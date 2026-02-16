@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gemini Video Clip Validation Schema",
+  "description": "Schema for sign language video clips processed by Gemini QA layer",
+  "type": "object",
+  "properties": {
+    "video_id": {
+      "type": "string",
+      "description": "Unique identifier for the video clip"
+    },
+    "gloss": {
+      "type": "string",
+      "description": "The sign gloss (word label)"
+    },
+    "predicted_label": {
+      "type": "string",
+      "description": "Model's predicted sign label"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Model confidence score for prediction"
+    },
+    "top_k_predictions": {
+      "type": "array",
+      "description": "Top-k predictions from the model",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Predicted sign label"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Confidence score"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Rank in top-k predictions"
+          }
+        },
+        "required": ["label", "confidence", "rank"]
+      }
+    },
+    "gemini_validation": {
+      "type": "object",
+      "description": "Gemini QA validation results",
+      "properties": {
+        "should_validate": {
+          "type": "boolean",
+          "description": "Whether validation was performed"
+        },
+        "validation_result": {
+          "type": "string",
+          "enum": ["Yes", "No", "Uncertain"],
+          "description": "Gemini's validation of the prediction"
+        },
+        "alternative_label": {
+          "type": "string",
+          "description": "Alternative sign suggested by Gemini if prediction is incorrect"
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Explanation for validation result"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of validation"
+        }
+      },
+      "required": ["should_validate"]
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "signer_id": {
+          "type": "integer",
+          "description": "Identifier for the signer"
+        },
+        "video_path": {
+          "type": "string",
+          "description": "Path to video file"
+        },
+        "duration_seconds": {
+          "type": "number",
+          "description": "Duration of video in seconds"
+        },
+        "fps": {
+          "type": "integer",
+          "description": "Frames per second"
+        },
+        "num_frames": {
+          "type": "integer",
+          "description": "Total number of frames"
+        },
+        "split": {
+          "type": "string",
+          "enum": ["train", "val", "test"],
+          "description": "Dataset split"
+        }
+      }
+    },
+    "is_correct": {
+      "type": "boolean",
+      "description": "Whether the prediction was correct (true label == predicted label)"
+    },
+    "inference_time_ms": {
+      "type": "number",
+      "description": "Inference time in milliseconds"
+    }
+  },
+  "required": [
+    "video_id",
+    "gloss",
+    "predicted_label",
+    "confidence"
+  ]
+}

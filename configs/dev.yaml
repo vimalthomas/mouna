@@ -1,0 +1,112 @@
+# Development Configuration for Mouna Sign Language Recognition
+
+data:
+  azure_container_bronze: "sign-videos-bronze"
+  azure_container_silver: "sign-videos-silver"
+  azure_container_gold: "sign-videos-gold"
+  num_classes: 2000  # WLASL-2000
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  max_sequence_length: 150  # Maximum frames/keypoints per video
+  video_fps: 30
+  frame_size: [224, 224]  # [height, width]
+
+baseline:
+  input_dim: 1629  # MediaPipe: 543 landmarks * 3 coordinates
+  hidden_dim: 512
+  num_layers: 2
+  dropout: 0.3
+  bidirectional: true
+  model_type: "bilstm"  # Options: bilstm, gru
+  use_attention: true
+
+multimodal:
+  vision_backbone: "timesformer"  # Options: timesformer, videomae, i3d
+  temporal_model: "transformer"  # Options: transformer, lstm, gru
+  fusion_strategy: "cross_attention"  # Options: late_fusion, cross_attention, early_fusion
+  hidden_dim: 768
+  num_heads: 8
+  num_layers: 6
+  dropout: 0.1
+  pretrained: true
+
+training:
+  batch_size: 16  # Smaller for dev (increase for production)
+  learning_rate: 0.001
+  num_epochs: 100
+  early_stopping_patience: 10
+  weight_decay: 0.00001
+  gradient_clip: 1.0
+  num_workers: 4
+  device: "cuda"  # Options: cuda, cpu
+
+  # Optimizer settings
+  optimizer: "adam"  # Options: adam, adamw, sgd
+  scheduler: "cosine"  # Options: cosine, step, plateau
+  warmup_epochs: 5
+
+  # Data augmentation
+  augmentation:
+    spatial_flip: true
+    temporal_speed: [0.8, 1.2]  # Speed range for temporal augmentation
+    keypoint_noise: 0.01  # Gaussian noise std for keypoints
+
+  # Class imbalance handling
+  use_class_weights: true
+  focal_loss: false
+  focal_loss_gamma: 2.0
+
+gemini:
+  model: "gemini-1.5-pro"
+  confidence_threshold: 0.7  # Only validate predictions below this
+  max_retries: 3
+  rate_limit_delay: 1.0  # Seconds between requests
+  enabled: true  # Set to false to disable Gemini validation
+
+mlflow:
+  tracking_uri: "./mlruns"  # Local MLflow for dev
+  experiment_name: "sign-recognition-dev"
+  run_name: null  # Auto-generated if null
+  log_models: true
+  log_artifacts: true
+
+evaluation:
+  metrics:
+    - "top1"
+    - "top5"
+    - "per_signer"
+    - "latency"
+    - "confusion_matrix"
+    - "per_class"
+
+  top_k: 5
+  save_predictions: true
+  save_confusion_matrix: true
+  confusion_matrix_top_classes: 50  # Show top 50 most frequent classes
+
+preprocessing:
+  # MediaPipe settings
+  mediapipe:
+    static_image_mode: false
+    model_complexity: 1  # 0=lite, 1=full, 2=heavy
+    min_detection_confidence: 0.5
+    min_tracking_confidence: 0.5
+
+  # Video preprocessing
+  normalize_pixels: true
+  normalize_keypoints: true
+  temporal_padding: "zeros"  # Options: zeros, repeat_last
+
+  # Feature selection
+  use_pose: true
+  use_hands: true
+  use_face: true  # Set to false to exclude face landmarks
+
+# Debugging and development
+debug:
+  verbose_logging: true
+  save_intermediate_outputs: false
+  limit_train_samples: null  # Set to integer to limit training samples for quick testing
+  limit_val_samples: null
+  visualize_augmentations: false

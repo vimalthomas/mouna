@@ -1,0 +1,148 @@
+# Databricks Asset Bundle Configuration
+bundle:
+  name: mouna
+
+workspace:
+  host: https://adb-7405614728635717.17.azuredatabricks.net
+
+targets:
+  dev:
+    mode: development
+    workspace:
+      root_path: /Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Shared/.bundle/prod/${bundle.name}
+    run_as:
+      user_name: vjosep3@lsu.edu
+
+resources:
+  jobs:
+    # Job 1: Download sample WLASL videos to bronze layer
+    download_sample_videos:
+      name: "[${bundle.target}] Mouna - Download Sample Videos"
+      tasks:
+        - task_key: download_samples
+          notebook_task:
+            notebook_path: ./notebooks/databricks/02_bronze_ingest
+            base_parameters:
+              sample_size: "10"
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+            spark_conf:
+              spark.databricks.delta.preview.enabled: "true"
+          libraries:
+            - pypi:
+                package: git+https://github.com/vimalthomas/mouna.git
+
+    # Job 2: Extract keypoints from videos
+    extract_keypoints:
+      name: "[${bundle.target}] Mouna - Extract Keypoints"
+      tasks:
+        - task_key: extract_keypoints
+          notebook_task:
+            notebook_path: ./notebooks/databricks/03_silver_preprocessing
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+          libraries:
+            - pypi:
+                package: git+https://github.com/vimalthomas/mouna.git
+            - pypi:
+                package: opencv-python
+            - pypi:
+                package: mediapipe
+
+    # Job 3: Train baseline model
+    train_baseline:
+      name: "[${bundle.target}] Mouna - Train Baseline Model"
+      tasks:
+        - task_key: train_baseline
+          notebook_task:
+            notebook_path: ./notebooks/databricks/04_train_baseline
+          new_cluster:
+            spark_version: 14.3.x-gpu-ml-scala2.12
+            node_type_id: Standard_NC6s_v3
+            num_workers: 0
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+          libraries:
+            - pypi:
+                package: git+https://github.com/vimalthomas/mouna.git
+            - pypi:
+                package: torch
+            - pypi:
+                package: mlflow
+
+  # Pipeline workflow that runs all jobs in sequence
+  pipelines:
+    mouna_pipeline:
+      name: "[${bundle.target}] Mouna - Full Pipeline"
+      tasks:
+        - task_key: setup_environment
+          notebook_task:
+            notebook_path: ./notebooks/databricks/01_setup_environment
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 1
+
+        - task_key: download_videos
+          depends_on:
+            - task_key: setup_environment
+          notebook_task:
+            notebook_path: ./notebooks/databricks/02_bronze_ingest
+            base_parameters:
+              sample_size: "10"
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+          libraries:
+            - pypi:
+                package: git+https://github.com/vimalthomas/mouna.git
+
+        - task_key: extract_keypoints
+          depends_on:
+            - task_key: download_videos
+          notebook_task:
+            notebook_path: ./notebooks/databricks/03_silver_preprocessing
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+          libraries:
+            - pypi:
+                package: git+https://github.com/vimalthomas/mouna.git
+            - pypi:
+                package: opencv-python
+            - pypi:
+                package: mediapipe
+
+        - task_key: train_model
+          depends_on:
+            - task_key: extract_keypoints
+          notebook_task:
+            notebook_path: ./notebooks/databricks/04_train_baseline
+          new_cluster:
+            spark_version: 14.3.x-gpu-ml-scala2.12
+            node_type_id: Standard_NC6s_v3
+            num_workers: 0
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+          libraries:
+            - pypi:
+                package: git+https://github.com/vimalthomas/mouna.git
+            - pypi:
+                package: torch
+            - pypi:
+                package: mlflow

@@ -1,0 +1,140 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mouna"
+version = "0.1.0"
+description = "Sign Language Recognition System - Base Model for HCI Research"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "Vimal Thomas Joseph"}
+]
+keywords = ["sign-language", "recognition", "azure", "databricks", "mlflow"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    # Core ML frameworks
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "transformers>=4.30.0",
+
+    # Computer vision & video processing
+    "opencv-python>=4.8.0",
+    "mediapipe>=0.10.0",
+    "av>=10.0.0",
+    "decord>=0.6.0",
+
+    # Azure & Databricks
+    "azure-storage-blob>=12.19.0",
+    "azure-identity>=1.15.0",
+    "databricks-connect>=13.0.0",
+    "pyspark>=3.5.0",
+    "delta-spark>=3.0.0",
+
+    # MLflow & experiment tracking
+    "mlflow>=2.10.0",
+    "mlflow-skinny[databricks]>=2.10.0",
+
+    # Gemini API
+    "google-generativeai>=0.3.0",
+
+    # Data processing
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+    "scipy>=1.11.0",
+
+    # Visualization
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.17.0",
+
+    # Configuration & utilities
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "pyyaml>=6.0",
+    "tqdm>=4.65.0",
+    "rich>=13.0.0",
+
+    # Logging
+    "loguru>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "ipython>=8.12.0",
+    "jupyter>=1.0.0",
+    "jupyterlab>=4.0.0",
+]
+
+notebooks = [
+    "ipykernel>=6.25.0",
+    "ipywidgets>=8.1.0",
+    "notebook>=7.0.0",
+]
+
+all = [
+    "mouna[dev,notebooks]",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/mouna"
+Repository = "https://github.com/yourusername/mouna"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mouna = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311"]
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=src/mouna --cov-report=term-missing"

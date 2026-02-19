@@ -1,129 +1,103 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Silver Layer: Keypoint Extraction
-# MAGIC
-# MAGIC Extract MediaPipe keypoints from videos using mouna package
+# MAGIC Extract MediaPipe keypoints from videos stored in the bronze Delta table
+# MAGIC and write results to the silver Delta table.
 
 # COMMAND ----------
 
-# MAGIC %run ./01_setup_environment
-
-# COMMAND ----------
-
-from mouna.data.preprocessing import KeypointExtractor, VideoPreprocessor
-from pyspark.sql.functions import pandas_udf, col
-from pyspark.sql.types import *
-import pandas as pd
-import numpy as np
+import sys
+import os
 import pickle
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BinaryType, BooleanType
 
-BRONZE_PATH = "abfss://sign-videos-bronze@mysignstorage.dfs.core.windows.net/"
-SILVER_PATH = "abfss://sign-videos-silver@mysignstorage.dfs.core.windows.net/"
+# Inline sys.path — makes the mouna package importable
+_nb_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+_src_path = "/Workspace/" + "/".join(_nb_path.split("/")[1:-3]) + "/src"
+if _src_path not in sys.path:
+    sys.path.insert(0, _src_path)
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Load Video Inventory from Bronze
-
-# COMMAND ----------
-
-inventory_df = spark.read.format("delta").load(f"{BRONZE_PATH}inventory/")
-print(f"Total videos in inventory: {inventory_df.count()}")
-inventory_df.show(5)
+BRONZE_PATH = "abfss://sign-videos-bronze@mounastorage2025.dfs.core.windows.net/"
+SILVER_PATH = "abfss://sign-videos-silver@mounastorage2025.dfs.core.windows.net/"
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Extract Keypoints (Distributed)
+# MAGIC ## Load Videos from Bronze Delta Table
 
 # COMMAND ----------
 
-# Define schema for keypoints
+videos_df = spark.read.format("delta").load(f"{BRONZE_PATH}raw_videos/")
+videos_pd  = videos_df.toPandas()
+
+print(f"Videos in bronze: {len(videos_pd)}")
+if videos_pd.empty:
+    raise RuntimeError("No videos in bronze/raw_videos/. Re-run 02_bronze_ingest first.")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Extract Keypoints (driver loop)
+# MAGIC
+# MAGIC Videos are in memory as bytes. Write each to /tmp for mediapipe processing,
+# MAGIC then delete immediately. Native Python file I/O is allowed on serverless.
+
+# COMMAND ----------
+
+from mouna.data.preprocessing import KeypointExtractor
+
+extractor = KeypointExtractor(model_complexity=0)
+
 keypoints_schema = StructType([
-    StructField("video_id", StringType(), False),
-    StructField("gloss", StringType(), False),
-    StructField("keypoints_pickle", BinaryType(), False),
-    StructField("num_frames", IntegerType(), False),
-    StructField("success", BooleanType(), False),
+    StructField("video_id",         StringType(),  True),
+    StructField("gloss",            StringType(),  True),
+    StructField("keypoints_pickle", BinaryType(),  True),
+    StructField("num_frames",       IntegerType(), True),
+    StructField("success",          BooleanType(), True),
 ])
 
-@pandas_udf(keypoints_schema)
-def extract_keypoints_udf(video_ids: pd.Series, glosses: pd.Series) -> pd.DataFrame:
-    """Extract keypoints from videos using MediaPipe"""
-    from mouna.data.preprocessing import KeypointExtractor
-    import pickle
+results = []
+for _, row in videos_pd.iterrows():
+    temp_path = f"/tmp/{row['video_id']}.mp4"
+    try:
+        # Write video bytes to local /tmp — native Python I/O is allowed on serverless
+        with open(temp_path, "wb") as f:
+            f.write(bytes(row["content"]))
 
-    extractor = KeypointExtractor()
-    results = []
+        kp     = extractor.extract_from_video(temp_path)
+        flat   = extractor.flatten_keypoints(kp)
+        normed = extractor.normalize_keypoints(flat)
 
-    for video_id, gloss in zip(video_ids, glosses):
-        try:
-            # Download video from bronze to temp
-            video_path = f"{BRONZE_PATH}videos/{gloss}/{video_id}.mp4"
-            temp_path = f"/tmp/{video_id}.mp4"
-
-            dbutils.fs.cp(video_path, f"file://{temp_path}")
-
-            # Extract keypoints
-            keypoints = extractor.extract_from_video(temp_path)
-
-            # Flatten keypoints
-            flattened = extractor.flatten_keypoints(keypoints)
-
-            # Normalize
-            normalized = extractor.normalize_keypoints(flattened)
-
-            # Serialize
-            keypoints_bytes = pickle.dumps(normalized)
-
-            results.append({
-                "video_id": video_id,
-                "gloss": gloss,
-                "keypoints_pickle": keypoints_bytes,
-                "num_frames": len(normalized),
-                "success": True
-            })
-
-            # Cleanup
+        results.append({
+            "video_id":         row["video_id"],
+            "gloss":            row["gloss"],
+            "keypoints_pickle": pickle.dumps(normed),
+            "num_frames":       int(len(normed)),
+            "success":          True,
+        })
+        print(f"  OK  {row['video_id']}  ({len(normed)} frames)")
+    except Exception as e:
+        results.append({
+            "video_id":         row["video_id"],
+            "gloss":            row["gloss"],
+            "keypoints_pickle": None,
+            "num_frames":       0,
+            "success":          False,
+        })
+        print(f"  ERR {row['video_id']}: {e}")
+    finally:
+        if os.path.exists(temp_path):
             os.remove(temp_path)
-
-        except Exception as e:
-            results.append({
-                "video_id": video_id,
-                "gloss": gloss,
-                "keypoints_pickle": None,
-                "num_frames": 0,
-                "success": False
-            })
-
-    return pd.DataFrame(results)
-
-# COMMAND ----------
-
-# Process videos
-keypoints_df = inventory_df.select("video_id", "gloss").groupBy(
-    "video_id", "gloss"
-).apply(extract_keypoints_udf)
-
-# Show results
-success_count = keypoints_df.filter(col("success") == True).count()
-total = keypoints_df.count()
-
-print(f"✅ Extracted keypoints from {success_count}/{total} videos")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Save to Silver Layer
+# MAGIC ## Write to Silver Delta Table
 
 # COMMAND ----------
 
-# Save as Delta table
-keypoints_df.write.mode("overwrite").format("delta").save(f"{SILVER_PATH}keypoints/")
+keypoints_df = spark.createDataFrame(results, schema=keypoints_schema)
+keypoints_df.write.format("delta").mode("overwrite").save(f"{SILVER_PATH}keypoints/")
 
-print(f"✅ Keypoints saved to silver layer")
-
-# Verify
-silver_df = spark.read.format("delta").load(f"{SILVER_PATH}keypoints/")
-print(f"Total keypoint records: {silver_df.count()}")
-silver_df.show(5)
+success = sum(r["success"] for r in results)
+print(f"\nExtracted {success}/{len(results)} keypoint sequences → silver layer")

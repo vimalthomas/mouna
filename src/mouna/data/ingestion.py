@@ -7,11 +7,8 @@ from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 import requests
-from azure.storage.blob import BlobServiceClient
 from loguru import logger
 from tqdm import tqdm
-
-from mouna.utils.config import AzureConfig
 
 
 class WLASLDownloader:
@@ -122,13 +119,14 @@ class WLASLDownloader:
 class AzureBlobUploader:
     """Upload videos to Azure Blob Storage."""
 
-    def __init__(self, config: AzureConfig):
+    def __init__(self, config):
         """
         Initialize Azure Blob uploader.
 
         Args:
             config: Azure configuration with credentials.
         """
+        from azure.storage.blob import BlobServiceClient
         self.config = config
         self.blob_service_client = BlobServiceClient.from_connection_string(
             config.connection_string

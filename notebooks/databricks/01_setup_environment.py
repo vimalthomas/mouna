@@ -2,38 +2,28 @@
 # MAGIC %md
 # MAGIC # Setup Environment
 # MAGIC
-# MAGIC Install the mouna package from GitHub and configure environment
+# MAGIC Configure environment and verify package access
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Install Package from GitHub
+# MAGIC ## Add Package to Path
 
 # COMMAND ----------
 
-# MAGIC %pip install git+https://github.com/vimalthomas-db/mouna.git
+import sys
 
-# COMMAND ----------
+# Resolve the src path relative to the notebook's workspace location
+# Notebook is at: .../files/notebooks/databricks/<notebook>.py
+# src is at:      .../files/src/
+notebook_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+bundle_files_root = "/".join(notebook_path.split("/")[:-3])  # go up past notebooks/databricks/<notebook>
+src_path = f"/Workspace{bundle_files_root}/src"
 
-# Restart Python to use the new package
-dbutils.library.restartPython()
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Verify Installation
-
-# COMMAND ----------
-
-import mouna
-from mouna.utils.logging import setup_logger
-from mouna.data.ingestion import WLASLDownloader, AzureBlobUploader
-
-print(f"✅ Mouna version: {mouna.__version__}")
-print(f"✅ Package installed successfully")
-
-# Setup logging
-setup_logger(log_level="INFO")
+print(f"✅ Added to sys.path: {src_path}")
 
 # COMMAND ----------
 

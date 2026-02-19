@@ -1,0 +1,4 @@
+torch
+mlflow
+pydantic-settings
+pyyaml

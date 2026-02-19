@@ -1,42 +1,36 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Train Baseline Model (BiLSTM)
-# MAGIC
-# MAGIC Train keypoint-based BiLSTM model using mouna package
+# MAGIC Train a keypoint-based BiLSTM classifier on the silver layer keypoints.
 
 # COMMAND ----------
 
-# MAGIC %run ./01_setup_environment
-
-# COMMAND ----------
-
-import torch
-from torch.utils.data import Dataset, DataLoader
-from mouna.models.baseline import KeypointBiLSTM, create_baseline_model
-from mouna.utils.config import load_config
-import mlflow
-import mlflow.pytorch
+import sys
 import pickle
 import numpy as np
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
+import mlflow
+import mlflow.pytorch
 
-SILVER_PATH = "abfss://sign-videos-silver@mysignstorage.dfs.core.windows.net/"
-GOLD_PATH = "abfss://sign-videos-gold@mysignstorage.dfs.core.windows.net/"
+# Inline sys.path — makes the mouna package importable
+_nb_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+_src_path = "/Workspace/" + "/".join(_nb_path.split("/")[1:-3]) + "/src"
+if _src_path not in sys.path:
+    sys.path.insert(0, _src_path)
 
-# COMMAND ----------
+SILVER_PATH = "abfss://sign-videos-silver@mounastorage2025.dfs.core.windows.net/"
 
-# MAGIC %md
-# MAGIC ## Load Configuration
-
-# COMMAND ----------
-
-# Load config from the package
-config = load_config()
-
-print(f"Model config:")
-print(f"  Hidden dim: {config.baseline.hidden_dim}")
-print(f"  Num layers: {config.baseline.num_layers}")
-print(f"  Batch size: {config.training.batch_size}")
-print(f"  Learning rate: {config.training.learning_rate}")
+# Hyperparameters
+HIDDEN_DIM    = 128
+NUM_LAYERS    = 1
+DROPOUT       = 0.3
+BIDIRECTIONAL = True
+BATCH_SIZE    = 2
+LR            = 1e-3
+NUM_EPOCHS    = 10
+MAX_SEQ_LEN   = 150
 
 # COMMAND ----------
 
@@ -45,72 +39,77 @@ print(f"  Learning rate: {config.training.learning_rate}")
 
 # COMMAND ----------
 
-# Load keypoints
 keypoints_df = spark.read.format("delta").load(f"{SILVER_PATH}keypoints/")
-keypoints_pd = keypoints_df.toPandas()
+keypoints_pd = keypoints_df.filter("success = true").toPandas()
 
-print(f"Loaded {len(keypoints_pd)} keypoint sequences")
+print(f"Total sequences:  {keypoints_df.count()}")
+print(f"Successful:       {len(keypoints_pd)}")
+print(f"Unique glosses:   {keypoints_pd['gloss'].nunique()}")
+
+if len(keypoints_pd) < 2:
+    raise RuntimeError(
+        f"Need at least 2 successful sequences to train; got {len(keypoints_pd)}. "
+        "Re-run bronze + silver with a larger sample_size."
+    )
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Prepare Dataset
+# MAGIC ## Build PyTorch Dataset
 
 # COMMAND ----------
 
 class KeypointDataset(Dataset):
-    """Dataset for keypoint sequences"""
+    """Pad/truncate keypoint sequences and map glosses to integer labels."""
 
-    def __init__(self, dataframe, max_length=150):
-        self.data = dataframe
+    def __init__(self, dataframe, max_length: int = MAX_SEQ_LEN):
+        self.data = dataframe.reset_index(drop=True)
         self.max_length = max_length
-
-        # Create label mapping
-        unique_glosses = sorted(dataframe['gloss'].unique())
-        self.label_to_idx = {gloss: idx for idx, gloss in enumerate(unique_glosses)}
+        unique_glosses = sorted(self.data["gloss"].unique())
+        self.label_to_idx = {g: i for i, g in enumerate(unique_glosses)}
         self.num_classes = len(unique_glosses)
+        first_kp = pickle.loads(self.data.at[0, "keypoints_pickle"])
+        self.input_dim = first_kp.shape[1] if first_kp.ndim == 2 else len(first_kp[0])
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         row = self.data.iloc[idx]
-
-        # Deserialize keypoints
-        keypoints = pickle.loads(row['keypoints_pickle'])
-
-        # Pad/truncate
-        seq_len = min(len(keypoints), self.max_length)
-        if len(keypoints) < self.max_length:
-            padding = np.zeros((self.max_length - len(keypoints), keypoints.shape[1]))
-            keypoints = np.vstack([keypoints, padding])
+        kp = pickle.loads(row["keypoints_pickle"])
+        seq_len = min(len(kp), self.max_length)
+        if len(kp) < self.max_length:
+            kp = np.vstack([kp, np.zeros((self.max_length - len(kp), kp.shape[1]))])
         else:
-            keypoints = keypoints[:self.max_length]
-
-        # Get label
-        label = self.label_to_idx[row['gloss']]
-
+            kp = kp[: self.max_length]
         return {
-            'keypoints': torch.tensor(keypoints, dtype=torch.float32),
-            'label': torch.tensor(label, dtype=torch.long),
-            'sequence_length': torch.tensor(seq_len, dtype=torch.long)
+            "keypoints": torch.tensor(kp, dtype=torch.float32),
+            "label":     torch.tensor(self.label_to_idx[row["gloss"]], dtype=torch.long),
+            "seq_len":   torch.tensor(seq_len, dtype=torch.long),
         }
 
-# Create dataset
+
 dataset = KeypointDataset(keypoints_pd)
+print(f"Dataset size: {len(dataset)}  |  classes: {dataset.num_classes}  |  input_dim: {dataset.input_dim}")
 
-# Split train/val
-train_size = int(0.8 * len(dataset))
-val_size = len(dataset) - train_size
-train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+# COMMAND ----------
 
-# Create dataloaders
-train_loader = DataLoader(train_dataset, batch_size=config.training.batch_size, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=config.training.batch_size)
+# MAGIC %md
+# MAGIC ## Train / Val Split
 
-print(f"Train samples: {len(train_dataset)}")
-print(f"Val samples: {len(val_dataset)}")
-print(f"Num classes: {dataset.num_classes}")
+# COMMAND ----------
+
+n_total = len(dataset)
+n_train = max(1, int(0.8 * n_total))
+n_val   = n_total - n_train
+
+train_ds, val_ds = torch.utils.data.random_split(
+    dataset, [n_train, n_val], generator=torch.Generator().manual_seed(42)
+)
+train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,  drop_last=False)
+val_loader   = DataLoader(val_ds,   batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
+
+print(f"Train: {n_train}  |  Val: {n_val}")
 
 # COMMAND ----------
 
@@ -119,22 +118,22 @@ print(f"Num classes: {dataset.num_classes}")
 
 # COMMAND ----------
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+from mouna.models.baseline import create_baseline_model
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = create_baseline_model(
-    model_type=config.baseline.model_type,
-    input_dim=config.baseline.input_dim,
-    hidden_dim=config.baseline.hidden_dim,
-    num_layers=config.baseline.num_layers,
+    model_type="bilstm",
+    input_dim=dataset.input_dim,
+    hidden_dim=HIDDEN_DIM,
+    num_layers=NUM_LAYERS,
     num_classes=dataset.num_classes,
-    dropout=config.baseline.dropout,
-    bidirectional=config.baseline.bidirectional
+    dropout=DROPOUT,
+    bidirectional=BIDIRECTIONAL,
 )
-
 model.to(device)
 
-print(f"✅ Model initialized on {device}")
-print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
+print(f"Device: {device}  |  Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
 # COMMAND ----------
 
@@ -143,91 +142,56 @@ print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
 # COMMAND ----------
 
-mlflow.set_experiment("/Users/vjosep3@lsu.edu/mouna-baseline")
+mlflow.set_experiment("/mouna/baseline")
 
-with mlflow.start_run():
-    # Log parameters
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+
+with mlflow.start_run(run_name="bilstm-baseline"):
     mlflow.log_params({
-        "model_type": config.baseline.model_type,
-        "hidden_dim": config.baseline.hidden_dim,
-        "num_layers": config.baseline.num_layers,
-        "batch_size": config.training.batch_size,
-        "learning_rate": config.training.learning_rate,
-        "num_classes": dataset.num_classes,
+        "model_type": "bilstm", "hidden_dim": HIDDEN_DIM, "num_layers": NUM_LAYERS,
+        "dropout": DROPOUT, "bidirectional": BIDIRECTIONAL, "batch_size": BATCH_SIZE,
+        "learning_rate": LR, "num_classes": dataset.num_classes,
+        "input_dim": dataset.input_dim, "train_size": n_train, "val_size": n_val,
     })
 
-    # Training setup
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.training.learning_rate)
+    best_val_acc = 0.0
 
-    # Training loop
-    num_epochs = 10  # Reduced for demo
-    best_val_acc = 0
-
-    for epoch in range(num_epochs):
-        # Train
+    for epoch in range(NUM_EPOCHS):
         model.train()
-        train_loss = 0
-        train_correct = 0
-        train_total = 0
-
+        train_loss, train_correct, train_total = 0.0, 0, 0
         for batch in train_loader:
-            keypoints = batch['keypoints'].to(device)
-            labels = batch['label'].to(device)
-            lengths = batch['sequence_length'].to(device)
-
+            kp, labels, lengths = batch["keypoints"].to(device), batch["label"].to(device), batch["seq_len"].to(device)
             optimizer.zero_grad()
-            outputs = model(keypoints, lengths)
-            loss = criterion(outputs, labels)
+            logits = model(kp, lengths)
+            loss = criterion(logits, labels)
             loss.backward()
             optimizer.step()
+            train_loss    += loss.item()
+            train_correct += logits.argmax(1).eq(labels).sum().item()
+            train_total   += labels.size(0)
 
-            train_loss += loss.item()
-            _, predicted = outputs.max(1)
-            train_total += labels.size(0)
-            train_correct += predicted.eq(labels).sum().item()
-
-        train_acc = 100. * train_correct / train_total
-        avg_train_loss = train_loss / len(train_loader)
-
-        # Validation
         model.eval()
-        val_loss = 0
-        val_correct = 0
-        val_total = 0
-
+        val_loss, val_correct, val_total = 0.0, 0, 0
         with torch.no_grad():
             for batch in val_loader:
-                keypoints = batch['keypoints'].to(device)
-                labels = batch['label'].to(device)
-                lengths = batch['sequence_length'].to(device)
+                kp, labels, lengths = batch["keypoints"].to(device), batch["label"].to(device), batch["seq_len"].to(device)
+                logits = model(kp, lengths)
+                loss = criterion(logits, labels)
+                val_loss    += loss.item()
+                val_correct += logits.argmax(1).eq(labels).sum().item()
+                val_total   += labels.size(0)
 
-                outputs = model(keypoints, lengths)
-                loss = criterion(outputs, labels)
+        avg_tl = train_loss / len(train_loader)
+        avg_vl = val_loss   / len(val_loader)
+        ta     = 100.0 * train_correct / train_total
+        va     = 100.0 * val_correct   / val_total
 
-                val_loss += loss.item()
-                _, predicted = outputs.max(1)
-                val_total += labels.size(0)
-                val_correct += predicted.eq(labels).sum().item()
+        mlflow.log_metrics({"train_loss": avg_tl, "train_acc": ta, "val_loss": avg_vl, "val_acc": va}, step=epoch)
+        print(f"Epoch {epoch+1:2d}/{NUM_EPOCHS} | train loss {avg_tl:.4f} acc {ta:.1f}% | val loss {avg_vl:.4f} acc {va:.1f}%")
 
-        val_acc = 100. * val_correct / val_total
-        avg_val_loss = val_loss / len(val_loader)
-
-        # Log metrics
-        mlflow.log_metrics({
-            "train_loss": avg_train_loss,
-            "train_acc": train_acc,
-            "val_loss": avg_val_loss,
-            "val_acc": val_acc,
-        }, step=epoch)
-
-        print(f"Epoch {epoch+1}/{num_epochs} - "
-              f"Train Loss: {avg_train_loss:.4f}, Train Acc: {train_acc:.2f}% - "
-              f"Val Loss: {avg_val_loss:.4f}, Val Acc: {val_acc:.2f}%")
-
-        # Save best model
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
+        if va > best_val_acc:
+            best_val_acc = va
             mlflow.pytorch.log_model(model, "best_model")
 
-    print(f"\n✅ Training complete! Best val accuracy: {best_val_acc:.2f}%")
+    print(f"\nBest val accuracy: {best_val_acc:.1f}%")

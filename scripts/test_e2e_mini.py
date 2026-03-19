@@ -59,7 +59,6 @@ def test_keypoint_extraction():
         print(f"  Pose shape: {keypoints['pose'].shape}")
         print(f"  Left hand shape: {keypoints['left_hand'].shape}")
         print(f"  Right hand shape: {keypoints['right_hand'].shape}")
-        print(f"  Face shape: {keypoints['face'].shape}")
 
         # Flatten
         flattened = extractor.flatten_keypoints(keypoints)
@@ -82,7 +81,7 @@ def test_model_training():
     num_samples = 20
     num_classes = 5
     seq_len = 50
-    feature_dim = 1629
+    feature_dim = 225
 
     print(f"Creating synthetic dataset: {num_samples} samples, {num_classes} classes")
 
@@ -181,7 +180,7 @@ def test_evaluation(model):
     num_samples = 10
     num_classes = 5
     seq_len = 50
-    feature_dim = 1629
+    feature_dim = 225
 
     X_test = torch.randn(num_samples, seq_len, feature_dim)
     y_test = torch.randint(0, num_classes, (num_samples,))
@@ -214,7 +213,7 @@ def test_model_save_load():
     print("="*60)
 
     model = KeypointBiLSTM(
-        input_dim=1629,
+        input_dim=225,
         hidden_dim=128,
         num_layers=2,
         num_classes=5,
@@ -227,7 +226,7 @@ def test_model_save_load():
         torch.save({
             'model_state_dict': model.state_dict(),
             'config': {
-                'input_dim': 1629,
+                'input_dim': 225,
                 'hidden_dim': 128,
                 'num_layers': 2,
                 'num_classes': 5,
@@ -244,7 +243,7 @@ def test_model_save_load():
         print(f"✓ Model loaded successfully")
 
         # Verify
-        test_input = torch.randn(1, 50, 1629)
+        test_input = torch.randn(1, 50, 225)
         test_lengths = torch.tensor([50])
 
         model.eval()

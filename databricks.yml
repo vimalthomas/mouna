@@ -3,7 +3,7 @@ bundle:
   name: mouna
 
 workspace:
-  host: https://adb-7405612889063784.4.azuredatabricks.net
+  host: https://adb-7405606934779715.15.azuredatabricks.net
 
 targets:
   dev:
@@ -11,21 +11,36 @@ targets:
     workspace:
       root_path: /Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
 
+variables:
+  azure_storage_key:
+    description: "Azure storage account key for mounastorage2025"
+    default: ""
+
 resources:
   jobs:
-    # Full pipeline — serverless compute, 5 sample videos
     mouna_pipeline:
       name: "[${bundle.target}] Mouna - Full Pipeline"
 
-      environments:
-        - environment_key: silver_env
-          spec:
-            client: "1"
-            dependencies:
-              - mediapipe
-              - loguru
-              - tqdm
+      run_as:
+        user_name: admin@vjosep3outlook.onmicrosoft.com
 
+      # ── Classic compute cluster for MediaPipe extraction ──────────────────
+      job_clusters:
+        - job_cluster_key: extraction_cluster
+          new_cluster:
+            spark_version: "15.4.x-cpu-ml-scala2.12"
+            node_type_id: Standard_D4s_v3
+            num_workers: 0
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: "local[*]"
+            custom_tags:
+              ResourceClass: SingleNode
+            spark_env_vars:
+              AZURE_STORAGE_KEY: "${var.azure_storage_key}"
+
+      # ── Serverless environment for training ───────────────────────────────
+      environments:
         - environment_key: train_env
           spec:
             client: "1"
@@ -34,21 +49,27 @@ resources:
               - mlflow
               - pydantic-settings
               - pyyaml
+              - scikit-learn
 
       tasks:
-        - task_key: download_videos
-          notebook_task:
-            notebook_path: ./notebooks/databricks/02_bronze_ingest.py
-            base_parameters:
-              sample_size: "5"
-
+        # Step 1: Extract keypoints on classic compute (MediaPipe + Spark)
         - task_key: extract_keypoints
-          depends_on:
-            - task_key: download_videos
-          environment_key: silver_env
+          job_cluster_key: extraction_cluster
+          libraries:
+            - pypi:
+                package: "mediapipe>=0.10.0"
+            - pypi:
+                package: "opencv-python-headless"
+            - pypi:
+                package: "azure-storage-blob"
+            - pypi:
+                package: "loguru"
+            - pypi:
+                package: "pyarrow"
           notebook_task:
-            notebook_path: ./notebooks/databricks/03_silver_preprocessing.py
+            notebook_path: ./notebooks/databricks/02_extract_keypoints_spark.py
 
+        # Step 2: Train BiLSTM on serverless (depends on extraction)
         - task_key: train_model
           depends_on:
             - task_key: extract_keypoints

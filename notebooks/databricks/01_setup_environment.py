@@ -33,9 +33,9 @@ print(f"✅ Added to sys.path: {src_path}")
 # COMMAND ----------
 
 # External locations are already configured via Unity Catalog
-BRONZE_PATH = "abfss://sign-videos-bronze@mysignstorage.dfs.core.windows.net/"
-SILVER_PATH = "abfss://sign-videos-silver@mysignstorage.dfs.core.windows.net/"
-GOLD_PATH = "abfss://sign-videos-gold@mysignstorage.dfs.core.windows.net/"
+BRONZE_PATH = "abfss://sign-videos-bronze@mounastorage2025.dfs.core.windows.net/"
+SILVER_PATH = "abfss://sign-videos-silver@mounastorage2025.dfs.core.windows.net/"
+GOLD_PATH = "abfss://sign-videos-gold@mounastorage2025.dfs.core.windows.net/"
 
 print(f"✅ Bronze layer: {BRONZE_PATH}")
 print(f"✅ Silver layer: {SILVER_PATH}")

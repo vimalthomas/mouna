@@ -1,167 +1,186 @@
-"""Video preprocessing and keypoint extraction using MediaPipe."""
+"""Video preprocessing and keypoint extraction using MediaPipe Tasks API."""
+
+import urllib.request
+from pathlib import Path
+from typing import Dict, Optional, Tuple
 
 import cv2
 import mediapipe as mp
 import numpy as np
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 from loguru import logger
-from tqdm import tqdm
+from mediapipe.tasks.python import vision
+from mediapipe.tasks.python.core.base_options import BaseOptions
+
+# Model URLs from MediaPipe Model Hub
+_MODEL_URLS = {
+    "pose": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+    "hand": "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+}
+_MODEL_CACHE_DIR = Path.home() / ".mouna" / "models"
+
+# Feature dimensions: 33 pose + 21 left_hand + 21 right_hand (no face)
+# Each landmark has x, y, z = 3 values
+POSE_LANDMARKS = 33
+HAND_LANDMARKS = 21
+KEYPOINT_DIM = (POSE_LANDMARKS + HAND_LANDMARKS * 2) * 3  # 225
+
+
+def _get_model_path(name: str) -> str:
+    """Download model file if not cached, return local path."""
+    _MODEL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    filename = _MODEL_URLS[name].split("/")[-1]
+    local_path = _MODEL_CACHE_DIR / filename
+    if not local_path.exists():
+        logger.info(f"Downloading MediaPipe {name} model to {local_path}...")
+        urllib.request.urlretrieve(_MODEL_URLS[name], local_path)
+        logger.info(f"Downloaded {name} model.")
+    return str(local_path)
 
 
 class KeypointExtractor:
-    """Extract pose, hand, and face keypoints from videos using MediaPipe."""
+    """Extract pose and hand keypoints from videos using MediaPipe Tasks API."""
 
     def __init__(
         self,
-        static_image_mode: bool = False,
-        model_complexity: int = 1,
         min_detection_confidence: float = 0.5,
-        min_tracking_confidence: float = 0.5,
     ):
         """
-        Initialize MediaPipe Holistic model.
+        Initialize MediaPipe Pose and Hand landmarkers.
 
         Args:
-            static_image_mode: Whether to treat images as static (vs video stream).
-            model_complexity: Complexity of pose model (0, 1, or 2).
             min_detection_confidence: Minimum confidence for detection.
-            min_tracking_confidence: Minimum confidence for tracking.
         """
-        self.mp_holistic = mp.solutions.holistic
-        self.holistic = self.mp_holistic.Holistic(
-            static_image_mode=static_image_mode,
-            model_complexity=model_complexity,
-            min_detection_confidence=min_detection_confidence,
-            min_tracking_confidence=min_tracking_confidence,
+        pose_opts = vision.PoseLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=_get_model_path("pose")),
+            running_mode=vision.RunningMode.IMAGE,
+            min_pose_detection_confidence=min_detection_confidence,
+            min_pose_presence_confidence=min_detection_confidence,
         )
+        self._pose = vision.PoseLandmarker.create_from_options(pose_opts)
+
+        hand_opts = vision.HandLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=_get_model_path("hand")),
+            running_mode=vision.RunningMode.IMAGE,
+            num_hands=2,
+            min_hand_detection_confidence=min_detection_confidence,
+            min_hand_presence_confidence=min_detection_confidence,
+        )
+        self._hand = vision.HandLandmarker.create_from_options(hand_opts)
 
     def extract_from_frame(self, frame: np.ndarray) -> Dict[str, np.ndarray]:
         """
         Extract keypoints from a single frame.
 
         Args:
-            frame: RGB image frame.
+            frame: BGR image frame (as from OpenCV).
 
         Returns:
-            Dictionary with pose, left_hand, right_hand, and face keypoints.
+            Dictionary with pose, left_hand, right_hand keypoints.
+            Each value has shape (N, 3) for x, y, z coordinates.
         """
-        # Convert to RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-        # Process with MediaPipe
-        results = self.holistic.process(frame_rgb)
+        pose_result = self._pose.detect(mp_image)
+        hand_result = self._hand.detect(mp_image)
 
-        keypoints = {
-            "pose": self._landmarks_to_array(results.pose_landmarks, 33),
-            "left_hand": self._landmarks_to_array(results.left_hand_landmarks, 21),
-            "right_hand": self._landmarks_to_array(results.right_hand_landmarks, 21),
-            "face": self._landmarks_to_array(results.face_landmarks, 468),
+        pose_kp = np.zeros((POSE_LANDMARKS, 3))
+        if pose_result.pose_landmarks:
+            for i, lm in enumerate(pose_result.pose_landmarks[0]):
+                pose_kp[i] = [lm.x, lm.y, lm.z]
+
+        left_hand_kp = np.zeros((HAND_LANDMARKS, 3))
+        right_hand_kp = np.zeros((HAND_LANDMARKS, 3))
+        if hand_result.hand_landmarks:
+            for landmarks, handedness in zip(
+                hand_result.hand_landmarks, hand_result.handedness
+            ):
+                label = handedness[0].category_name  # "Left" or "Right"
+                kp = np.array([[lm.x, lm.y, lm.z] for lm in landmarks])
+                if label == "Left":
+                    left_hand_kp = kp
+                else:
+                    right_hand_kp = kp
+
+        return {
+            "pose": pose_kp,
+            "left_hand": left_hand_kp,
+            "right_hand": right_hand_kp,
         }
 
-        return keypoints
-
     def extract_from_video(
-        self, video_path: str, max_frames: Optional[int] = None
+        self,
+        video_path: str,
+        max_frames: Optional[int] = None,
+        start_frame: int = 0,
+        end_frame: int = -1,
     ) -> Dict[str, np.ndarray]:
         """
-        Extract keypoints from entire video.
+        Extract keypoints from a video, optionally restricted to a frame range.
 
         Args:
-            video_path: Path to video file.
-            max_frames: Maximum number of frames to process.
+            video_path:   Path to video file.
+            max_frames:   Maximum number of frames to extract (cap on output length).
+            start_frame:  First frame index to extract (0-based). Use 0 for start of file.
+            end_frame:    Last frame index to extract (inclusive). Use -1 for end of file.
 
         Returns:
             Dictionary with temporal sequences of keypoints.
-            Shape: (num_frames, num_keypoints, 3) for x, y, z coordinates.
+            Shape: (num_frames, num_landmarks, 3).
         """
         cap = cv2.VideoCapture(video_path)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        if max_frames:
-            total_frames = min(total_frames, max_frames)
+        if start_frame > 0:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
 
-        # Storage for temporal sequences
-        pose_seq = []
-        left_hand_seq = []
-        right_hand_seq = []
-        face_seq = []
+        pose_seq, left_hand_seq, right_hand_seq = [], [], []
+        frame_idx = start_frame
 
-        frame_idx = 0
-        while cap.isOpened() and (max_frames is None or frame_idx < max_frames):
+        while cap.isOpened():
+            if max_frames is not None and len(pose_seq) >= max_frames:
+                break
+            if end_frame >= 0 and frame_idx > end_frame:
+                break
+
             ret, frame = cap.read()
             if not ret:
                 break
 
-            keypoints = self.extract_from_frame(frame)
-
-            pose_seq.append(keypoints["pose"])
-            left_hand_seq.append(keypoints["left_hand"])
-            right_hand_seq.append(keypoints["right_hand"])
-            face_seq.append(keypoints["face"])
-
+            kp = self.extract_from_frame(frame)
+            pose_seq.append(kp["pose"])
+            left_hand_seq.append(kp["left_hand"])
+            right_hand_seq.append(kp["right_hand"])
             frame_idx += 1
 
         cap.release()
 
         return {
-            "pose": np.array(pose_seq),  # (T, 33, 3)
+            "pose": np.array(pose_seq),        # (T, 33, 3)
             "left_hand": np.array(left_hand_seq),  # (T, 21, 3)
-            "right_hand": np.array(right_hand_seq),  # (T, 21, 3)
-            "face": np.array(face_seq),  # (T, 468, 3)
+            "right_hand": np.array(right_hand_seq), # (T, 21, 3)
         }
 
-    def _landmarks_to_array(
-        self, landmarks, expected_size: int
-    ) -> np.ndarray:
-        """
-        Convert MediaPipe landmarks to numpy array.
-
-        Args:
-            landmarks: MediaPipe landmarks object.
-            expected_size: Expected number of landmarks.
-
-        Returns:
-            Array of shape (expected_size, 3) with x, y, z coordinates.
-            Returns zeros if landmarks not detected.
-        """
-        if landmarks is None:
-            return np.zeros((expected_size, 3))
-
-        coords = []
-        for landmark in landmarks.landmark:
-            coords.append([landmark.x, landmark.y, landmark.z])
-
-        return np.array(coords)
 
     def flatten_keypoints(self, keypoints: Dict[str, np.ndarray]) -> np.ndarray:
         """
         Flatten all keypoints into single feature vector per frame.
 
         Args:
-            keypoints: Dictionary with pose, hands, and face keypoints.
+            keypoints: Dictionary with pose, left_hand, right_hand keypoints.
 
         Returns:
-            Flattened array of shape (num_frames, 543*3) = (num_frames, 1629).
-            543 = 33 (pose) + 21 (left_hand) + 21 (right_hand) + 468 (face)
+            Flattened array of shape (num_frames, 225).
+            225 = (33 pose + 21 left_hand + 21 right_hand) * 3
         """
-        pose = keypoints["pose"]  # (T, 33, 3)
+        pose = keypoints["pose"]            # (T, 33, 3)
         left_hand = keypoints["left_hand"]  # (T, 21, 3)
-        right_hand = keypoints["right_hand"]  # (T, 21, 3)
-        face = keypoints["face"]  # (T, 468, 3)
+        right_hand = keypoints["right_hand"] # (T, 21, 3)
 
-        # Flatten spatial dimensions, keep temporal
-        pose_flat = pose.reshape(pose.shape[0], -1)  # (T, 99)
+        pose_flat = pose.reshape(pose.shape[0], -1)             # (T, 99)
         left_flat = left_hand.reshape(left_hand.shape[0], -1)  # (T, 63)
-        right_flat = right_hand.reshape(right_hand.shape[0], -1)  # (T, 63)
-        face_flat = face.reshape(face.shape[0], -1)  # (T, 1404)
+        right_flat = right_hand.reshape(right_hand.shape[0], -1) # (T, 63)
 
-        # Concatenate all features
-        all_features = np.concatenate(
-            [pose_flat, left_flat, right_flat, face_flat], axis=1
-        )  # (T, 1629)
-
-        return all_features
+        return np.concatenate([pose_flat, left_flat, right_flat], axis=1)  # (T, 225)
 
     def normalize_keypoints(self, keypoints: np.ndarray) -> np.ndarray:
         """
@@ -173,15 +192,10 @@ class KeypointExtractor:
         Returns:
             Normalized keypoints.
         """
-        # Center around mean
         mean = np.mean(keypoints, axis=0, keepdims=True)
         centered = keypoints - mean
-
-        # Scale to unit variance
         std = np.std(centered, axis=0, keepdims=True) + 1e-8
-        normalized = centered / std
-
-        return normalized
+        return centered / std
 
 
 class VideoPreprocessor:
@@ -223,8 +237,6 @@ class VideoPreprocessor:
 
         frames = []
         frame_idx = 0
-
-        # Calculate frame sampling rate
         sample_rate = max(1, int(original_fps / self.target_fps))
 
         while cap.isOpened():
@@ -232,15 +244,10 @@ class VideoPreprocessor:
             if not ret:
                 break
 
-            # Sample frames based on target FPS
             if frame_idx % sample_rate == 0:
-                # Resize
                 frame = cv2.resize(frame, self.target_size)
-
-                # Normalize if requested
                 if self.normalize:
                     frame = frame.astype(np.float32) / 255.0
-
                 frames.append(frame)
 
             frame_idx += 1
@@ -269,10 +276,8 @@ class VideoPreprocessor:
         current_length = sequence.shape[0]
 
         if current_length >= max_length:
-            # Truncate
             return sequence[:max_length]
         else:
-            # Pad
             pad_shape = (max_length - current_length,) + sequence.shape[1:]
             padding = np.full(pad_shape, pad_value, dtype=sequence.dtype)
             return np.concatenate([sequence, padding], axis=0)

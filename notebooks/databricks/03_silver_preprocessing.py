@@ -5,6 +5,9 @@
 # MAGIC and write results to the silver Delta table.
 
 # COMMAND ----------
+# MAGIC %pip install --quiet "mediapipe>=0.10.14" "opencv-python-headless>=4.8.0"
+
+# COMMAND ----------
 
 import sys
 import os
@@ -46,7 +49,7 @@ if videos_pd.empty:
 
 from mouna.data.preprocessing import KeypointExtractor
 
-extractor = KeypointExtractor(model_complexity=0)
+extractor = KeypointExtractor()
 
 keypoints_schema = StructType([
     StructField("video_id",         StringType(),  True),

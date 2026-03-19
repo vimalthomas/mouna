@@ -10,7 +10,7 @@ class KeypointBiLSTM(nn.Module):
 
     def __init__(
         self,
-        input_dim: int = 1629,  # Flattened MediaPipe keypoints
+        input_dim: int = 225,  # Flattened MediaPipe keypoints (pose + 2 hands)
         hidden_dim: int = 512,
         num_layers: int = 2,
         num_classes: int = 2000,
@@ -110,7 +110,7 @@ class KeypointGRU(nn.Module):
 
     def __init__(
         self,
-        input_dim: int = 1629,
+        input_dim: int = 225,
         hidden_dim: int = 512,
         num_layers: int = 2,
         num_classes: int = 2000,
@@ -254,12 +254,14 @@ class TemporalAttention(nn.Module):
 
 def create_baseline_model(
     model_type: str = "bilstm",
-    input_dim: int = 1629,
+    input_dim: int = 225,
     hidden_dim: int = 512,
     num_layers: int = 2,
     num_classes: int = 2000,
     dropout: float = 0.3,
     bidirectional: bool = True,
+    # transformer-specific kwargs (ignored by RNN models)
+    **kwargs,
 ) -> nn.Module:
     """
     Factory function to create baseline model.
@@ -293,6 +295,17 @@ def create_baseline_model(
             num_classes=num_classes,
             dropout=dropout,
             bidirectional=bidirectional,
+        )
+    elif model_type.lower() == "transformer":
+        from mouna.models.transformer import PoseTransformer
+        return PoseTransformer(
+            input_dim=input_dim,
+            d_model=kwargs.get("d_model", hidden_dim),
+            nhead=kwargs.get("nhead", 4),
+            num_layers=num_layers,
+            dim_feedforward=kwargs.get("dim_feedforward", hidden_dim * 2),
+            dropout=dropout,
+            num_classes=num_classes,
         )
     else:
         raise ValueError(f"Unknown model type: {model_type}")

@@ -127,12 +127,3 @@ class MultimodalSignRecognition(nn.Module):
         logits = self.classifier(fused_features)
 
         return logits
-
-
-class VisionBackbone(nn.Module):
-    """Placeholder for custom vision backbone (e.g., I3D)."""
-
-    def __init__(self, backbone_type: str = "i3d", pretrained: bool = True):
-        super().__init__()
-        # TODO: Implement I3D or other custom backbones
-        raise NotImplementedError("Custom vision backbones not yet implemented")

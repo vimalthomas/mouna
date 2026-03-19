@@ -184,7 +184,6 @@ def test_preprocessing():
         print(f"  Pose: {keypoints['pose'].shape}")
         print(f"  Left hand: {keypoints['left_hand'].shape}")
         print(f"  Right hand: {keypoints['right_hand'].shape}")
-        print(f"  Face: {keypoints['face'].shape}")
 
         # Test flattening
         temporal_data = {k: np.expand_dims(v, 0) for k, v in keypoints.items()}

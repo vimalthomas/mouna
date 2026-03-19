@@ -10,6 +10,8 @@ import requests
 from loguru import logger
 from tqdm import tqdm
 
+from mouna.utils.config import AzureConfig
+
 
 class WLASLDownloader:
     """Download WLASL dataset videos."""

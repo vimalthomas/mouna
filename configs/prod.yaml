@@ -13,7 +13,7 @@ data:
   frame_size: [224, 224]
 
 baseline:
-  input_dim: 1629
+  input_dim: 225  # MediaPipe Tasks API: (33 pose + 21 left_hand + 21 right_hand) * 3
   hidden_dim: 512
   num_layers: 2
   dropout: 0.3

@@ -30,18 +30,13 @@ dependencies = [
     "opencv-python>=4.8.0",
     "mediapipe>=0.10.0",
     "av>=10.0.0",
-    "decord>=0.6.0",
 
-    # Azure & Databricks
+    # Azure
     "azure-storage-blob>=12.19.0",
     "azure-identity>=1.15.0",
-    "databricks-connect>=13.0.0",
-    "pyspark>=3.5.0",
-    "delta-spark>=3.0.0",
 
     # MLflow & experiment tracking
     "mlflow>=2.10.0",
-    "mlflow-skinny[databricks]>=2.10.0",
 
     # Gemini API
     "google-generativeai>=0.3.0",
@@ -70,6 +65,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+databricks = [
+    "databricks-connect>=13.0.0",
+    "pyspark>=3.5.0",
+    "delta-spark>=3.0.0",
+    "mlflow-skinny[databricks]>=2.10.0",
+]
+
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",

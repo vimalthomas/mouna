@@ -1,6 +1,5 @@
 """Configuration management using Pydantic."""
 
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -44,7 +43,7 @@ class DataConfig(BaseSettings):
 class BaselineModelConfig(BaseSettings):
     """Baseline model configuration."""
 
-    input_dim: int = 1662  # MediaPipe: 543 landmarks * 3 coordinates (x, y, z)
+    input_dim: int = 225  # MediaPipe Tasks API: (33 pose + 21 left_hand + 21 right_hand) * 3
     hidden_dim: int = 512
     num_layers: int = 2
     dropout: float = 0.3
@@ -80,7 +79,7 @@ class TrainingConfig(BaseSettings):
 class GeminiConfig(BaseSettings):
     """Gemini QA configuration."""
 
-    api_key: str = Field(..., env="GEMINI_API_KEY")
+    api_key: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
     model: str = "gemini-1.5-pro"
     confidence_threshold: float = 0.7
     max_retries: int = 3

@@ -4,51 +4,14 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Sign } from "@/lib/types";
 import { fetchSigns } from "@/lib/fetchSigns";
 
-interface VideoInfo {
-  url: string;
-  start: number | null;
-  end: number | null;
-}
-
 function VideoCard({ sign }: { sign: Sign }) {
-  const [videoInfo, setVideoInfo] = useState<VideoInfo | null | undefined>(undefined);
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  async function handlePlay() {
-    if (playing) return;
-    if (videoInfo === undefined) {
-      try {
-        const res = await fetch(`http://localhost:8000/video/${sign.word}`);
-        const data = await res.json();
-        if (data.url) {
-          setVideoInfo({ url: data.url, start: data.start, end: data.end });
-          setPlaying(true);
-        } else {
-          setVideoInfo(null);
-        }
-      } catch {
-        setVideoInfo(null);
-      }
-    } else if (videoInfo) {
-      setPlaying(true);
-      videoRef.current?.play().catch(() => {});
-    }
-  }
-
-  function handleLoadedMetadata() {
-    if (!videoRef.current || !videoInfo) return;
-    videoRef.current.currentTime = videoInfo.start ?? 0;
-    videoRef.current.play().catch(() => {});
-  }
-
-  function handleTimeUpdate() {
-    if (!videoRef.current || !videoInfo || videoInfo.end == null) return;
-    if (videoRef.current.currentTime >= videoInfo.end) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = videoInfo.start ?? 0;
-      setPlaying(false);
-    }
+  function handlePlay() {
+    if (!sign.video) return;
+    setPlaying(true);
+    videoRef.current?.play().catch(() => {});
   }
 
   return (
@@ -57,30 +20,30 @@ function VideoCard({ sign }: { sign: Sign }) {
         onClick={handlePlay}
         className="bg-white border border-gray-200 rounded-xl aspect-square flex items-center justify-center cursor-pointer hover:border-gray-300 transition-colors overflow-hidden relative"
       >
-        {playing && videoInfo ? (
+        {sign.video ? (
           <video
             ref={videoRef}
-            key={videoInfo.url}
-            src={`http://localhost:8000${videoInfo.url}`}
+            src={sign.video}
             muted
+            loop
             className="w-full h-full object-cover"
-            onLoadedMetadata={handleLoadedMetadata}
-            onTimeUpdate={handleTimeUpdate}
             onEnded={() => setPlaying(false)}
           />
         ) : (
-          <svg
-            className="w-10 h-10 text-gray-300"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-10 h-10 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
         )}
+        {!playing && sign.video && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+            <svg className="w-10 h-10 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        )}
       </div>
-      <p className="text-sm font-semibold text-gray-900 mt-2 text-center capitalize">
-        {sign.word}
-      </p>
+      <p className="text-sm font-semibold text-gray-900 mt-2 text-center capitalize">{sign.word}</p>
+      <p className="text-xs text-gray-400 text-center">{sign.description}</p>
     </div>
   );
 }

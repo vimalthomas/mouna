@@ -22,7 +22,7 @@ export default function PracticePage() {
   const [, setCategories] = useState<string[]>([]);
   const [mode, setMode] = useState<Mode>("words");
   const [target, setTarget] = useState<Sign | null>(null);
-  const [, setResult] = useState<InferenceResult | null>(null);
+  const [result, setResult] = useState<InferenceResult | null>(null);
   const [index, setIndex] = useState(0);
   const [sessionSigns, setSessionSigns] = useState<Sign[]>([]);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null | undefined>(undefined);
@@ -47,20 +47,14 @@ export default function PracticePage() {
       .catch(() => {});
   }, []);
 
-  // Load reference video when target changes (words/sentences mode)
+  // Load reference video from local public folder
   useEffect(() => {
     if (!target || mode === "letters") return;
-    setVideoInfo(undefined);
-    fetch(`http://localhost:8000/video/${target.word}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.url) {
-          setVideoInfo({ url: data.url, start: data.start, end: data.end });
-        } else {
-          setVideoInfo(null);
-        }
-      })
-      .catch(() => setVideoInfo(null));
+    if (target.video) {
+      setVideoInfo({ url: target.video, start: null, end: null });
+    } else {
+      setVideoInfo(null);
+    }
   }, [target, mode]);
 
   const handleResult = useCallback((r: InferenceResult) => {
@@ -184,8 +178,16 @@ export default function PracticePage() {
         </h2>
       )}
 
+      {/* Sentences placeholder */}
+      {mode === "sentences" && (
+        <div className="bg-violet-50 border border-violet-200 rounded-2xl px-6 py-8 text-center mb-6">
+          <p className="text-violet-600 font-semibold text-sm">Sentence practice coming soon</p>
+          <p className="text-gray-400 text-xs mt-1">Switch to Words or Letters to continue practicing</p>
+        </div>
+      )}
+
       {/* Side-by-side: Camera + Reference Video */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
+      {mode !== "sentences" && (<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
         {/* Camera */}
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -225,8 +227,9 @@ export default function PracticePage() {
               <video
                 ref={videoRef}
                 key={videoInfo.url}
-                src={`http://localhost:8000${videoInfo.url}`}
+                src={videoInfo.url}
                 muted
+                loop
                 className="w-full h-full object-cover"
                 onLoadedMetadata={handleVideoLoaded}
                 onTimeUpdate={handleTimeUpdate}
@@ -252,7 +255,27 @@ export default function PracticePage() {
             </button>
           </div>
         </div>
-      </div>
+      </div>)}
+
+      {/* Result feedback */}
+      {result && (
+        <div className={`rounded-2xl border px-6 py-4 mt-4 flex items-center justify-between ${
+          result.uncertain ? "bg-amber-50 border-amber-200" :
+          result.prediction === target?.word ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+        }`}>
+          <div>
+            <p className="text-sm font-semibold text-gray-700">
+              {result.uncertain ? "Unclear sign — try again" :
+               result.prediction === target?.word ? `✓ Correct! You signed "${result.prediction}"` :
+               `Looks like "${result.prediction}" — expected "${target?.word}"`}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">Confidence: {Math.round(result.confidence * 100)}%</p>
+          </div>
+          <button onClick={() => setResult(null)} className="text-xs text-gray-400 hover:text-gray-600 ml-4">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Practice with AI */}
       <div className="flex justify-center gap-4 mt-6">

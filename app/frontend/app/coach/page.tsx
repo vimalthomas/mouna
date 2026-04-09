@@ -23,29 +23,20 @@ export default function CoachPage() {
     fetchSigns()
       .then((data) => {
         setSigns(data.signs);
-        // Pick a weak-area sign to start
-        const weakWords = ["pain", "appointment", "help", "medicine"];
-        const weak = data.signs.find((s) => weakWords.includes(s.word));
-        if (weak) setTarget(weak);
-        else if (data.signs.length > 0) setTarget(data.signs[0]);
+        // Pick first available sign
+        if (data.signs.length > 0) setTarget(data.signs[0]);
       })
       .catch(() => {});
   }, []);
 
-  // Load reference video when target changes
+  // Load reference video from local public folder
   useEffect(() => {
     if (!target) return;
-    setVideoInfo(undefined);
-    fetch(`http://localhost:8000/video/${target.word}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.url) {
-          setVideoInfo({ url: data.url, start: data.start, end: data.end });
-        } else {
-          setVideoInfo(null);
-        }
-      })
-      .catch(() => setVideoInfo(null));
+    if (target.video) {
+      setVideoInfo({ url: target.video, start: null, end: null });
+    } else {
+      setVideoInfo(null);
+    }
   }, [target]);
 
   const handleResult = useCallback(
@@ -82,9 +73,12 @@ export default function CoachPage() {
 
   function pickNextSign() {
     if (signs.length === 0) return;
-    const pick = signs[Math.floor(Math.random() * signs.length)];
+    const others = signs.filter((s) => s.word !== target?.word);
+    const pool = others.length > 0 ? others : signs;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
     setTarget(pick);
     setFeedback(null);
+    setStarted(false); // reset so "Click to Begin" shows again for new sign
   }
 
   return (
@@ -134,7 +128,7 @@ export default function CoachPage() {
         {/* Expert Sign */}
         <div>
           <p className="text-sm font-medium text-gray-700 mb-2">Expert Sign</p>
-          <div className="bg-gray-200 rounded-xl aspect-video flex items-center justify-center overflow-hidden">
+          <div className="bg-gray-200 rounded-xl aspect-video flex items-center justify-center overflow-hidden relative">
             {videoInfo === undefined && (
               <div className="flex items-center gap-2 text-gray-400 text-sm">
                 <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
@@ -145,15 +139,25 @@ export default function CoachPage() {
               <p className="text-gray-400 text-sm">No expert video available</p>
             )}
             {videoInfo && (
-              <video
-                ref={videoRef}
-                key={videoInfo.url}
-                src={`http://localhost:8000${videoInfo.url}`}
-                muted
-                className="w-full h-full object-cover"
-                onLoadedMetadata={handleVideoLoaded}
-                onTimeUpdate={handleTimeUpdate}
-              />
+              <>
+                <video
+                  ref={videoRef}
+                  key={videoInfo.url}
+                  src={videoInfo.url}
+                  muted
+                  loop
+                  className="w-full h-full object-cover"
+                />
+                {!started && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <div className="bg-white/90 rounded-full p-4">
+                      <svg className="w-8 h-8 text-violet-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

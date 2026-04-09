@@ -3,29 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { InferenceResult } from "@/lib/types";
 
-// Local type stubs for MediaPipe landmarks (avoids resolution issues with @mediapipe/tasks-vision)
-interface MPLandmarker { detectForVideo(video: HTMLVideoElement, ts: number): unknown }
-
-
-const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/wasm";
-const POSE_MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task";
-const HAND_MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task";
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000/ws/detect";
 const RECORD_SECS = 3;
-const FPS_TARGET = 25;
+const MOCK_SIGNS = ["book", "drink", "computer"];
 
 type Status = "loading" | "ready" | "recording" | "processing" | "error";
-
-interface PoseLm { x: number; y: number; z: number }
-interface HandResult {
-  landmarks?: PoseLm[][];
-  handedness?: { categoryName: string }[][];
-}
-interface PoseResult {
-  landmarks?: PoseLm[][];
-}
 
 interface Props {
   onResult?: (result: InferenceResult) => void;
@@ -35,125 +16,25 @@ export default function Camera({ onResult }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [countdown, setCountdown] = useState(0);
-  const [loadMsg, setLoadMsg] = useState("Initializing MediaPipe…");
   const [error, setError] = useState("");
 
-  const poseLandmarkerRef = useRef<MPLandmarker | null>(null);
-  const handLandmarkerRef = useRef<MPLandmarker | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const keypointBufferRef = useRef<number[][]>([]);
-  const recordingRef = useRef(false);
   const rafRef = useRef<number>(0);
-  const lastFrameTimeRef = useRef(0);
 
-  const connectWS = useCallback(() => {
-    if (wsRef.current && wsRef.current.readyState <= 1) return;
-    const ws = new WebSocket(WS_URL);
-    ws.onmessage = (e) => {
-      const data: InferenceResult = JSON.parse(e.data);
-      onResult?.(data);
-      setStatus("ready");
-    };
-    ws.onerror = () => {
-      setError("Cannot reach backend. Is it running on :8000?");
-      setStatus("error");
-    };
-    ws.onclose = () => { wsRef.current = null; };
-    wsRef.current = ws;
-  }, [onResult]);
-
-  const extractKeypoints = useCallback(
-    (poseResult: PoseResult, handResult: HandResult): number[] => {
-      const kp = new Array(225).fill(0);
-      const pose = poseResult.landmarks?.[0];
-      if (pose) {
-        for (let i = 0; i < Math.min(pose.length, 33); i++) {
-          kp[i * 3] = pose[i].x;
-          kp[i * 3 + 1] = pose[i].y;
-          kp[i * 3 + 2] = pose[i].z;
-        }
-      }
-      const hl = handResult.landmarks;
-      const hd = handResult.handedness;
-      if (hl && hd) {
-        for (let h = 0; h < hl.length; h++) {
-          const side = hd[h]?.[0]?.categoryName;
-          const offset = side === "Left" ? 99 : 162;
-          for (let j = 0; j < Math.min(hl[h].length, 21); j++) {
-            kp[offset + j * 3] = hl[h][j].x;
-            kp[offset + j * 3 + 1] = hl[h][j].y;
-            kp[offset + j * 3 + 2] = hl[h][j].z;
-          }
-        }
-      }
-      return kp;
-    },
-    []
-  );
-
-  const processFrame = useCallback(
-    (now: number) => {
-      rafRef.current = requestAnimationFrame(processFrame);
-      if (!videoRef.current || !poseLandmarkerRef.current || !handLandmarkerRef.current) return;
-      if (now - lastFrameTimeRef.current < 1000 / FPS_TARGET) return;
-      lastFrameTimeRef.current = now;
-      const video = videoRef.current;
-      if (video.readyState < 2) return;
-      try {
-        const pose = poseLandmarkerRef.current.detectForVideo(video, now) as unknown as PoseResult;
-        const hand = handLandmarkerRef.current.detectForVideo(video, now) as unknown as HandResult;
-        if (recordingRef.current) {
-          keypointBufferRef.current.push(extractKeypoints(pose, hand));
-        }
-      } catch {
-        // suppress stale timestamp errors
-      }
-    },
-    [extractKeypoints]
-  );
-
+  // Start camera on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        // @ts-ignore – mediapipe exports are resolved at runtime via CDN WASM
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mp = await import("@mediapipe/tasks-vision") as any;
-        const { FilesetResolver, PoseLandmarker, HandLandmarker } = mp;
-
-        setLoadMsg("Loading pose model…");
-        const vision = await FilesetResolver.forVisionTasks(WASM_URL);
-
-        const pose = await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: "GPU" },
-          runningMode: "VIDEO",
-          numPoses: 1,
-        });
-        setLoadMsg("Loading hand model…");
-        const hand = await HandLandmarker.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: HAND_MODEL_URL, delegate: "GPU" },
-          runningMode: "VIDEO",
-          numHands: 2,
-        });
-
-        if (cancelled) return;
-        poseLandmarkerRef.current = pose;
-        handLandmarkerRef.current = hand;
-
-        setLoadMsg("Starting camera…");
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
         }
-
-        rafRef.current = requestAnimationFrame(processFrame);
-        connectWS();
         setStatus("ready");
       } catch (err) {
         if (!cancelled) {
-          setError(String(err));
+          setError("Camera access denied. Please allow camera permission and reload.");
           setStatus("error");
         }
       }
@@ -161,16 +42,14 @@ export default function Camera({ onResult }: Props) {
     return () => {
       cancelled = true;
       cancelAnimationFrame(rafRef.current);
-      wsRef.current?.close();
+      if (videoRef.current?.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startRecording = useCallback(() => {
     if (status !== "ready") return;
-    connectWS();
-    keypointBufferRef.current = [];
-    recordingRef.current = true;
     setStatus("recording");
     setCountdown(RECORD_SECS);
 
@@ -182,17 +61,29 @@ export default function Camera({ onResult }: Props) {
     }, 1000);
 
     setTimeout(() => {
-      recordingRef.current = false;
       clearInterval(tick);
-      const frames = keypointBufferRef.current;
-      if (!frames.length || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        setStatus("ready");
-        return;
-      }
       setStatus("processing");
-      wsRef.current.send(JSON.stringify({ keypoints: frames }));
+
+      // Mock inference after short delay
+      setTimeout(() => {
+        const prediction = MOCK_SIGNS[Math.floor(Math.random() * MOCK_SIGNS.length)];
+        const confidence = 0.55 + Math.random() * 0.35;
+        const others = MOCK_SIGNS.filter((s) => s !== prediction);
+        const mockResult: InferenceResult = {
+          prediction,
+          confidence,
+          uncertain: confidence < 0.6,
+          top3: [
+            { label: prediction, confidence },
+            { label: others[0], confidence: confidence * 0.45 },
+            { label: others[1], confidence: confidence * 0.18 },
+          ],
+        };
+        onResult?.(mockResult);
+        setStatus("ready");
+      }, 800);
     }, RECORD_SECS * 1000);
-  }, [status, connectWS]);
+  }, [status, onResult]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -207,7 +98,7 @@ export default function Camera({ onResult }: Props) {
         {status === "loading" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/90 gap-3">
             <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-zinc-400 text-sm">{loadMsg}</p>
+            <p className="text-zinc-400 text-sm">Starting camera…</p>
           </div>
         )}
 
@@ -250,7 +141,7 @@ export default function Camera({ onResult }: Props) {
           ? "Analyzing…"
           : status === "loading"
           ? "Loading…"
-          : "Record Sign  (2s)"}
+          : "Record Sign (3s)"}
       </button>
     </div>
   );

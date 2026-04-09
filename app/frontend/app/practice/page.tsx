@@ -1,160 +1,267 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Camera from "@/components/Camera";
-import SignCard from "@/components/SignCard";
-import { Sign, SignsData, InferenceResult } from "@/lib/types";
+import { Sign, InferenceResult } from "@/lib/types";
+import { fetchSigns } from "@/lib/fetchSigns";
 
-type PracticeResult = "correct" | "wrong" | "uncertain" | null;
+type Mode = "words" | "letters" | "sentences";
+
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+interface VideoInfo {
+  url: string;
+  start: number | null;
+  end: number | null;
+}
 
 export default function PracticePage() {
-  const [signs, setSigns] = useState<Sign[]>([]);
+  const router = useRouter();
+  const [, setSigns] = useState<Sign[]>([]);
+  const [, setCategories] = useState<string[]>([]);
+  const [mode, setMode] = useState<Mode>("words");
   const [target, setTarget] = useState<Sign | null>(null);
-  const [result, setResult] = useState<InferenceResult | null>(null);
-  const [outcome, setOutcome] = useState<PracticeResult>(null);
-  const [score, setScore] = useState({ correct: 0, total: 0 });
-  const [category, setCategory] = useState("all");
-  const [categories, setCategories] = useState<string[]>([]);
+  const [, setResult] = useState<InferenceResult | null>(null);
+  const [index, setIndex] = useState(0);
+  const [sessionSigns, setSessionSigns] = useState<Sign[]>([]);
+  const [videoInfo, setVideoInfo] = useState<VideoInfo | null | undefined>(undefined);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Letters mode state
+  const [letterIndex, setLetterIndex] = useState(0);
 
   useEffect(() => {
-    fetch("http://localhost:8000/signs")
-      .then((r) => r.json())
-      .then((data: SignsData) => {
+    fetchSigns()
+      .then((data) => {
         setSigns(data.signs);
         setCategories(data.categories);
+        const shuffled = [...data.signs].sort(() => Math.random() - 0.5);
+        const session = shuffled.slice(0, 11);
+        setSessionSigns(session);
+        if (session.length > 0) {
+          setTarget(session[0]);
+          setIndex(0);
+        }
       })
       .catch(() => {});
   }, []);
 
-  const pickTarget = useCallback(
-    (pool: Sign[]) => {
-      const filtered = category === "all" ? pool : pool.filter((s) => s.category === category);
-      if (!filtered.length) return;
-      const pick = filtered[Math.floor(Math.random() * filtered.length)];
-      setTarget(pick);
-      setResult(null);
-      setOutcome(null);
-    },
-    [category]
-  );
-
+  // Load reference video when target changes (words/sentences mode)
   useEffect(() => {
-    if (signs.length) pickTarget(signs);
-  }, [signs, pickTarget]);
+    if (!target || mode === "letters") return;
+    setVideoInfo(undefined);
+    fetch(`http://localhost:8000/video/${target.word}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.url) {
+          setVideoInfo({ url: data.url, start: data.start, end: data.end });
+        } else {
+          setVideoInfo(null);
+        }
+      })
+      .catch(() => setVideoInfo(null));
+  }, [target, mode]);
 
-  const handleResult = useCallback(
-    (r: InferenceResult) => {
-      setResult(r);
-      if (r.uncertain) {
-        setOutcome("uncertain");
-        setScore((s) => ({ ...s, total: s.total + 1 }));
-      } else if (r.prediction === target?.word) {
-        setOutcome("correct");
-        setScore((s) => ({ correct: s.correct + 1, total: s.total + 1 }));
-      } else {
-        setOutcome("wrong");
-        setScore((s) => ({ ...s, total: s.total + 1 }));
-      }
-    },
-    [target]
-  );
+  const handleResult = useCallback((r: InferenceResult) => {
+    setResult(r);
+  }, []);
 
-  const outcomeConfig = {
-    correct: { bg: "bg-emerald-950 border-emerald-700", icon: "✓", text: "text-emerald-400", label: "Correct!" },
-    wrong: { bg: "bg-red-950 border-red-800", icon: "✗", text: "text-red-400", label: `Wrong — it was "${result?.prediction}"` },
-    uncertain: { bg: "bg-zinc-900 border-zinc-700", icon: "?", text: "text-zinc-400", label: "Uncertain — try again" },
-  };
+  const retrySign = useCallback(() => {
+    setResult(null);
+  }, []);
+
+  function handleVideoLoaded() {
+    if (!videoRef.current || !videoInfo) return;
+    videoRef.current.currentTime = videoInfo.start ?? 0;
+  }
+
+  function handleTimeUpdate() {
+    if (!videoRef.current || !videoInfo || videoInfo.end == null) return;
+    if (videoRef.current.currentTime >= videoInfo.end) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = videoInfo.start ?? 0;
+    }
+  }
+
+  function playReference() {
+    videoRef.current?.play().catch(() => {});
+  }
+
+  // Compute progress based on mode
+  const progressPct =
+    mode === "letters"
+      ? ((letterIndex + 1) / LETTERS.length) * 100
+      : sessionSigns.length > 0
+      ? ((index + 1) / sessionSigns.length) * 100
+      : 0;
+
+  const progressLabel =
+    mode === "letters"
+      ? `Progress: Sign ${letterIndex + 1} of ${LETTERS.length}`
+      : `Progress: Sign ${index + 1} of ${sessionSigns.length}`;
+
+  const category = sessionSigns.length > 0 && target ? target.category : "";
+
+  // Current display word
+  const displayWord =
+    mode === "letters" ? LETTERS[letterIndex] : target?.word?.toUpperCase() ?? "";
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-6 max-w-6xl mx-auto w-full flex-1">
-      {/* Left: target + camera */}
-      <div className="flex-1 min-w-0 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-white">Practice Mode</h1>
-          <div className="flex items-center gap-3">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-violet-500"
+    <div className="p-8 max-w-5xl mx-auto w-full">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">Practice Mode</h1>
+
+      {/* Mode Tabs */}
+      <div className="flex items-center gap-2 mb-6 bg-gray-200/60 rounded-full p-1 w-fit">
+        {(["words", "letters", "sentences"] as Mode[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors capitalize ${
+              mode === m
+                ? "bg-violet-600 text-white shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+
+      {/* Session Info */}
+      <div className="mb-2">
+        <p className="text-violet-600 text-sm font-medium capitalize">
+          {mode === "letters"
+            ? "Alphabet Practice"
+            : category
+            ? `${category} Vocabulary`
+            : "Practice Session"}{" "}
+          &middot; Real-time sign recognition
+        </p>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="mb-1">
+        <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${progressPct}%`,
+              background: "linear-gradient(90deg, #4f46e5, #a78bfa)",
+            }}
+          />
+        </div>
+      </div>
+      <p className="text-gray-400 text-xs mb-6">{progressLabel}</p>
+
+      {/* Letter Grid (Letters mode only) */}
+      {mode === "letters" && (
+        <div className="flex flex-wrap gap-2 justify-center mb-6">
+          {LETTERS.map((letter, i) => {
+            let style = "border border-gray-300 bg-white text-gray-700";
+            if (i < letterIndex) {
+              style = "bg-violet-600 text-white";
+            } else if (i === letterIndex) {
+              style = "bg-violet-400 text-white";
+            }
+            return (
+              <button
+                key={letter}
+                onClick={() => setLetterIndex(i)}
+                className={`w-10 h-10 rounded-lg text-sm font-bold flex items-center justify-center transition-colors ${style}`}
+              >
+                {letter}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Target Word / Letter */}
+      {displayWord && mode !== "letters" && (
+        <h2 className="text-4xl font-bold text-violet-600 text-center mb-6 uppercase tracking-wide">
+          {displayWord}
+        </h2>
+      )}
+
+      {/* Side-by-side: Camera + Reference Video */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
+        {/* Camera */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+            <span className="text-sm font-medium text-gray-700">Camera</span>
+          </div>
+          <Camera onResult={handleResult} />
+          <div className="flex gap-3 mt-3">
+            <button
+              onClick={retrySign}
+              className="px-6 py-2.5 rounded-full text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <option value="all">All categories</option>
-              {categories.map((c) => (
-                <option key={c} value={c} className="capitalize">{c}</option>
-              ))}
-            </select>
-            <span className="text-sm text-zinc-400 font-mono">
-              {score.correct}/{score.total}
-            </span>
+              Retry
+            </button>
           </div>
         </div>
 
-        {/* Score bar */}
-        {score.total > 0 && (
-          <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-emerald-500 rounded-full transition-all"
-              style={{ width: `${(score.correct / score.total) * 100}%` }}
-            />
+        {/* Reference Video */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">Reference Video</p>
+          <div className="bg-gray-200 rounded-xl aspect-video flex items-center justify-center overflow-hidden">
+            {videoInfo === undefined && mode !== "letters" && (
+              <div className="flex items-center gap-2 text-gray-400 text-sm">
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                Loading...
+              </div>
+            )}
+            {(videoInfo === null || mode === "letters") && (
+              <div className="flex items-center gap-2 text-gray-400 text-sm">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                <span>Reference Sign</span>
+              </div>
+            )}
+            {videoInfo && mode !== "letters" && (
+              <video
+                ref={videoRef}
+                key={videoInfo.url}
+                src={`http://localhost:8000${videoInfo.url}`}
+                muted
+                className="w-full h-full object-cover"
+                onLoadedMetadata={handleVideoLoaded}
+                onTimeUpdate={handleTimeUpdate}
+              />
+            )}
           </div>
-        )}
-
-        {/* Target sign */}
-        {target && (
-          <div className="rounded-2xl border border-violet-700 bg-violet-950/40 p-4">
-            <p className="text-xs text-violet-400 uppercase tracking-widest mb-1">Sign this word</p>
-            <p className="text-3xl font-bold text-white capitalize mb-2">{target.word}</p>
-            <p className="text-sm text-zinc-400">{target.description}</p>
+          <div className="flex gap-3 mt-3">
+            <button
+              onClick={playReference}
+              className="bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-6 py-2.5 rounded-full transition-colors"
+            >
+              Play
+            </button>
+            <button
+              onClick={() => {
+                if (videoRef.current && videoInfo) {
+                  videoRef.current.currentTime = videoInfo.start ?? 0;
+                }
+              }}
+              className="px-6 py-2.5 rounded-full text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Retry
+            </button>
           </div>
-        )}
-
-        <Camera onResult={handleResult} />
+        </div>
       </div>
 
-      {/* Right: feedback */}
-      <div className="w-full lg:w-72 shrink-0 flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-white">Feedback</h2>
-
-        {outcome && result && (
-          <div className={`rounded-2xl border p-5 ${outcomeConfig[outcome].bg}`}>
-            <div className="flex items-center gap-3 mb-3">
-              <span className={`text-3xl font-bold ${outcomeConfig[outcome].text}`}>
-                {outcomeConfig[outcome].icon}
-              </span>
-              <span className={`font-semibold ${outcomeConfig[outcome].text}`}>
-                {outcomeConfig[outcome].label}
-              </span>
-            </div>
-            <div className="text-sm text-zinc-400">
-              {result.top3.map((p, i) => (
-                <div key={i} className="flex justify-between py-0.5">
-                  <span className="capitalize">{p.label}</span>
-                  <span>{Math.round(p.confidence * 100)}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {!outcome && (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 flex flex-col items-center justify-center min-h-40 gap-2">
-            <span className="text-3xl">🎯</span>
-            <p className="text-zinc-500 text-sm text-center">Record the target sign to get feedback</p>
-          </div>
-        )}
-
+      {/* Practice with AI */}
+      <div className="flex justify-center gap-4 mt-6">
         <button
-          onClick={() => pickTarget(signs)}
-          className="w-full py-3 rounded-xl font-semibold text-sm bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"
+          onClick={() => router.push("/coach")}
+          className="bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold px-8 py-3 rounded-full transition-colors"
         >
-          Next Sign →
+          Practice with AI
         </button>
-
-        {target && (
-          <div className="mt-2">
-            <p className="text-xs text-zinc-600 mb-2 uppercase tracking-widest">Reference</p>
-            <SignCard sign={target} highlight />
-          </div>
-        )}
       </div>
     </div>
   );

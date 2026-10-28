@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Train PoseTransformer on the full local keypoints dataset."""
 
+import os
 import pickle
 
 import numpy as np
@@ -12,8 +13,18 @@ from torch.utils.data import DataLoader, Dataset
 import mlflow
 import mlflow.pytorch
 
-PARQUET = "data/silver/keypoints/keypoints.parquet"
-MODEL_OUT = "data/best_model_transformer.pth"
+# Overridable via env so the same script can train v1 (default) vs v2 (merged,
+# OpenPose-recovered) without duplicating the file — isolates the data-only
+# comparison requested before layering in the normalization change.
+PARQUET = os.environ.get("MOUNA_PARQUET", "data/silver/keypoints/keypoints.parquet")
+MODEL_OUT = os.environ.get("MOUNA_MODEL_OUT", "data/best_model_transformer.pth")
+RUN_NAME = os.environ.get("MOUNA_RUN_NAME", "pose-transformer-wlasl+msasl")
+DATASET_TAG = os.environ.get("MOUNA_DATASET_TAG", "WLASL+MS-ASL")
+# Path to an encoder checkpoint from pretrain_transformer.py. When set, the
+# classifier starts from self-supervised-pretrained weights instead of random
+# init — everything else about the run (data, split, augmentation) is
+# unchanged, so this isolates pretrained-vs-scratch as the only variable.
+INIT_ENCODER = os.environ.get("MOUNA_INIT_ENCODER", "")
 
 D_MODEL = 128
 NHEAD = 4
@@ -26,7 +37,7 @@ NUM_EPOCHS = 200
 MAX_SEQ_LEN = 150
 PATIENCE = 30
 MIXUP_ALPHA = 0.4   # mixup augmentation strength
-SEED = 42
+SEED = int(os.environ.get("MOUNA_SEED", 42))
 
 
 class KeypointDataset(Dataset):
@@ -161,9 +172,34 @@ def main():
     num_classes = len(glosses)
 
     from sklearn.model_selection import train_test_split
-    train_df, temp_df = train_test_split(df, test_size=0.30, stratify=df["gloss"], random_state=SEED)
-    val_df, test_df   = train_test_split(temp_df, test_size=0.50, stratify=temp_df["gloss"], random_state=SEED)
-    print(f"Split — train: {len(train_df)}  val: {len(val_df)}  test: {len(test_df)}")
+
+    if "official_split" in df.columns:
+        # WLASL's real signer-disjoint benchmark split (from asl100.json), not a
+        # random stratified split. Confirmed today: our previous random splits put
+        # 91/143 WLASL test videos into the official TRAIN set — numbers from that
+        # aren't comparable to any published result and may leak signer identity.
+        # Non-WLASL data (no official label) always goes to train.
+        train_df = df[df["official_split"] == "train"].reset_index(drop=True)
+        val_df = df[df["official_split"] == "val"].reset_index(drop=True)
+        test_df = df[df["official_split"] == "test"].reset_index(drop=True)
+        print(f"Split (official WLASL benchmark split) — train: {len(train_df)}  val: {len(val_df)}  test: {len(test_df)}")
+    elif "source" in df.columns and (df["source"] != df["source"].iloc[0]).any():
+        # Mixed-quality dataset (camera MediaPipe + recovered OpenPose instances).
+        # Val/test must only ever be drawn from the reliable camera-extracted pool —
+        # otherwise a run with more noisy recovered data also gets a noisier test
+        # set, and a lower test_acc could reflect harder test examples rather than
+        # worse learning. Recovered instances only ever appear in training.
+        clean = df[df["source"] == "mediapipe_video"].reset_index(drop=True)
+        recovered = df[df["source"] != "mediapipe_video"].reset_index(drop=True)
+        clean_train, temp_df = train_test_split(clean, test_size=0.30, stratify=clean["gloss"], random_state=SEED)
+        val_df, test_df = train_test_split(temp_df, test_size=0.50, stratify=temp_df["gloss"], random_state=SEED)
+        train_df = pd.concat([clean_train, recovered], ignore_index=True)
+        print(f"Split (fixed clean eval pool) — train: {len(train_df)} ({len(clean_train)} clean + {len(recovered)} recovered)  "
+              f"val: {len(val_df)}  test: {len(test_df)}")
+    else:
+        train_df, temp_df = train_test_split(df, test_size=0.30, stratify=df["gloss"], random_state=SEED)
+        val_df, test_df   = train_test_split(temp_df, test_size=0.50, stratify=temp_df["gloss"], random_state=SEED)
+        print(f"Split — train: {len(train_df)}  val: {len(val_df)}  test: {len(test_df)}")
 
     train_ds = KeypointDataset(train_df, label_to_idx, augment=True)
     val_ds   = KeypointDataset(val_df,   label_to_idx, augment=False)
@@ -192,6 +228,20 @@ def main():
         dropout=DROPOUT,
         num_classes=num_classes,
     )
+
+    if INIT_ENCODER:
+        ckpt = torch.load(INIT_ENCODER, map_location="cpu", weights_only=False)
+        encoder_state = ckpt["encoder_state_dict"] if "encoder_state_dict" in ckpt else ckpt
+        result = model.load_state_dict(encoder_state, strict=False)
+        print(f"\nLoaded pretrained encoder from {INIT_ENCODER}")
+        print(f"  missing_keys (expected: classifier.* only, randomly initialized): {result.missing_keys}")
+        print(f"  unexpected_keys (should be empty): {result.unexpected_keys}")
+        assert all(k.startswith("classifier.") for k in result.missing_keys), (
+            "Pretrained encoder load left non-classifier weights uninitialized — "
+            "architecture mismatch between pretrain and fine-tune configs."
+        )
+        assert not result.unexpected_keys, "Pretrained checkpoint has keys PoseTransformer doesn't recognize."
+
     model.to(device)
     print(f"\nDevice: {device} | Params: {sum(p.numel() for p in model.parameters()):,}")
 
@@ -204,7 +254,7 @@ def main():
 
     mlflow.set_experiment("mouna/transformer")
 
-    with mlflow.start_run(run_name="pose-transformer-wlasl+msasl"):
+    with mlflow.start_run(run_name=RUN_NAME):
         mlflow.log_params({
             "model": "transformer", "d_model": D_MODEL, "nhead": NHEAD,
             "num_layers": NUM_LAYERS, "dim_feedforward": DIM_FEEDFORWARD,
@@ -213,7 +263,8 @@ def main():
             "train": len(train_df), "val": len(val_df), "test": len(test_df),
             "patience": PATIENCE, "device": str(device), "label_smoothing": 0.1,
             "mixup_alpha": MIXUP_ALPHA, "scheduler": "CosineWarmRestarts",
-            "datasets": "WLASL+MS-ASL",
+            "datasets": DATASET_TAG, "parquet": PARQUET,
+            "init_encoder": INIT_ENCODER if INIT_ENCODER else "scratch",
         })
 
         best_val_acc = 0.0
@@ -258,7 +309,7 @@ def main():
             print(f"  {g:14s}: {c}/{t}  ({100*c/t if t else 0:.0f}%)")
 
         mlflow.log_metrics({"test_acc": test_acc, "best_val_acc": best_val_acc})
-        mlflow.pytorch.log_model(model, "best_model")
+        mlflow.pytorch.log_model(model, "best_model", serialization_format="pickle")
 
         torch.save({
             "model_state_dict": best_state,

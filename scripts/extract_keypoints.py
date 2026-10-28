@@ -7,6 +7,7 @@ frames so the model trains on the correct sign, not surrounding content.
 """
 
 import json
+import os
 import pickle
 from pathlib import Path
 
@@ -15,13 +16,19 @@ import pandas as pd
 
 from mouna.data.preprocessing import KeypointExtractor
 
-# All manifest files to combine
-MANIFESTS = [
-    Path("data/raw/wlasl/videos/manifest.json"),
-    Path("data/raw/msasl/videos/manifest.json"),  # optional — skipped if absent
-]
+# All manifest files to combine. Overridable via env (comma-separated) so this
+# script can also run against a single new manifest (e.g. the official MS-ASL
+# re-download) without touching the baseline keypoints.parquet.
+_manifests_env = os.environ.get("MOUNA_EXTRACT_MANIFESTS")
+MANIFESTS = (
+    [Path(p) for p in _manifests_env.split(",")] if _manifests_env else
+    [
+        Path("data/raw/wlasl/videos/manifest.json"),
+        Path("data/raw/msasl/videos/manifest.json"),  # optional — skipped if absent
+    ]
+)
 WLASL_JSON     = Path("data/raw/wlasl/WLASL_v0.3.json")
-OUTPUT_PARQUET = Path("data/silver/keypoints/keypoints.parquet")
+OUTPUT_PARQUET = Path(os.environ.get("MOUNA_EXTRACT_OUTPUT", "data/silver/keypoints/keypoints.parquet"))
 MAX_FRAMES     = 150  # cap on frames extracted per clip
 
 

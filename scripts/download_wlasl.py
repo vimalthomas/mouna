@@ -13,7 +13,7 @@ from pathlib import Path
 WLASL_JSON = "data/raw/wlasl/WLASL_v0.3.json"
 OUTPUT_DIR = Path("data/raw/wlasl/videos")
 TOP_N_GLOSSES = 100   # top N glosses by instance count (WLASL-100 benchmark)
-MAX_PER_GLOSS = 20
+MAX_PER_GLOSS = 999   # effectively unlimited — grab every available instance per gloss
 
 
 def is_youtube(url: str) -> bool:
@@ -38,7 +38,8 @@ def download_youtube(url: str, dest: Path) -> bool:
     try:
         result = subprocess.run(
             [
-                "yt-dlp", "-f", "mp4/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+                "yt-dlp", "--js-runtimes", "node",
+                "-f", "mp4/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
                 "--merge-output-format", "mp4",
                 "-o", str(dest),
                 "--quiet", "--no-warnings",
@@ -46,9 +47,15 @@ def download_youtube(url: str, dest: Path) -> bool:
             ],
             timeout=60,
             capture_output=True,
+            text=True,
         )
         if result.returncode == 0 and dest.exists() and dest.stat().st_size > 1000:
             return True
+        # Surface the real reason instead of a bare FAIL, so skipped videos are distinguishable
+        # (dead/private/unavailable) from anything actually worth retrying.
+        reason = (result.stderr or result.stdout or "").strip().splitlines()
+        if reason:
+            print(f"    {reason[-1]}", end=" ")
         return False
     except Exception as e:
         print(f"    ERR yt-dlp: {e}")

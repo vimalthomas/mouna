@@ -23,9 +23,11 @@ import numpy as np
 import torch
 
 from mouna.data.preprocessing import KeypointExtractor
+from mouna.data.handedness import canonicalize_handedness
+from mouna.data.part_normalize import normalize_per_part
 from mouna.models.transformer import PoseTransformer
 
-MODEL_PATH    = "data/best_model_transformer.pth"
+MODEL_PATH    = "data/best_model_v4canon.pth"
 RECORD_SECS   = 2
 MAX_SEQ_LEN   = 150
 CONF_THRESH   = 0.30   # below → "uncertain"
@@ -106,10 +108,12 @@ def run_inference(model, idx_to_label, kp_buffer):
         np.array([k["right_hand"] for k in kp_buffer]).reshape(T, -1),
     ], axis=1).astype(np.float32)
 
-    # Normalize (same as training)
-    mean = flat.mean(axis=0, keepdims=True)
-    std  = flat.std(axis=0,  keepdims=True) + 1e-8
-    flat = (flat - mean) / std
+    # Exact same preprocessing the model was trained on: mirror to canonical
+    # dominant hand, then per-part normalize (body on shoulders, each hand on
+    # its own wrist) -- NOT a whole-vector z-score, which is what every
+    # checkpoint before v2norm was actually trained against.
+    flat = canonicalize_handedness(flat, target="right")
+    flat = normalize_per_part(flat)
 
     seq_len = min(T, MAX_SEQ_LEN)
     if T < MAX_SEQ_LEN:

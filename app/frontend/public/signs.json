@@ -1,8 +1,0 @@
-{
-  "signs": [
-    {"word": "book", "category": "objects", "difficulty": "easy", "description": "Palms together open like a book", "video": "/videos/book.mp4"},
-    {"word": "drink", "category": "food", "difficulty": "easy", "description": "C-hand moves to mouth as if drinking", "video": "/videos/drink.mp4"},
-    {"word": "computer", "category": "technology", "difficulty": "medium", "description": "C-hand moves along forearm", "video": "/videos/computer.mp4"}
-  ],
-  "categories": ["objects", "food", "technology"]
-}

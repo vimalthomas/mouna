@@ -74,6 +74,35 @@ class PoseTransformer(nn.Module):
             nn.Linear(d_model // 2, num_classes),
         )
 
+    def forward_features(
+        self, x: torch.Tensor, lengths: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        """Pooled encoder embedding before the classifier head -- the
+        comparison space for the reference-matching coach (same reasoning
+        as every embedding-based teach/correct system: compare in the
+        model's learned space, not raw keypoints, since training has
+        already taught it which variation is irrelevant).
+
+        Returns: (batch, d_model)
+        """
+        x = self.input_proj(x)       # (B, T, d_model)
+        x = self.pos_enc(x)
+
+        if lengths is not None:
+            B, T, _ = x.shape
+            mask = torch.arange(T, device=x.device).unsqueeze(0) >= lengths.unsqueeze(1)
+        else:
+            mask = None
+
+        x = self.encoder(x, src_key_padding_mask=mask)  # (B, T, d_model)
+
+        if lengths is not None:
+            valid = (~mask).unsqueeze(-1).float()          # (B, T, 1)
+            pooled = (x * valid).sum(dim=1) / valid.sum(dim=1).clamp(min=1)
+        else:
+            pooled = x.mean(dim=1)                         # (B, d_model)
+        return pooled
+
     def forward(
         self, x: torch.Tensor, lengths: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
@@ -85,23 +114,5 @@ class PoseTransformer(nn.Module):
         Returns:
             logits: (batch, num_classes)
         """
-        x = self.input_proj(x)       # (B, T, d_model)
-        x = self.pos_enc(x)
-
-        # Build padding mask: True = position to IGNORE (padding)
-        if lengths is not None:
-            B, T, _ = x.shape
-            mask = torch.arange(T, device=x.device).unsqueeze(0) >= lengths.unsqueeze(1)
-        else:
-            mask = None
-
-        x = self.encoder(x, src_key_padding_mask=mask)  # (B, T, d_model)
-
-        # Masked mean pooling over valid frames
-        if lengths is not None:
-            valid = (~mask).unsqueeze(-1).float()          # (B, T, 1)
-            pooled = (x * valid).sum(dim=1) / valid.sum(dim=1).clamp(min=1)
-        else:
-            pooled = x.mean(dim=1)                         # (B, d_model)
-
+        pooled = self.forward_features(x, lengths)
         return self.classifier(pooled)

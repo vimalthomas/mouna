@@ -1,105 +1,1522 @@
 {
   "signs": [
-    {"word": "accident", "category": "events", "difficulty": "hard", "description": "Both fists collide together"},
-    {"word": "africa", "category": "places", "difficulty": "medium", "description": "A-hand circles face then drops"},
-    {"word": "all", "category": "concepts", "difficulty": "easy", "description": "One hand sweeps under the other"},
-    {"word": "apple", "category": "food", "difficulty": "easy", "description": "X-hand twists at cheek"},
-    {"word": "basketball", "category": "sports", "difficulty": "medium", "description": "Both hands mime dribbling a ball"},
-    {"word": "bed", "category": "home", "difficulty": "easy", "description": "Hands pressed together, tilt head onto them"},
-    {"word": "before", "category": "time", "difficulty": "medium", "description": "Flat hand moves back toward body"},
-    {"word": "bird", "category": "animals", "difficulty": "easy", "description": "G-hand opens and closes at mouth"},
-    {"word": "birthday", "category": "events", "difficulty": "medium", "description": "Middle finger taps chin then chest"},
-    {"word": "black", "category": "colors", "difficulty": "easy", "description": "Index finger slides across forehead"},
-    {"word": "blue", "category": "colors", "difficulty": "easy", "description": "B-hand twists at wrist"},
-    {"word": "book", "category": "objects", "difficulty": "easy", "description": "Palms together open like a book"},
-    {"word": "bowling", "category": "sports", "difficulty": "medium", "description": "Hand swings forward releasing a ball"},
-    {"word": "brown", "category": "colors", "difficulty": "easy", "description": "B-hand slides down cheek"},
-    {"word": "but", "category": "concepts", "difficulty": "medium", "description": "Index fingers cross then separate outward"},
-    {"word": "can", "category": "concepts", "difficulty": "medium", "description": "Both fists move down firmly"},
-    {"word": "candy", "category": "food", "difficulty": "easy", "description": "Index finger twists at cheek"},
-    {"word": "chair", "category": "home", "difficulty": "medium", "description": "Fingers of one hand rest on the other like sitting"},
-    {"word": "change", "category": "concepts", "difficulty": "medium", "description": "Both fists twist in opposite directions"},
-    {"word": "cheat", "category": "concepts", "difficulty": "hard", "description": "V-hand taps elbow of other arm"},
-    {"word": "city", "category": "places", "difficulty": "medium", "description": "Fingertips touch repeatedly in arc"},
-    {"word": "clothes", "category": "clothing", "difficulty": "easy", "description": "Both hands brush down chest"},
-    {"word": "color", "category": "concepts", "difficulty": "easy", "description": "Fingers wiggle at chin"},
-    {"word": "computer", "category": "technology", "difficulty": "medium", "description": "C-hand circles on forearm"},
-    {"word": "cook", "category": "food", "difficulty": "medium", "description": "Flat hand flips over on palm"},
-    {"word": "cool", "category": "concepts", "difficulty": "easy", "description": "Thumb of 5-hand touches chest, fingers fan"},
-    {"word": "corn", "category": "food", "difficulty": "medium", "description": "Index fingers twist at mouth"},
-    {"word": "cousin", "category": "people", "difficulty": "medium", "description": "C-hand shakes near cheek or temple"},
-    {"word": "cow", "category": "animals", "difficulty": "easy", "description": "Y-hand rotates at temple like horns"},
-    {"word": "dance", "category": "activities", "difficulty": "easy", "description": "V-hand swings over flat palm"},
-    {"word": "dark", "category": "concepts", "difficulty": "medium", "description": "Both hands cross down in front of face"},
-    {"word": "deaf", "category": "concepts", "difficulty": "easy", "description": "Index finger touches ear then lips"},
-    {"word": "decide", "category": "concepts", "difficulty": "medium", "description": "F-hands move down firmly"},
-    {"word": "doctor", "category": "people", "difficulty": "medium", "description": "D-hand taps wrist pulse point"},
-    {"word": "dog", "category": "animals", "difficulty": "easy", "description": "Pat thigh then snap fingers"},
-    {"word": "drink", "category": "food", "difficulty": "easy", "description": "C-hand tips toward mouth"},
-    {"word": "eat", "category": "food", "difficulty": "easy", "description": "Flat O-hand taps mouth"},
-    {"word": "enjoy", "category": "concepts", "difficulty": "medium", "description": "Both hands circle on chest"},
-    {"word": "family", "category": "people", "difficulty": "medium", "description": "F-hands circle outward"},
-    {"word": "fine", "category": "concepts", "difficulty": "easy", "description": "5-hand thumb touches chest"},
-    {"word": "finish", "category": "concepts", "difficulty": "easy", "description": "5-hands flip outward from chest"},
-    {"word": "fish", "category": "animals", "difficulty": "easy", "description": "Flat hand wiggles forward like swimming"},
-    {"word": "forget", "category": "concepts", "difficulty": "easy", "description": "Open hand wipes across forehead closing"},
-    {"word": "full", "category": "concepts", "difficulty": "easy", "description": "Flat hand slides across under chin"},
-    {"word": "give", "category": "concepts", "difficulty": "easy", "description": "Flat O-hand extends outward opening"},
-    {"word": "go", "category": "concepts", "difficulty": "easy", "description": "Index fingers circle forward and point ahead"},
-    {"word": "graduate", "category": "events", "difficulty": "medium", "description": "G-hand circles then lands on flat palm"},
-    {"word": "hat", "category": "clothing", "difficulty": "easy", "description": "Hand pats top of head"},
-    {"word": "hearing", "category": "concepts", "difficulty": "easy", "description": "Index finger circles at ear"},
-    {"word": "help", "category": "concepts", "difficulty": "easy", "description": "Thumb-up fist lifts on flat palm"},
-    {"word": "hot", "category": "concepts", "difficulty": "easy", "description": "Claw hand at mouth, twists away"},
-    {"word": "how", "category": "questions", "difficulty": "medium", "description": "Both bent hands roll upward together"},
-    {"word": "jacket", "category": "clothing", "difficulty": "medium", "description": "A-hands trace lapels down chest"},
-    {"word": "kiss", "category": "actions", "difficulty": "easy", "description": "Fingers touch lips then cheek"},
-    {"word": "language", "category": "concepts", "difficulty": "medium", "description": "L-hands shake outward alternately"},
-    {"word": "last", "category": "time", "difficulty": "medium", "description": "Little finger strikes down on other little finger"},
-    {"word": "later", "category": "time", "difficulty": "medium", "description": "L-hand rotates forward on flat palm"},
-    {"word": "letter", "category": "objects", "difficulty": "medium", "description": "Thumb licks fingers then presses palm"},
-    {"word": "like", "category": "concepts", "difficulty": "easy", "description": "Middle finger and thumb pinch from chest outward"},
-    {"word": "man", "category": "people", "difficulty": "easy", "description": "Flat hand touches forehead then chest"},
-    {"word": "many", "category": "concepts", "difficulty": "easy", "description": "Both fists flick open repeatedly"},
-    {"word": "medicine", "category": "health", "difficulty": "medium", "description": "Middle finger stirs on palm"},
-    {"word": "meet", "category": "actions", "difficulty": "easy", "description": "Both index fingers come together"},
-    {"word": "mother", "category": "people", "difficulty": "easy", "description": "5-hand thumb taps chin twice"},
-    {"word": "need", "category": "concepts", "difficulty": "medium", "description": "X-hand bends down firmly"},
-    {"word": "no", "category": "concepts", "difficulty": "easy", "description": "Index and middle finger snap to thumb"},
-    {"word": "now", "category": "time", "difficulty": "easy", "description": "Y-hands drop down together"},
-    {"word": "orange", "category": "colors", "difficulty": "easy", "description": "C-hand squeezes at chin"},
-    {"word": "paint", "category": "activities", "difficulty": "medium", "description": "Flat hand brushes up and down on palm"},
-    {"word": "paper", "category": "objects", "difficulty": "easy", "description": "Flat hands clap and slide"},
-    {"word": "pink", "category": "colors", "difficulty": "easy", "description": "P-hand brushes down lips"},
-    {"word": "pizza", "category": "food", "difficulty": "easy", "description": "P-hand traces Z shape in air"},
-    {"word": "play", "category": "activities", "difficulty": "easy", "description": "Y-hands shake at wrists"},
-    {"word": "pull", "category": "actions", "difficulty": "easy", "description": "Both hands pull back toward body"},
-    {"word": "purple", "category": "colors", "difficulty": "easy", "description": "P-hand shakes side to side"},
-    {"word": "right", "category": "concepts", "difficulty": "easy", "description": "R-hand taps on other R-hand"},
-    {"word": "same", "category": "concepts", "difficulty": "easy", "description": "Y-hand swings between two points"},
-    {"word": "school", "category": "places", "difficulty": "easy", "description": "Flat hands clap twice"},
-    {"word": "secretary", "category": "people", "difficulty": "hard", "description": "H-hand touches ear then writes on palm"},
-    {"word": "shirt", "category": "clothing", "difficulty": "easy", "description": "Fingers pinch and tug shirt at chest"},
-    {"word": "short", "category": "concepts", "difficulty": "easy", "description": "H-hand slides over other H-hand"},
-    {"word": "son", "category": "people", "difficulty": "medium", "description": "Bent arm rocks like baby, then flat hand on forearm"},
-    {"word": "study", "category": "activities", "difficulty": "medium", "description": "Wiggling fingers move toward flat palm"},
-    {"word": "table", "category": "home", "difficulty": "easy", "description": "Flat arms layer horizontally"},
-    {"word": "tall", "category": "concepts", "difficulty": "easy", "description": "Index finger slides up flat palm"},
-    {"word": "tell", "category": "actions", "difficulty": "easy", "description": "Index finger moves from chin outward"},
-    {"word": "thanksgiving", "category": "events", "difficulty": "hard", "description": "Flat hands move from mouth outward"},
-    {"word": "thin", "category": "concepts", "difficulty": "medium", "description": "G-hand slides down body"},
-    {"word": "thursday", "category": "time", "difficulty": "medium", "description": "H-hand circles then taps"},
-    {"word": "time", "category": "time", "difficulty": "easy", "description": "X-finger taps back of wrist"},
-    {"word": "walk", "category": "actions", "difficulty": "easy", "description": "Two flat hands alternate stepping forward"},
-    {"word": "want", "category": "concepts", "difficulty": "easy", "description": "Claw hands pull toward body"},
-    {"word": "what", "category": "questions", "difficulty": "easy", "description": "Index finger sweeps across flat palm"},
-    {"word": "white", "category": "colors", "difficulty": "easy", "description": "5-hand pulls from chest closing to flat O"},
-    {"word": "who", "category": "questions", "difficulty": "easy", "description": "L-hand circles at lips"},
-    {"word": "woman", "category": "people", "difficulty": "easy", "description": "Thumb strokes jaw down to chin"},
-    {"word": "work", "category": "activities", "difficulty": "easy", "description": "S-hand taps wrist of other S-hand"},
-    {"word": "wrong", "category": "concepts", "difficulty": "easy", "description": "Y-hand taps chin"},
-    {"word": "year", "category": "time", "difficulty": "medium", "description": "S-hands circle each other once"},
-    {"word": "yes", "category": "concepts", "difficulty": "easy", "description": "S-hand nods up and down"}
+    {
+      "word": "accident",
+      "category": "events",
+      "difficulty": "hard",
+      "description": "Both fists collide together",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "africa",
+      "category": "places",
+      "difficulty": "medium",
+      "description": "A-hand circles face then drops",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "all",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "One hand sweeps under the other",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "apple",
+      "category": "food",
+      "difficulty": "easy",
+      "description": "X-hand twists at cheek",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "basketball",
+      "category": "sports",
+      "difficulty": "medium",
+      "description": "Both hands mime dribbling a ball",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "bed",
+      "category": "home",
+      "difficulty": "easy",
+      "description": "Hands pressed together, tilt head onto them",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "before",
+      "category": "time",
+      "difficulty": "medium",
+      "description": "Flat hand moves back toward body",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "bird",
+      "category": "animals",
+      "difficulty": "easy",
+      "description": "G-hand opens and closes at mouth",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "birthday",
+      "category": "events",
+      "difficulty": "medium",
+      "description": "Middle finger taps chin then chest",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "black",
+      "category": "colors",
+      "difficulty": "easy",
+      "description": "Index finger slides across forehead",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "blue",
+      "category": "colors",
+      "difficulty": "easy",
+      "description": "B-hand twists at wrist",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "book",
+      "category": "objects",
+      "difficulty": "easy",
+      "description": "Palms together open like a book",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "bowling",
+      "category": "sports",
+      "difficulty": "medium",
+      "description": "Hand swings forward releasing a ball",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "brown",
+      "category": "colors",
+      "difficulty": "easy",
+      "description": "B-hand slides down cheek",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "but",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "Index fingers cross then separate outward",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "can",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "Both fists move down firmly",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "candy",
+      "category": "food",
+      "difficulty": "easy",
+      "description": "Index finger twists at cheek",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "chair",
+      "category": "home",
+      "difficulty": "medium",
+      "description": "Fingers of one hand rest on the other like sitting",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "change",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "Both fists twist in opposite directions",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "cheat",
+      "category": "concepts",
+      "difficulty": "hard",
+      "description": "V-hand taps elbow of other arm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "city",
+      "category": "places",
+      "difficulty": "medium",
+      "description": "Fingertips touch repeatedly in arc",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "clothes",
+      "category": "clothing",
+      "difficulty": "easy",
+      "description": "Both hands brush down chest",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "color",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Fingers wiggle at chin",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "computer",
+      "category": "technology",
+      "difficulty": "medium",
+      "description": "C-hand circles on forearm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "cook",
+      "category": "food",
+      "difficulty": "medium",
+      "description": "Flat hand flips over on palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "cool",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Thumb of 5-hand touches chest, fingers fan",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "corn",
+      "category": "food",
+      "difficulty": "medium",
+      "description": "Index fingers twist at mouth",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "cousin",
+      "category": "people",
+      "difficulty": "medium",
+      "description": "C-hand shakes near cheek or temple",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "cow",
+      "category": "animals",
+      "difficulty": "easy",
+      "description": "Y-hand rotates at temple like horns",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "dance",
+      "category": "activities",
+      "difficulty": "easy",
+      "description": "V-hand swings over flat palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "dark",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "Both hands cross down in front of face",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "deaf",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Index finger touches ear then lips",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "decide",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "F-hands move down firmly",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "doctor",
+      "category": "people",
+      "difficulty": "medium",
+      "description": "D-hand taps wrist pulse point",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "dog",
+      "category": "animals",
+      "difficulty": "easy",
+      "description": "Pat thigh then snap fingers",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "drink",
+      "category": "food",
+      "difficulty": "easy",
+      "description": "C-hand tips toward mouth",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "eat",
+      "category": "food",
+      "difficulty": "easy",
+      "description": "Flat O-hand taps mouth",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "enjoy",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "Both hands circle on chest",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "family",
+      "category": "people",
+      "difficulty": "medium",
+      "description": "F-hands circle outward",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "fine",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "5-hand thumb touches chest",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "finish",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "5-hands flip outward from chest",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "fish",
+      "category": "animals",
+      "difficulty": "easy",
+      "description": "Flat hand wiggles forward like swimming",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "forget",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Open hand wipes across forehead closing",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "full",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Flat hand slides across under chin",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "give",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Flat O-hand extends outward opening",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "go",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Index fingers circle forward and point ahead",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "graduate",
+      "category": "events",
+      "difficulty": "medium",
+      "description": "G-hand circles then lands on flat palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "hat",
+      "category": "clothing",
+      "difficulty": "easy",
+      "description": "Hand pats top of head",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "hearing",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Index finger circles at ear",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "help",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Thumb-up fist lifts on flat palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "hot",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Claw hand at mouth, twists away",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "how",
+      "category": "questions",
+      "difficulty": "medium",
+      "description": "Both bent hands roll upward together",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": true,
+      "nms_type": "wh_question_marker",
+      "nms_notes": "furrowed brow + head tilt -- characteristic even in citation-form elicitation of wh-signs -- first-pass from general ASL grammar knowledge, NOT yet checked against a linguistic source or fluent-signer review."
+    },
+    {
+      "word": "jacket",
+      "category": "clothing",
+      "difficulty": "medium",
+      "description": "A-hands trace lapels down chest",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "kiss",
+      "category": "actions",
+      "difficulty": "easy",
+      "description": "Fingers touch lips then cheek",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "language",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "L-hands shake outward alternately",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "last",
+      "category": "time",
+      "difficulty": "medium",
+      "description": "Little finger strikes down on other little finger",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "later",
+      "category": "time",
+      "difficulty": "medium",
+      "description": "L-hand rotates forward on flat palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "letter",
+      "category": "objects",
+      "difficulty": "medium",
+      "description": "Thumb licks fingers then presses palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "like",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Middle finger and thumb pinch from chest outward",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "man",
+      "category": "people",
+      "difficulty": "easy",
+      "description": "Flat hand touches forehead then chest",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "many",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Both fists flick open repeatedly",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "medicine",
+      "category": "health",
+      "difficulty": "medium",
+      "description": "Middle finger stirs on palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "meet",
+      "category": "actions",
+      "difficulty": "easy",
+      "description": "Both index fingers come together",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "mother",
+      "category": "people",
+      "difficulty": "easy",
+      "description": "5-hand thumb taps chin twice",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "need",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "X-hand bends down firmly",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "no",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Index and middle finger snap to thumb",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": true,
+      "nms_type": "negation_marker",
+      "nms_notes": "headshake accompanying the manual sign -- first-pass from general ASL grammar knowledge, NOT yet checked against a linguistic source or fluent-signer review."
+    },
+    {
+      "word": "now",
+      "category": "time",
+      "difficulty": "easy",
+      "description": "Y-hands drop down together",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "orange",
+      "category": "colors",
+      "difficulty": "easy",
+      "description": "C-hand squeezes at chin",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "paint",
+      "category": "activities",
+      "difficulty": "medium",
+      "description": "Flat hand brushes up and down on palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "paper",
+      "category": "objects",
+      "difficulty": "easy",
+      "description": "Flat hands clap and slide",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "pink",
+      "category": "colors",
+      "difficulty": "easy",
+      "description": "P-hand brushes down lips",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "pizza",
+      "category": "food",
+      "difficulty": "easy",
+      "description": "P-hand traces Z shape in air",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "play",
+      "category": "activities",
+      "difficulty": "easy",
+      "description": "Y-hands shake at wrists",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "pull",
+      "category": "actions",
+      "difficulty": "easy",
+      "description": "Both hands pull back toward body",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "purple",
+      "category": "colors",
+      "difficulty": "easy",
+      "description": "P-hand shakes side to side",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "right",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "R-hand taps on other R-hand",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "same",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Y-hand swings between two points",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "school",
+      "category": "places",
+      "difficulty": "easy",
+      "description": "Flat hands clap twice",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "secretary",
+      "category": "people",
+      "difficulty": "hard",
+      "description": "H-hand touches ear then writes on palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "shirt",
+      "category": "clothing",
+      "difficulty": "easy",
+      "description": "Fingers pinch and tug shirt at chest",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "short",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "H-hand slides over other H-hand",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "son",
+      "category": "people",
+      "difficulty": "medium",
+      "description": "Bent arm rocks like baby, then flat hand on forearm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "study",
+      "category": "activities",
+      "difficulty": "medium",
+      "description": "Wiggling fingers move toward flat palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "table",
+      "category": "home",
+      "difficulty": "easy",
+      "description": "Flat arms layer horizontally",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "tall",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Index finger slides up flat palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "tell",
+      "category": "actions",
+      "difficulty": "easy",
+      "description": "Index finger moves from chin outward",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "thanksgiving",
+      "category": "events",
+      "difficulty": "hard",
+      "description": "Flat hands move from mouth outward",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "thin",
+      "category": "concepts",
+      "difficulty": "medium",
+      "description": "G-hand slides down body",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "thursday",
+      "category": "time",
+      "difficulty": "medium",
+      "description": "H-hand circles then taps",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "time",
+      "category": "time",
+      "difficulty": "easy",
+      "description": "X-finger taps back of wrist",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "walk",
+      "category": "actions",
+      "difficulty": "easy",
+      "description": "Two flat hands alternate stepping forward",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "want",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Claw hands pull toward body",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "what",
+      "category": "questions",
+      "difficulty": "easy",
+      "description": "Index finger sweeps across flat palm",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": true,
+      "nms_type": "wh_question_marker",
+      "nms_notes": "furrowed brow + head tilt -- characteristic even in citation-form elicitation of wh-signs -- first-pass from general ASL grammar knowledge, NOT yet checked against a linguistic source or fluent-signer review."
+    },
+    {
+      "word": "white",
+      "category": "colors",
+      "difficulty": "easy",
+      "description": "5-hand pulls from chest closing to flat O",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "who",
+      "category": "questions",
+      "difficulty": "easy",
+      "description": "L-hand circles at lips",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": true,
+      "nms_type": "wh_question_marker",
+      "nms_notes": "furrowed brow + head tilt -- characteristic even in citation-form elicitation of wh-signs -- first-pass from general ASL grammar knowledge, NOT yet checked against a linguistic source or fluent-signer review."
+    },
+    {
+      "word": "woman",
+      "category": "people",
+      "difficulty": "easy",
+      "description": "Thumb strokes jaw down to chin",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "work",
+      "category": "activities",
+      "difficulty": "easy",
+      "description": "S-hand taps wrist of other S-hand",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "wrong",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "Y-hand taps chin",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "year",
+      "category": "time",
+      "difficulty": "medium",
+      "description": "S-hands circle each other once",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    },
+    {
+      "word": "yes",
+      "category": "concepts",
+      "difficulty": "easy",
+      "description": "S-hand nods up and down",
+      "manual_checks": [
+        "handshape",
+        "location",
+        "orientation",
+        "hand_count"
+      ],
+      "nms_required": false,
+      "nms_type": null,
+      "nms_notes": null
+    }
   ],
-  "categories": ["actions", "activities", "animals", "clothing", "colors", "concepts", "events", "food", "health", "home", "people", "places", "questions", "sports", "technology", "time"]
+  "categories": [
+    "actions",
+    "activities",
+    "animals",
+    "clothing",
+    "colors",
+    "concepts",
+    "events",
+    "food",
+    "health",
+    "home",
+    "people",
+    "places",
+    "questions",
+    "sports",
+    "technology",
+    "time"
+  ]
 }

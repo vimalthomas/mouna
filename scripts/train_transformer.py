@@ -31,13 +31,21 @@ NHEAD = 4
 NUM_LAYERS = 3
 DIM_FEEDFORWARD = 256
 DROPOUT = 0.3
-BATCH_SIZE = 16
+BATCH_SIZE = int(os.environ.get("MOUNA_BATCH_SIZE", "16"))
 LR = 5e-4
 NUM_EPOCHS = 200
 MAX_SEQ_LEN = 150
 PATIENCE = 30
 MIXUP_ALPHA = 0.4   # mixup augmentation strength
 SEED = int(os.environ.get("MOUNA_SEED", 42))
+# The spatial-flip augmentation below does `1.0 - x`, which is only a valid
+# mirror for raw [0,1]-space coordinates. KeypointDataset actually reads
+# per-part-normalized data (centered on shoulder/wrist, range roughly -2 to
+# +4) where that formula shifts data by ~1 unit instead of reflecting it --
+# a real bug discovered while building handedness canonicalization. Default
+# stays off (preserves every already-recorded baseline's exact behavior);
+# opt in only for runs where handedness is handled upstream instead.
+DISABLE_FLIP_AUG = os.environ.get("MOUNA_DISABLE_FLIP_AUG", "0") == "1"
 
 
 class KeypointDataset(Dataset):
@@ -64,7 +72,7 @@ class KeypointDataset(Dataset):
 
         # Spatial flip (50% chance): mirror x-coords, swap left/right hand
         # Layout: pose(0:99), left_hand(99:162), right_hand(162:225)
-        if np.random.random() < 0.5:
+        if (not DISABLE_FLIP_AUG) and np.random.random() < 0.5:
             kp = kp.copy()
             for seg_start, n_joints in [(0, 33), (99, 21), (162, 21)]:
                 for j in range(n_joints):
@@ -212,7 +220,10 @@ def main():
     input_dim = train_ds.input_dim
 
     from mouna.models.transformer import PoseTransformer
-    if torch.cuda.is_available():
+    forced_device = os.environ.get("MOUNA_DEVICE", "")
+    if forced_device:
+        device = torch.device(forced_device)
+    elif torch.cuda.is_available():
         device = torch.device("cuda")
     elif torch.backends.mps.is_available():
         device = torch.device("mps")

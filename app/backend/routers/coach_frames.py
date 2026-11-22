@@ -203,9 +203,19 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 # Skeleton comparison needs the raw attempt buffer -- compute it
                 # BEFORE clearing, not after (this used to discard the buffer
                 # immediately, leaving nothing to render a comparison from).
-                attempt_skeletons = model_service.get_attempt_skeletons(keypoint_buffer)
+                # face_buffer was already being collected every frame
+                # alongside keypoint_buffer (see the "frame" handler above) --
+                # it just wasn't used here before the face-mesh skeleton.
+                attempt_skeletons = model_service.get_attempt_skeletons(keypoint_buffer, face_buffer)
                 reference_skeleton = model_service.get_reference_skeleton(target_sign)
-                divergent_snapshots = model_service.get_attempt_snapshots(keypoint_buffer, score.get("divergent_frames") or {})
+                divergent_frames = score.get("divergent_frames") or {}
+                divergent_snapshots = model_service.get_attempt_snapshots(keypoint_buffer, divergent_frames, face_buffer)
+                # When the attempt's own bucket triple matched a DIFFERENT
+                # known sign (see compare.py's looks_like logic), fetch that
+                # sign's reference skeleton too -- so "this looks like X"
+                # comes with an actual X to look at, not just the word.
+                looks_like = score.get("looks_like")
+                looks_like_skeleton = model_service.get_reference_skeleton(looks_like) if looks_like else None
                 keypoint_buffer = []
                 face_buffer = []
 
@@ -272,6 +282,14 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                     "attempt_skeleton_canonical": attempt_skeletons["canonical"],
                     "reference_skeleton": reference_skeleton,
                     "divergent_snapshots": divergent_snapshots,
+                    # Raw frame index per mismatched param, into
+                    # attempt_skeleton_raw/canonical -- lets the frontend
+                    # replay a short looping window around the moment of
+                    # max divergence instead of only showing one frozen
+                    # frame (P1's "replay it" request).
+                    "divergent_frames": divergent_frames,
+                    "looks_like": looks_like,
+                    "looks_like_skeleton": looks_like_skeleton,
                     "feedback": feedback_data.get("feedback", ""),
                     "tips": feedback_data.get("tips", []),
                     "attempt_number": coaching.attempts,

@@ -1,5 +1,6 @@
 import { Component, inject, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CameraViewComponent } from '../../shared/components/camera-view/camera-view.component';
 import { SkeletonCompareComponent } from '../../shared/components/skeleton-compare/skeleton-compare.component';
@@ -82,33 +83,44 @@ const CHECK_HOLD_MS = 1200;
             </select>
           </div>
 
-          <div class="flex items-center gap-2 mb-3">
+          <div class="flex items-center gap-2 mb-3 flex-wrap">
             <span class="text-xs font-semibold text-ink-faint uppercase tracking-wide mr-1">Speed:</span>
             @for (r of playbackRates; track r.value) {
               <button
                 (click)="setPlaybackRate(r.value)"
                 class="text-xs font-semibold px-3 py-1 rounded-full border"
-                [class]="playbackRate === r.value ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'"
+                [class]="!stepMode && playbackRate === r.value ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'"
               >{{ r.label }}</button>
+            }
+            <span class="w-px h-4 bg-border/60 mx-1"></span>
+            <button
+              (click)="toggleStepMode()"
+              class="text-xs font-semibold px-3 py-1 rounded-full border"
+              [class]="stepMode ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'"
+            >Step through</button>
+            @if (stepMode) {
+              <button (click)="stepFrame(-1)" class="text-xs font-semibold w-8 h-7 rounded-full border bg-surface-sunk text-ink-muted border-border/50">◀</button>
+              <button (click)="stepFrame(1)" class="text-xs font-semibold w-8 h-7 rounded-full border bg-surface-sunk text-ink-muted border-border/50">▶</button>
+              <span class="text-xs text-ink-faint">paused — step one moment at a time</span>
             }
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3" #previewVideos>
             <div class="relative rounded-xl overflow-hidden bg-black border border-border/50" style="aspect-ratio: 16/10;">
               @if (referenceVideoUrl) {
-                <video [src]="referenceVideoUrl" autoplay loop muted playsinline class="w-full h-full object-cover" (loadedmetadata)="applyRate($event)"></video>
+                <video [src]="referenceVideoUrl" [loop]="!hasTrimWindow" autoplay muted playsinline class="w-full h-full object-cover" (loadedmetadata)="onVideoLoaded($event)" (timeupdate)="enforceTrim($event)"></video>
               } @else {
                 <div class="w-full h-full flex items-center justify-center text-ink-muted text-sm">No reference video for "{{ targetSignWord }}"</div>
               }
-              <div class="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide text-white/80 bg-black/50 px-2 py-0.5 rounded">Full clip</div>
+              <div class="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide text-white/80 bg-black/50 px-2 py-0.5 rounded">{{ hasTrimWindow ? 'Just the sign' : 'Full clip' }}</div>
             </div>
 
             <!-- real hand, cropped from the SAME clip and kept in sync -- not a drawn icon -->
             <div class="relative rounded-xl overflow-hidden bg-black border border-border/50" style="aspect-ratio: 16/10;">
               @if (referenceVideoUrl && handZoomStyle) {
-                <video [src]="referenceVideoUrl" autoplay loop muted playsinline class="absolute object-cover" [style]="handZoomStyle" (loadedmetadata)="applyRate($event)"></video>
+                <video [src]="referenceVideoUrl" [loop]="!hasTrimWindow" autoplay muted playsinline class="absolute object-cover" [style]="handZoomStyle" (loadedmetadata)="onVideoLoaded($event)" (timeupdate)="enforceTrim($event)"></video>
               } @else if (referenceVideoUrl) {
-                <video [src]="referenceVideoUrl" autoplay loop muted playsinline class="w-full h-full object-cover" (loadedmetadata)="applyRate($event)"></video>
+                <video [src]="referenceVideoUrl" [loop]="!hasTrimWindow" autoplay muted playsinline class="w-full h-full object-cover" (loadedmetadata)="onVideoLoaded($event)" (timeupdate)="enforceTrim($event)"></video>
               } @else {
                 <div class="w-full h-full flex items-center justify-center text-ink-muted text-sm">No reference video</div>
               }
@@ -301,58 +313,142 @@ const CHECK_HOLD_MS = 1200;
               >{{ (lastResult?.verdict || '').replace('_',' ') }}</span>
             </div>
 
-            <div class="flex items-center gap-2 mb-3">
-              <span class="text-xs font-semibold text-ink-faint uppercase tracking-wide mr-1">Playback:</span>
-              @for (r of skeletonRates; track r.value) {
-                <button
-                  (click)="skeletonSpeed = r.value"
-                  class="text-xs font-semibold px-3 py-1 rounded-full border"
-                  [class]="skeletonSpeed === r.value ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'"
-                >{{ r.label }}</button>
+            @if (lastResult?.looks_like) {
+              <div class="rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 mb-4">
+                <p class="text-sm text-ink"><strong class="capitalize">Heads up:</strong> your handshape, location, and palm direction actually matched <strong class="capitalize">"{{ lastResult?.looks_like }}"</strong> more closely than "{{ targetSignWord }}". Here's that sign next to yours:</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                  <app-skeleton-compare
+                    [frames]="lastResult?.attempt_skeleton_raw ?? null"
+                    [speedMultiplier]="skeletonSpeed"
+                    color="#3f5fc4"
+                    label="Your motion"
+                  />
+                  <app-skeleton-compare
+                    [frames]="lastResult?.looks_like_skeleton ?? null"
+                    [speedMultiplier]="skeletonSpeed"
+                    color="#ab7a14"
+                    [label]="looksLikeLabel"
+                  />
+                </div>
+              </div>
+            }
+
+            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-1 rounded-full bg-surface-sunk border border-border/50 p-1">
+                @for (t of feedbackTabs; track t.id) {
+                  <button
+                    (click)="feedbackTab = t.id"
+                    class="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                    [class]="feedbackTab === t.id ? 'bg-accent text-white' : 'text-ink-muted'"
+                  >{{ t.label }}</button>
+                }
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-ink-faint uppercase tracking-wide mr-1">Playback:</span>
+                @for (r of skeletonRates; track r.value) {
+                  <button
+                    (click)="skeletonSpeed = r.value"
+                    class="text-xs font-semibold px-3 py-1 rounded-full border"
+                    [class]="skeletonSpeed === r.value ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'"
+                  >{{ r.label }}</button>
+                }
+              </div>
+            </div>
+
+            @if (feedbackTab === 'video') {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div class="relative rounded-xl overflow-hidden bg-black border border-border/50" style="aspect-ratio: 16/10;">
+                  @if (recordedAttemptUrl) {
+                    <video [src]="recordedAttemptUrl" autoplay loop muted playsinline class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
+                  } @else {
+                    <div class="w-full h-full flex items-center justify-center text-white/60 text-sm px-4 text-center">Your browser doesn't support recording this, or this is the first attempt this session.</div>
+                  }
+                  <div class="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide text-white/80 bg-black/50 px-2 py-0.5 rounded">You</div>
+                </div>
+                <div class="relative rounded-xl overflow-hidden bg-black border border-border/50" style="aspect-ratio: 16/10;">
+                  @if (referenceVideoUrl) {
+                    <video [src]="referenceVideoUrl" [loop]="!hasTrimWindow" autoplay muted playsinline class="w-full h-full object-cover" (loadedmetadata)="onVideoLoaded($event)" (timeupdate)="enforceTrim($event)"></video>
+                  }
+                  <div class="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide text-white/80 bg-black/50 px-2 py-0.5 rounded">Target</div>
+                </div>
+              </div>
+              <p class="text-xs text-ink-muted -mt-2 mb-4">Real video, both sides — no skeleton standing in for either of you. The other tabs below show the geometric breakdown (useful for seeing exactly where a mismatch is) if you want more detail.</p>
+            } @else if (feedbackTab === 'motion') {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <app-skeleton-compare
+                  [frames]="lastResult?.attempt_skeleton_raw ?? null"
+                  [parameters]="lastResult?.parameters ?? null"
+                  [speedMultiplier]="skeletonSpeed"
+                  color="#3f5fc4"
+                  label="Your motion"
+                />
+                <app-skeleton-compare
+                  [frames]="lastResult?.reference_skeleton ?? null"
+                  [speedMultiplier]="skeletonSpeed"
+                  color="#8a93a3"
+                  label="Target"
+                />
+              </div>
+            } @else if (feedbackTab === 'hands') {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <app-skeleton-compare
+                  mode="hands"
+                  [frames]="lastResult?.attempt_skeleton_raw ?? null"
+                  [parameters]="lastResult?.parameters ?? null"
+                  [speedMultiplier]="skeletonSpeed"
+                  color="#3f5fc4"
+                  label="Your hand, zoomed in"
+                />
+                <app-skeleton-compare
+                  mode="hands"
+                  [frames]="lastResult?.reference_skeleton ?? null"
+                  [speedMultiplier]="skeletonSpeed"
+                  color="#8a93a3"
+                  label="Target hand, zoomed in"
+                />
+              </div>
+            } @else {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <app-skeleton-compare
+                  mode="face"
+                  [frames]="lastResult?.attempt_skeleton_raw ?? null"
+                  [parameters]="lastResult?.parameters ?? null"
+                  [speedMultiplier]="skeletonSpeed"
+                  color="#3f5fc4"
+                  label="Your face, zoomed in"
+                />
+                <app-skeleton-compare
+                  mode="face"
+                  [frames]="lastResult?.reference_skeleton ?? null"
+                  [speedMultiplier]="skeletonSpeed"
+                  color="#8a93a3"
+                  label="Target face, zoomed in"
+                />
+              </div>
+              @if (!hasFaceData) {
+                <p class="text-xs text-ink-muted -mt-2 mb-4">No facial reference data for "{{ targetSignWord }}" yet — only what/who/how/no currently have it.</p>
               }
-            </div>
+            }
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-              <app-skeleton-compare
-                [frames]="lastResult?.attempt_skeleton_raw ?? null"
-                [parameters]="lastResult?.parameters ?? null"
-                [speedMultiplier]="skeletonSpeed"
-                color="#3f5fc4"
-                label="Your motion"
-              />
-              <app-skeleton-compare
-                [frames]="lastResult?.reference_skeleton ?? null"
-                [speedMultiplier]="skeletonSpeed"
-                color="#8a93a3"
-                label="Target"
-              />
-            </div>
-            <div class="grid grid-cols-1 gap-4 mb-4">
-              <app-skeleton-compare
-                mode="hands"
-                [frames]="lastResult?.attempt_skeleton_raw ?? null"
-                [parameters]="lastResult?.parameters ?? null"
-                [speedMultiplier]="skeletonSpeed"
-                color="#3f5fc4"
-                label="Your hand, zoomed in"
-              />
-              <app-skeleton-compare
-                mode="hands"
-                [frames]="lastResult?.reference_skeleton ?? null"
-                [speedMultiplier]="skeletonSpeed"
-                color="#8a93a3"
-                label="Target hand, zoomed in"
-              />
-            </div>
-
-            @if (snapshotEntries.length > 0) {
+            @if (replayWindows.length > 0) {
               <div class="mb-4">
-                <p class="text-xs font-semibold text-ink-faint uppercase tracking-wide mb-2">Where the difference was</p>
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-xs font-semibold text-ink-faint uppercase tracking-wide">Replay where the difference was</p>
+                  <div class="flex items-center gap-2">
+                    @for (r of skeletonRates; track r.value) {
+                      <button
+                        (click)="skeletonSpeed = r.value"
+                        class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border"
+                        [class]="skeletonSpeed === r.value ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'"
+                      >{{ r.label }}</button>
+                    }
+                  </div>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
-                  @for (s of snapshotEntries; track s.param) {
+                  @for (w of replayWindows; track w.param) {
                     <div>
-                      <app-skeleton-compare [frames]="[s.frame]" [animate]="false" color="#ab7a14" [label]="s.param" />
-                      <p class="text-xs text-ink-muted mt-1">Your {{ s.param }} diverged most from the target here.</p>
+                      <app-skeleton-compare [frames]="w.frames" [animate]="true" [speedMultiplier]="skeletonSpeed" color="#ab7a14" [label]="w.param" />
+                      <p class="text-xs text-ink-muted mt-1">Your {{ w.param }} diverged most from the target here — looping that moment.</p>
                     </div>
                   }
                 </div>
@@ -368,7 +464,8 @@ const CHECK_HOLD_MS = 1200;
                       [class]="p.match === true ? 'bg-emerald-500/15 text-emerald-500' : p.match === false ? 'bg-amber-500/15 text-amber-500' : 'bg-surface text-ink-faint border border-dashed border-border'"
                     >{{ p.match === true ? 'match' : p.match === false ? 'mismatch' : 'n/a' }}</span>
                   </div>
-                  @if (p.detail) { <p class="text-xs font-mono text-ink-muted mt-1">{{ p.detail }}</p> }
+                  @if (p.why) { <p class="text-sm text-ink mt-1.5">{{ p.why }}</p> }
+                  @if (p.detail) { <p class="text-[11px] font-mono text-ink-faint mt-1">{{ p.detail }}</p> }
                 </div>
               }
             </div>
@@ -423,6 +520,7 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   private coachService = inject(GeminiCoachService);
   private signsApi = inject(SignsApiService);
+  private route = inject(ActivatedRoute);
   private subs: Subscription[] = [];
   private shouldScroll = false;
 
@@ -454,21 +552,64 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
   recordingProgress = 0;
   private countdownTimer: ReturnType<typeof setInterval> | null = null;
   private recordingTimer: ReturnType<typeof setInterval> | null = null;
+  private mediaRecorder: MediaRecorder | null = null;
+  private recordedChunks: Blob[] = [];
+  /** The user's own actual attempt video, not a skeleton derived from it --
+   * see startAttemptRecording(). Null until the first attempt finishes, or
+   * permanently null if MediaRecorder isn't supported in this browser. */
+  recordedAttemptUrl: string | null = null;
   private recordingStartTime = 0;
 
   referenceVideoUrl: string | null = null;
+  /** Seconds, derived from frame_start/frame_end/fps (see loadReferenceVideo)
+   * -- null end means "no known trim window, play/loop the whole file"
+   * (WLASL's frame_end === -1 convention: this file already IS the clean clip). */
+  referenceTrimStart = 0;
+  referenceTrimEnd: number | null = null;
   readonly playbackRates = [
     { label: '0.5×', value: 0.5 },
     { label: '1×', value: 1 },
     { label: '1.5×', value: 1.5 },
   ];
   playbackRate = 1;
+  /** "Spell it out" mode -- P1 in the late-signers paper asked to slow a
+   * sign down enough to step through it, which is a different need than
+   * just playing it slower (speed is continuous, this is discrete and
+   * learner-controlled). Pauses both preview videos and steps them a fixed
+   * time delta at a time instead of playing. */
+  stepMode = false;
+  private readonly STEP_SECONDS = 0.1;
   readonly skeletonRates = [
     { label: '0.5×', value: 0.5 },
     { label: '1×', value: 1 },
     { label: '1.5×', value: 1.5 },
   ];
   skeletonSpeed = 1;
+  /** Feedback screen used to show all 4 skeleton panels (body x2, hands x2)
+   * stacked at once -- split into tabs per explicit request so only one
+   * comparison is on screen at a time. */
+  readonly feedbackTabs: { id: 'video' | 'motion' | 'hands' | 'face'; label: string }[] = [
+    { id: 'video', label: 'You vs. Target' },
+    { id: 'motion', label: 'Motion vs. Target' },
+    { id: 'hands', label: 'Hands vs. Target' },
+    { id: 'face', label: 'Face vs. Target' },
+  ];
+  /** Leads with the real-video comparison, not the skeleton -- an actual
+   * human next to an actual human is the primary view now; the skeleton
+   * tabs are the diagnostic/secondary ones, not the other way around. */
+  feedbackTab: 'video' | 'motion' | 'hands' | 'face' = 'video';
+
+  /** Only what/who/how/no have a regenerated reference face mesh so far
+   * (see scripts/auto_screen_references.py) -- used to show a plain-
+   * language note instead of two silently-empty-looking face panels. */
+  get looksLikeLabel(): string {
+    return `"${this.lastResult?.looks_like ?? ''}" looks like this`;
+  }
+
+  get hasFaceData(): boolean {
+    const seq = this.lastResult?.reference_skeleton;
+    return !!seq?.some(f => !!f.face);
+  }
   faceBboxStyle: Record<string, string> | null = null;
   handBboxStyle: Record<string, string> | null = null;
   lastResult: CoachingMessage | null = null;
@@ -511,27 +652,44 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
     return this.hasAnalyzedFacial;
   }
 
-  get parameterCards(): { name: string; match: boolean | null; detail: string }[] {
+  get parameterCards(): { name: string; match: boolean | null; why: string; detail: string }[] {
     const params = this.lastResult?.parameters || {};
     const cards = ['handshape', 'location', 'orientation'].map(key => {
       const p = params[key];
       return {
         name: key.charAt(0).toUpperCase() + key.slice(1),
         match: p ? p.match : null,
+        // Plain-language explanation (see parameters.py's _describe_mismatch)
+        // leads; the raw bucket values stay as a small secondary line for
+        // anyone who wants the exact reading, not the headline anymore.
+        why: (p && !p.match && p.why) || '',
         detail: p ? `target: ${p.target} · you: ${p.yours}` : '',
       };
     });
     cards.push({
       name: 'Hand count',
       match: this.lastResult?.hand_count_match ?? null,
+      why: '',
       detail: '',
     });
     return cards;
   }
 
-  get snapshotEntries(): { param: string; frame: SkeletonFrame }[] {
-    const snaps = this.lastResult?.divergent_snapshots || {};
-    return Object.entries(snaps).map(([param, frame]) => ({ param, frame }));
+  /** A short looping window of the attempt's OWN raw motion around the exact
+   * frame that diverged most from the reference, per mismatched parameter --
+   * replaces a single frozen snapshot with something you can actually watch
+   * repeat (P1's "replay it" request). Raw space, not canonical, so it looks
+   * like the signer's own hand, same as the "Your motion" panel above. */
+  get replayWindows(): { param: string; frames: SkeletonFrame[] }[] {
+    const seq = this.lastResult?.attempt_skeleton_raw;
+    const divergent = this.lastResult?.divergent_frames;
+    if (!seq || seq.length === 0 || !divergent) return [];
+    const WINDOW = 8; // frames either side of the divergent moment
+    return Object.entries(divergent).map(([param, idx]) => {
+      const start = Math.max(0, idx - WINDOW);
+      const end = Math.min(seq.length, idx + WINDOW + 1);
+      return { param, frames: seq.slice(start, end) };
+    }).filter(w => w.frames.length > 0);
   }
 
   stepLabel(step: PrepStep): string {
@@ -539,9 +697,17 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnInit(): void {
+    // Supports deep-linking a specific sign in, e.g. from the dashboard's
+    // "due for review" list (?sign=apple) -- falls back to the first sign
+    // in the list exactly as before when no query param is present.
+    const requestedSign = this.route.snapshot.queryParamMap.get('sign');
     this.signsApi.getSigns().subscribe(signs => {
       this.signs = signs;
-      if (signs.length > 0) this.targetSignWord = signs[0].word;
+      if (requestedSign && signs.some(s => s.word === requestedSign)) {
+        this.targetSignWord = requestedSign;
+      } else if (signs.length > 0) {
+        this.targetSignWord = signs[0].word;
+      }
       this.onTargetChange();
     });
 
@@ -581,14 +747,71 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.previewVideosEl?.nativeElement.querySelectorAll('video').forEach(v => { v.playbackRate = rate; });
   }
 
-  applyRate(event: Event): void {
-    (event.target as HTMLVideoElement).playbackRate = this.playbackRate;
+  /** Seeks to the trim window's start (if this clip has one -- see
+   * loadReferenceVideo) and sets playback rate, once metadata is ready. */
+  onVideoLoaded(event: Event): void {
+    const video = event.target as HTMLVideoElement;
+    video.playbackRate = this.playbackRate;
+    if (this.hasTrimWindow) video.currentTime = this.referenceTrimStart;
+    if (this.stepMode) video.pause();
+  }
+
+  /** Manual loop over JUST the sign's frame_start-frame_end window, not the
+   * whole source file -- some WLASL clips are a few seconds of isolated
+   * sign, others are a brief window inside a much longer raw recording
+   * (e.g. one "what" instance sits at frames 1748-1780 of a 70+ second
+   * clip). Playing the raw file start-to-finish showed a long stretch of
+   * unrelated footage before ever reaching the sign -- this keeps playback
+   * inside just the real sign, however long the underlying file is. */
+  enforceTrim(event: Event): void {
+    if (!this.hasTrimWindow) return;
+    const video = event.target as HTMLVideoElement;
+    if (video.currentTime >= this.referenceTrimEnd! || video.currentTime < this.referenceTrimStart) {
+      video.currentTime = this.referenceTrimStart;
+    }
+  }
+
+  get hasTrimWindow(): boolean {
+    return this.referenceTrimEnd !== null;
+  }
+
+  toggleStepMode(): void {
+    this.stepMode = !this.stepMode;
+    const videos = this.previewVideosEl?.nativeElement.querySelectorAll('video') ?? [];
+    videos.forEach(v => {
+      if (this.stepMode) {
+        v.pause();
+      } else {
+        v.play().catch(() => {});
+      }
+    });
+  }
+
+  stepFrame(direction: 1 | -1): void {
+    const videos = this.previewVideosEl?.nativeElement.querySelectorAll('video') ?? [];
+    const start = this.hasTrimWindow ? this.referenceTrimStart : 0;
+    const end = this.hasTrimWindow ? this.referenceTrimEnd! : null;
+    videos.forEach(v => {
+      const span = end ?? (v.duration || 0);
+      let next = v.currentTime + direction * this.STEP_SECONDS;
+      if (span > start) next = start + (((next - start) % (span - start)) + (span - start)) % (span - start); // wrap within [start, span)
+      v.currentTime = next;
+    });
   }
 
   loadReferenceVideo(): void {
     this.signsApi.getVideo(this.targetSignWord).subscribe({
-      next: res => { this.referenceVideoUrl = `${environment.apiBaseUrl}${res.video_url}`; },
-      error: () => { this.referenceVideoUrl = null; },
+      next: res => {
+        this.referenceVideoUrl = `${environment.apiBaseUrl}${res.video_url}`;
+        const hasKnownEnd = res.frame_end !== null && res.frame_end !== -1 && !!res.fps;
+        this.referenceTrimStart = hasKnownEnd ? (res.frame_start ?? 0) / res.fps! : 0;
+        this.referenceTrimEnd = hasKnownEnd ? res.frame_end! / res.fps! : null;
+      },
+      error: () => {
+        this.referenceVideoUrl = null;
+        this.referenceTrimStart = 0;
+        this.referenceTrimEnd = null;
+      },
     });
   }
 
@@ -707,14 +930,45 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.recordState = 'recording';
     this.recordingProgress = 0;
     this.recordingStartTime = Date.now();
+    this.startAttemptRecording();
     this.recordingTimer = setInterval(() => {
       const elapsed = Date.now() - this.recordingStartTime;
       this.recordingProgress = Math.min((elapsed / RECORDING_DURATION_MS) * 100, 100);
       if (elapsed >= RECORDING_DURATION_MS) {
         if (this.recordingTimer) clearInterval(this.recordingTimer);
+        this.stopAttemptRecording();
         this.coachService.requestPrediction(this.targetSignWord);
       }
     }, 100);
+  }
+
+  /** Records the ACTUAL camera video client-side (MediaRecorder on the same
+   * stream the frame-capture pipeline already reads from -- independent
+   * consumers of one stream, nothing about keypoint extraction changes).
+   * This is the real-human-next-to-real-human example: the reference video
+   * is already a real fluent signer; this is the other real person in the
+   * comparison, instead of a skeleton standing in for you. */
+  private startAttemptRecording(): void {
+    const stream = this.cameraViewRecord?.getStream();
+    if (!stream) return;
+    this.recordedChunks = [];
+    try {
+      this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    } catch {
+      this.mediaRecorder = null; // unsupported mime/browser -- feedback screen just won't have this panel
+      return;
+    }
+    this.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) this.recordedChunks.push(e.data); };
+    this.mediaRecorder.start();
+  }
+
+  private stopAttemptRecording(): void {
+    if (!this.mediaRecorder || this.mediaRecorder.state === 'inactive') return;
+    this.mediaRecorder.onstop = () => {
+      if (this.recordedAttemptUrl) URL.revokeObjectURL(this.recordedAttemptUrl);
+      this.recordedAttemptUrl = URL.createObjectURL(new Blob(this.recordedChunks, { type: 'video/webm' }));
+    };
+    this.mediaRecorder.stop();
   }
 
   retryRecording(): void {
@@ -761,6 +1015,7 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
   ngOnDestroy(): void {
     if (this.countdownTimer) clearInterval(this.countdownTimer);
     if (this.recordingTimer) clearInterval(this.recordingTimer);
+    if (this.recordedAttemptUrl) URL.revokeObjectURL(this.recordedAttemptUrl);
     if (this.sessionStarted) this.coachService.endSession();
     this.subs.forEach(s => s.unsubscribe());
   }

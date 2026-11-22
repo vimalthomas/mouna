@@ -19,9 +19,15 @@ scripts/calibrate_discrete_buckets.py):
   movement    (speed tertile)                  +4.7pp gap  -- NOT real, excluded
 
 Movement is intentionally absent from this module. Speed-only bucketing
-didn't separate signs; a shape/direction-based version hasn't been built.
-Don't add a movement score here without the same validation the other
-three went through.
+didn't separate signs (+4.7pp). A direction-based version (net
+displacement's dominant axis+sign, same style as orientation, see
+scripts/calibrate_movement_direction.py) was also tried and also failed
+(+4.4pp, within=0.286 vs across=0.242) -- flattening a clip to a single
+start->end vector loses too much of the real path shape (curves, repeated
+taps) to separate signs. Don't add a movement score here without the
+same validation the other three went through; if retried, a real path-
+shape signal (e.g. DTW-aligned trajectory comparison, not a single
+summary vector) is the more promising untried direction.
 
 Must operate on keypoints AFTER canonicalize_handedness but BEFORE
 normalize_per_part -- see part_normalize.py's docstring for why body/hand
@@ -182,11 +188,47 @@ def classify_orientation_bucket(signal: dict) -> str:
     return f"{sign}{['x', 'y', 'z'][axis]}"
 
 
+HANDSHAPE_PLAIN = {
+    "open": "your fingers extended open",
+    "half": "your fingers half-curled",
+    "closed": "your fingers curled into a fist",
+}
+LOCATION_PLAIN = {
+    "face_region": "near your face",
+    "chest_region": "near your chest",
+    "neutral_space": "out in neutral space in front of you",
+}
+
+
+def _describe_mismatch(param: str, target: str, yours: str) -> str:
+    """Plain-language reason a mismatched parameter is wrong -- not just
+    the raw bucket labels (which is what this used to surface, literally
+    as "target: open · you: closed" in the UI). Modeled on the "coaches
+    show AND tell" distinction from AgentCoach (CHI 2026): a highlighted
+    joint/segment tells you WHERE something's off, this is what explains
+    WHY. Handshape/location get a specific, directional sentence because
+    their buckets are validated and genuinely map to a plain description.
+    Orientation does NOT get a confident left/right/up/down claim here --
+    the palm-normal axis convention was never verified against enough real
+    signs to state a direction with confidence (checked 23 real reference
+    signs' buckets against their text descriptions and found no reliable
+    pattern worth asserting) -- so it points at the one place that IS
+    reliable: the actual direction arrow already drawn on the skeleton."""
+    if param == "handshape":
+        return f"This sign needs {HANDSHAPE_PLAIN[target]}, but {HANDSHAPE_PLAIN[yours]}."
+    if param == "location":
+        return f"This sign is made {LOCATION_PLAIN[target]}, but your hand was {LOCATION_PLAIN[yours]}."
+    if param == "orientation":
+        return "Your palm faced a different direction than the target needs -- compare the direction arrow on the skeleton panels."
+    return ""
+
+
 def compare_discrete(attempt_signal: dict, reference_signal: dict) -> dict:
     """Bucket both sides and report target vs. yours + match, for each of
-    the 3 validated parameters. No score number, no verdict -- this is
-    explanatory detail alongside compare.py's embedding-driven verdict,
-    not a replacement for it."""
+    the 3 validated parameters, plus a plain-language "why" when they
+    mismatch. No score number, no verdict -- this is explanatory detail
+    alongside compare.py's embedding-driven verdict, not a replacement for
+    it."""
     out = {}
     for name, classify in (
         ("handshape", classify_handshape_bucket),
@@ -195,9 +237,11 @@ def compare_discrete(attempt_signal: dict, reference_signal: dict) -> dict:
     ):
         target_bucket = classify(reference_signal)
         yours_bucket = classify(attempt_signal)
+        match = target_bucket == yours_bucket
         out[name] = {
             "target": target_bucket,
             "yours": yours_bucket,
-            "match": target_bucket == yours_bucket,
+            "match": match,
+            "why": None if match else _describe_mismatch(name, target_bucket, yours_bucket),
         }
     return out

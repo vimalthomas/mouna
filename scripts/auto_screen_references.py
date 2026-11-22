@@ -37,7 +37,7 @@ from mediapipe.tasks.python import vision
 from mediapipe.tasks.python.core.base_options import BaseOptions
 
 sys.path.insert(0, "src")
-from mouna.data.handedness import canonicalize_handedness  # noqa: E402
+from mouna.data.handedness import canonicalize_handedness, detect_dominant_hand  # noqa: E402
 from mouna.data.openpose_convert import convert_video as op_convert_video  # noqa: E402
 from mouna.data.part_normalize import normalize_per_part  # noqa: E402
 from mouna.models.transformer import PoseTransformer  # noqa: E402
@@ -66,7 +66,15 @@ def find_video_path(video_id: str, source: str) -> Path | None:
     return None
 
 
-def extract_face_signal(video_path: Path, max_frames: int = 150) -> dict | None:
+def extract_face_signal(video_path: Path, mirror: bool, max_frames: int = 150) -> dict | None:
+    """mirror: apply the SAME x'=1-x flip already applied to this clip's
+    pose/hand data by canonicalize_handedness (see handedness.py) -- face
+    landmarks live in a completely separate extraction pass from the
+    225-dim pose/hand array, so they're never touched by that mirror
+    unless we do it here too. Pre-mirroring at build time (rather than at
+    serve time) means the stored reference landmarks are already in the
+    same canonical orientation as representative_sequence_raw_canon, so
+    nothing downstream needs to know a mirror ever happened."""
     opts = vision.FaceLandmarkerOptions(
         base_options=BaseOptions(model_asset_path=str(FACE_MODEL_PATH)),
         running_mode=vision.RunningMode.IMAGE,
@@ -80,6 +88,12 @@ def extract_face_signal(video_path: Path, max_frames: int = 150) -> dict | None:
 
     cap = cv2.VideoCapture(str(video_path))
     blendshapes, yaws = [], []
+    # Index-aligned with the raw video frame number (None where no face was
+    # detected that frame) -- unlike blendshapes/yaws above, which silently
+    # skip undetected frames (fine for their aggregate peak/range use, wrong
+    # for rendering, which needs this frame's landmarks to line up with
+    # that same frame's pose in representative_sequence_raw_canon).
+    landmarks_xy_sequence: list[list[list[float]] | None] = []
     n = 0
     while n < max_frames:
         ret, frame = cap.read()
@@ -94,7 +108,15 @@ def extract_face_signal(video_path: Path, max_frames: int = 150) -> dict | None:
         if result.facial_transformation_matrixes:
             m = np.array(result.facial_transformation_matrixes[0])
             yaws.append(float(np.degrees(np.arctan2(-m[2, 0], np.sqrt(m[2, 1] ** 2 + m[2, 2] ** 2)))))
+        if result.face_landmarks:
+            pts = [[lm.x, lm.y] for lm in result.face_landmarks[0]]
+            if mirror:
+                pts = [[1.0 - x, y] for x, y in pts]
+            landmarks_xy_sequence.append(pts)
+        else:
+            landmarks_xy_sequence.append(None)
     cap.release()
+    landmarker.close()
 
     if not blendshapes:
         return None
@@ -105,6 +127,11 @@ def extract_face_signal(video_path: Path, max_frames: int = 150) -> dict | None:
         "blendshape_matrix": matrix,  # (T, 52)
         "head_yaw_deg": np.array(yaws, dtype=np.float32),  # (T,) or shorter if matrices were missing
         "n_frames": len(blendshapes),
+        # Index-aligned with representative_sequence_raw_canon's frame
+        # number (see landmarks_xy_sequence above) -- already mirror-
+        # corrected, so skeleton.py never needs to mirror reference face
+        # data again at render time.
+        "landmarks_xy_sequence": landmarks_xy_sequence,
     }
 
 
@@ -189,7 +216,10 @@ def main():
 
         video_path = find_video_path(best_row["_vid"], best_row["source"])
         if video_path is not None:
-            face_signal = extract_face_signal(video_path)
+            best_raw = raw_lookup[best_row["_vid"]]
+            dominant = detect_dominant_hand(best_raw)
+            mirror = dominant not in ("right", "both", "neither")
+            face_signal = extract_face_signal(video_path, mirror=mirror)
             if face_signal is not None:
                 entry["representative_face_signal"] = face_signal
                 print(f"  face signal extracted: {face_signal['n_frames']} frames, "

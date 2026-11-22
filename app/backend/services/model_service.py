@@ -34,7 +34,7 @@ _PROJECT_ROOT = _BACKEND_DIR.parent.parent  # app/backend -> app -> project root
 sys.path.insert(0, str(_PROJECT_ROOT / "src"))
 
 from mouna.models.transformer import PoseTransformer  # noqa: E402
-from mouna.data.handedness import canonicalize_handedness  # noqa: E402
+from mouna.data.handedness import canonicalize_handedness, detect_dominant_hand  # noqa: E402
 from mouna.data.part_normalize import normalize_per_part  # noqa: E402
 from mouna.coach.compare import score_attempt  # noqa: E402
 from mouna.coach.facial import check_nms, from_live_frames  # noqa: E402
@@ -58,11 +58,38 @@ CONF_THRESH = 0.25
 WLASL_100_LABELS: list[str] = []
 
 
+def _build_bucket_index(references: dict) -> dict[tuple, list[str]]:
+    """(handshape,location,orientation) bucket triple -> every word whose
+    reference lands in it. Lets score_attempt() say "this looks more like
+    X" when an attempt's own bucket triple matches a DIFFERENT word than
+    the one being practiced -- grounded in the real collision found in
+    2026-11-01's research pass (basketball/bed/decide/hot/need all share
+    one triple), not a hypothetical. Built once at load time, not per
+    attempt -- 24 words is cheap, but there's no reason to redo it on
+    every websocket message."""
+    index: dict[tuple, list[str]] = {}
+    for word, ref in references.items():
+        raw_canon = ref.get("representative_sequence_raw_canon")
+        if raw_canon is None:
+            continue
+        signal = extract_dominant_hand_signal(raw_canon)
+        if signal is None:
+            continue
+        triple = (
+            classify_handshape_bucket(signal),
+            classify_location_bucket(signal),
+            classify_orientation_bucket(signal),
+        )
+        index.setdefault(triple, []).append(word)
+    return index
+
+
 class ModelService:
     def __init__(self) -> None:
         self.model: PoseTransformer | None = None
         self.idx_to_label: dict[int, str] = {}
         self.references: dict = {}
+        self.reference_bucket_index: dict[tuple, list[str]] = {}
         self.device = torch.device(
             "mps" if torch.backends.mps.is_available()
             else "cuda" if torch.cuda.is_available()
@@ -108,6 +135,10 @@ class ModelService:
                 self.references = pickle.load(f)
             logger.info("Coach reference library loaded: %d/%d words covered",
                         len(self.references), cfg["num_classes"])
+            self.reference_bucket_index = _build_bucket_index(self.references)
+            logger.info("Reference bucket index built: %d distinct (handshape,location,orientation) "
+                        "buckets across %d words", len(self.reference_bucket_index),
+                        sum(len(v) for v in self.reference_bucket_index.values()))
         else:
             logger.warning(
                 "sign_references.pkl not found -- score_against_target will report "
@@ -168,7 +199,7 @@ class ModelService:
                 "overall_verdict": "needs_work", "notes": ["Model not loaded."],
             }
         raw = np.array(keypoints, dtype=np.float32)
-        return score_attempt(raw, target_word, self.references, self.model, self.idx_to_label)
+        return score_attempt(raw, target_word, self.references, self.model, self.idx_to_label, self.reference_bucket_index)
 
     def get_reference_buckets(self, target_word: str) -> dict | None:
         """Reference-only bucket classification (handshape/location/
@@ -228,31 +259,46 @@ class ModelService:
         """Reference's normalized skeleton sequence (canonical space only
         -- there's no 'raw camera' ambiguity to show for a pre-recorded
         reference clip the way there is for a live attempt). Both hands,
-        full pose. See mouna.coach.skeleton."""
+        full pose, plus a face mesh overlay when this word has reference
+        facial data (see mouna.coach.skeleton + face_mesh) -- the stored
+        landmarks were already mirror-corrected at build time (see
+        scripts/auto_screen_references.py), so mirror_face is always False
+        here regardless of this clip's own original handedness."""
         ref = self.references.get(target_word)
         if ref is None:
             return None
         raw_canon = ref.get("representative_sequence_raw_canon")
         if raw_canon is None:
             return None
-        return extract_skeleton_sequence(raw_canon)
+        face_signal = ref.get("representative_face_signal") or {}
+        face_frames = face_signal.get("landmarks_xy_sequence")
+        return extract_skeleton_sequence(raw_canon, face_frames=face_frames, mirror_face=False)
 
-    def get_attempt_skeletons(self, keypoints: list[list[float]]) -> dict:
+    def get_attempt_skeletons(self, keypoints: list[list[float]], face_frames: list[dict | None] | None = None) -> dict:
         """Live attempt's skeleton in TWO spaces:
           - "raw": exactly as the camera saw it, correctly left/right-sided
             -- what the user should look at to confirm it looks like them.
           - "canonical": after canonicalize_handedness (mirrored if the
             signer's dominant hand isn't "right") -- the space scoring
             actually happens in, directly comparable to the reference.
-        Both include both hands + full pose (see mouna.coach.skeleton)."""
+        Both include both hands + full pose + a face mesh (see
+        mouna.coach.skeleton). face_frames (optional): the session's
+        face_buffer, index-aligned with keypoints (see coach_frames.py --
+        both are appended in the same per-frame loop iteration). The
+        canonical view mirrors the face too, exactly when the body itself
+        got mirrored, so the two don't end up visually inconsistent."""
         raw = np.array(keypoints, dtype=np.float32)
+        dominant = detect_dominant_hand(raw)
+        will_mirror = dominant not in ("right", "both", "neither")
         canon = canonicalize_handedness(raw, target="right")
         return {
-            "raw": extract_skeleton_sequence(raw),
-            "canonical": extract_skeleton_sequence(canon),
+            "raw": extract_skeleton_sequence(raw, face_frames=face_frames, mirror_face=False),
+            "canonical": extract_skeleton_sequence(canon, face_frames=face_frames, mirror_face=will_mirror),
         }
 
-    def get_attempt_snapshots(self, keypoints: list[list[float]], divergent_frames: dict) -> dict:
+    def get_attempt_snapshots(
+        self, keypoints: list[list[float]], divergent_frames: dict, face_frames: list[dict | None] | None = None,
+    ) -> dict:
         """One real skeleton frame per mismatched parameter -- the exact
         attempt frame that diverged most from the reference's typical
         value (see mouna.coach.parameters.find_divergent_frame), not an
@@ -261,10 +307,12 @@ class ModelService:
         if not divergent_frames:
             return {}
         raw = np.array(keypoints, dtype=np.float32)
+        dominant = detect_dominant_hand(raw)
+        will_mirror = dominant not in ("right", "both", "neither")
         canon = canonicalize_handedness(raw, target="right")
         snapshots = {}
         for param, frame_idx in divergent_frames.items():
-            frame = extract_skeleton_sequence(canon, frame_indices=[frame_idx])
+            frame = extract_skeleton_sequence(canon, frame_indices=[frame_idx], face_frames=face_frames, mirror_face=will_mirror)
             if frame:
                 snapshots[param] = frame[0]
         return snapshots

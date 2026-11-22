@@ -148,6 +148,14 @@ export class CameraViewComponent implements OnInit, OnDestroy {
     }, 100);
   }
 
+  /** Exposes the live MediaStream so a parent can record it (e.g. via
+   * MediaRecorder) alongside the existing frame-capture pipeline -- those
+   * two consumers are independent, recording doesn't change what gets
+   * sent for keypoint extraction. */
+  getStream(): MediaStream | null {
+    return this.videoRef.nativeElement.srcObject as MediaStream | null;
+  }
+
   stop(): void {
     this.isCapturing = false;
     if (this.captureInterval) {

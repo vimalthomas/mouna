@@ -5,7 +5,7 @@ from auth.dependencies import get_current_user
 from auth.schemas import UserPublic, UserUpdateRequest
 from db.models import Sign, SignProgress, User
 from db.session import get_db
-from services.stats_service import get_user_stats
+from services.stats_service import get_review_queue, get_user_stats
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -36,6 +36,14 @@ def get_my_stats(
     db: Session = Depends(get_db),
 ) -> dict:
     return get_user_stats(db, user.id)
+
+
+@router.get("/me/review-queue")
+def get_my_review_queue(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    return {"due": get_review_queue(db, user.id)}
 
 
 @router.get("/me/signs/progress")

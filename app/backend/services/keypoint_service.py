@@ -138,11 +138,16 @@ class KeypointService:
         return keypoints  # 225 floats
 
     def extract_face_from_base64(self, b64_frame: str) -> dict | None:
-        """Single-frame facial signal: blendshape scores (dict name->score)
-        + head yaw in degrees, or None if no face was detected. Opt-in, not
-        called on every coach-session frame -- only during an NMS-check step
-        (see routers/coach_frames.py) since it's an extra model pass per
-        frame on top of pose+hands."""
+        """Single-frame facial signal: blendshape scores (dict name->score),
+        head yaw in degrees, and the raw 478-point face mesh (x,y only, same
+        normalized image-plane space pose/hands come in) -- or None if no
+        face was detected. Opt-in, not called on every coach-session frame
+        -- only during an NMS-check step (see routers/coach_frames.py) since
+        it's an extra model pass per frame on top of pose+hands.
+
+        landmarks_xy is the newer addition (see face_mesh.py) -- raw points
+        only, no contour selection here, so the choice of which points trace
+        a renderable outline stays in one place (face_mesh.REGIONS)."""
         import mediapipe as mp
 
         try:
@@ -164,7 +169,11 @@ class KeypointService:
                 m = np.array(result.facial_transformation_matrixes[0])
                 yaw_deg = float(np.degrees(np.arctan2(-m[2, 0], np.sqrt(m[2, 1] ** 2 + m[2, 2] ** 2))))
 
-            return {"blendshapes": blendshapes, "head_yaw_deg": yaw_deg}
+            landmarks_xy = None
+            if result.face_landmarks:
+                landmarks_xy = [[lm.x, lm.y] for lm in result.face_landmarks[0]]
+
+            return {"blendshapes": blendshapes, "head_yaw_deg": yaw_deg, "landmarks_xy": landmarks_xy}
         except Exception:
             logger.exception("Face extraction error")
             return None

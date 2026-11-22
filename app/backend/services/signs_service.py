@@ -7,6 +7,63 @@ from models.schemas import SignInfo, VideoResponse
 
 logger = logging.getLogger(__name__)
 
+# WLASL's own per-instance frame_start/frame_end mark which sub-range of a
+# raw source video is the actual isolated sign. frame_end == -1 means "the
+# whole file from frame_start is the sign" (already a clean clip) -- but
+# some entries are a tiny window inside a much longer, unrelated recording
+# (e.g. "what" video_id 62944: frames 1748-1780 inside a 70+ second clip),
+# and get_video() used to just take entries[0] with no regard for which
+# kind it was, then the frontend played the raw file start-to-finish with
+# no trimming -- showing a long stretch of irrelevant footage before ever
+# reaching the sign. A real ASL sign is ~1-3 seconds; prefer any instance
+# WLASL itself already marks as a short, known-duration sub-clip.
+MAX_CLEAN_SIGN_SECONDS = 6.0
+
+
+def _instance_duration_s(entry: dict) -> float | None:
+    """Prefer WLASL's own sub-range annotation when present (frame_end not
+    -1); fall back to the actual file duration probed once at startup (see
+    _probe_duration) for frame_end == -1 entries, since "whole file is the
+    sign" doesn't mean the whole file is SHORT -- one real case found in
+    this deployment's downloaded files ("thanksgiving") is a genuine 8.1s
+    frame_end=-1 file with no shorter sibling instance available."""
+    frame_end = entry.get("frame_end")
+    fps = entry.get("fps")
+    if frame_end not in (None, -1) and fps:
+        return (frame_end - entry.get("frame_start", 0)) / fps
+    return entry.get("probed_duration_s")
+
+
+def _pick_cleanest_instance(entries: list[dict]) -> dict:
+    known = [(e, d) for e in entries if (d := _instance_duration_s(e)) is not None]
+    short = [(e, d) for e, d in known if d <= MAX_CLEAN_SIGN_SECONDS]
+    if short:
+        short.sort(key=lambda pair: pair[1])
+        return short[0][0]
+    if known:
+        # Nothing qualifies as genuinely short -- still pick the shortest
+        # available rather than an arbitrary (possibly much longer) one.
+        known.sort(key=lambda pair: pair[1])
+        return known[0][0]
+    return entries[0]
+
+
+def _probe_duration(video_path: Path) -> float | None:
+    """Real file duration via OpenCV metadata (reads the header, not every
+    frame -- cheap). Called once per available video at startup
+    (_load_video_index), not per-request, so get_video() stays O(1)."""
+    try:
+        import cv2
+        cap = cv2.VideoCapture(str(video_path))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        cap.release()
+        if fps and frame_count:
+            return frame_count / fps
+    except Exception:
+        logger.exception("Failed to probe duration for %s", video_path)
+    return None
+
 
 class SignsService:
     def __init__(self) -> None:
@@ -65,16 +122,28 @@ class SignsService:
         with open(wlasl_path, encoding="utf-8") as f:
             data = json.load(f)
 
+        videos_dir = Path(settings.videos_dir)
         for entry in data:
             gloss = entry["gloss"].lower()
             available = []
             for inst in entry.get("instances", []):
                 vid = inst.get("video_id", "")
                 if vid in self.available_videos:
+                    frame_end = inst.get("frame_end")
+                    probed = None
+                    # Only probe actual video files for words we actually
+                    # serve (171 WLASL glosses have files on disk, but only
+                    # the active 100-word vocabulary needs this) -- and only
+                    # when WLASL's own frame_end doesn't already tell us the
+                    # duration, so startup stays fast.
+                    if (frame_end is None or frame_end == -1) and gloss in self.signs_by_word:
+                        probed = _probe_duration(videos_dir / f"{vid}.mp4")
                     available.append({
                         "video_id": vid,
                         "frame_start": inst.get("frame_start"),
-                        "frame_end": inst.get("frame_end"),
+                        "frame_end": frame_end,
+                        "fps": inst.get("fps"),
+                        "probed_duration_s": probed,
                     })
             if available:
                 self.video_index[gloss] = available
@@ -95,7 +164,7 @@ class SignsService:
         if not entries:
             return None
 
-        entry = entries[0]
+        entry = _pick_cleanest_instance(entries)
         video_id = entry["video_id"]
         video_url = f"/static/videos/{video_id}.mp4"
 
@@ -104,6 +173,7 @@ class SignsService:
             video_url=video_url,
             frame_start=entry.get("frame_start"),
             frame_end=entry.get("frame_end"),
+            fps=entry.get("fps"),
         )
 
 

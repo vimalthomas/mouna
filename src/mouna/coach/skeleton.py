@@ -27,6 +27,7 @@ from typing import Optional
 
 import numpy as np
 
+from mouna.coach import face_mesh
 from mouna.data.part_normalize import _interpolate_missing  # reuse validated gap-filling, not reimplement it
 
 LEFT_SHOULDER, RIGHT_SHOULDER = 11, 12
@@ -79,18 +80,33 @@ def _orientation_2d(hand_shape: np.ndarray) -> np.ndarray:
 
 
 def extract_skeleton_sequence(
-    flat_225: np.ndarray, n_frames: int = 20, frame_indices: Optional[list[int]] = None,
+    flat_225: np.ndarray,
+    n_frames: int = 20,
+    frame_indices: Optional[list[int]] = None,
+    face_frames: Optional[list[Optional[dict]]] = None,
+    mirror_face: bool = False,
 ) -> Optional[list[dict]]:
     """flat_225: (T, 225) keypoints, RAW or canonicalized (caller's choice).
     Returns up to n_frames evenly-sampled frames (only frames where at
     least one hand was detected), each:
       {"pose": {name: [x,y], ...}, "left_hand": [[x,y],x21] | None,
        "right_hand": [[x,y],x21] | None, "left_orientation": [ox,oy] | None,
-       "right_orientation": [ox,oy] | None}
+       "right_orientation": [ox,oy] | None, "face": {region: [[x,y],...]} | None}
     all in body-relative (mid_shoulder-centered, shoulder_dist-scaled)
     space. Pass `frame_indices` to get specific original-array frames
     instead of an evenly-sampled sequence (used for snapshot moments).
-    None if neither hand was ever detected."""
+    None if neither hand was ever detected.
+
+    face_frames: same-length, same-index-aligned list as the raw buffer
+    this flat_225 came from (keypoint_service.extract_face_from_base64()
+    output per frame, or the reference's per-frame landmarks_xy list) --
+    omit for no face rendering. mirror_face: set True when flat_225 is the
+    MIRRORED (canonicalize_handedness'd) version of the signer's own raw
+    data -- face landmarks live in a completely separate array from the
+    225-dim pose/hand one, so canonicalize_handedness never touches them;
+    this flag is how the caller tells us to apply the same x'=1-x mirror
+    here, so a mirrored body doesn't end up paired with an un-mirrored
+    face in the canonical view."""
     T = flat_225.shape[0]
     arr = flat_225.reshape(T, 75, 3).astype(np.float32)
     pose_raw, lh_raw, rh_raw = arr[:, :33], arr[:, 33:54], arr[:, 54:75]
@@ -128,5 +144,30 @@ def extract_skeleton_sequence(
             "right_hand": rh_norm[i].tolist() if right_present[i] else None,
             "left_orientation": lh_orient[i].tolist() if left_present[i] else None,
             "right_orientation": rh_orient[i].tolist() if right_present[i] else None,
+            "face": _face_contours_at(face_frames, i, mid_shoulder, scale, mirror_face),
         })
     return frames
+
+
+def _face_contours_at(
+    face_frames: Optional[list], i: int, mid_shoulder: np.ndarray, scale: float, mirror: bool,
+) -> Optional[dict]:
+    """face_frames elements come in two shapes depending on caller: the live
+    path's face_buffer is a list of dicts (keypoint_service.
+    extract_face_from_base64() output, {"landmarks_xy": ..., ...} or None);
+    the reference path's landmarks_xy_sequence is the bare per-frame point
+    list (or None) directly, already pre-extracted at build time (see
+    auto_screen_references.py). Handle both rather than forcing one shape
+    on the other caller."""
+    if not face_frames or i >= len(face_frames) or face_frames[i] is None:
+        return None
+    entry = face_frames[i]
+    landmarks_xy = entry.get("landmarks_xy") if isinstance(entry, dict) else entry
+    if landmarks_xy is None:
+        return None
+    pts = np.asarray(landmarks_xy, dtype=np.float32)
+    if mirror:
+        pts = pts.copy()
+        pts[:, 0] = 1.0 - pts[:, 0]
+    contours = face_mesh.extract_face_contours(pts, mid_shoulder[i, :2], scale)
+    return contours or None

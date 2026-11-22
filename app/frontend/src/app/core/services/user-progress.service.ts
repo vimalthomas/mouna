@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { UserStats, UserStatsResponse, WeakSign } from '../models/sign.model';
+import { ReviewDueSign, UserStats, UserStatsResponse, WeakSign } from '../models/sign.model';
 
 const EMPTY_STATS: UserStats = {
   totalSessions: 0,
@@ -45,6 +45,16 @@ export class UserProgressService {
 
   getWeakSigns(): WeakSign[] {
     return this.statsSubject.value.weakSigns;
+  }
+
+  /** Signs overdue for review (see backend stats_service.get_review_queue --
+   * a simple, disclosed-as-such linear spacing heuristic, not real SM-2).
+   * Separate call rather than folded into stats$ since it's only needed on
+   * the dashboard's review widget, not every stats consumer. */
+  getReviewQueue() {
+    return this.http.get<{ due: ReviewDueSign[] }>(`${this.baseUrl}/users/me/review-queue`).pipe(
+      map(res => res.due)
+    );
   }
 
   reset(): void {

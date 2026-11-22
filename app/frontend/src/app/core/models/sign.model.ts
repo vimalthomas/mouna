@@ -23,6 +23,17 @@ export interface ParameterResult {
   target: string | null;
   yours: string | null;
   match: boolean | null;
+  why?: string | null;
+}
+
+export interface FaceContours {
+  face_oval: [number, number][];
+  left_eye: [number, number][];
+  right_eye: [number, number][];
+  left_eyebrow: [number, number][];
+  right_eyebrow: [number, number][];
+  lips_outer: [number, number][];
+  lips_inner: [number, number][];
 }
 
 export interface SkeletonFrame {
@@ -31,6 +42,7 @@ export interface SkeletonFrame {
   right_hand: [number, number][] | null;
   left_orientation: [number, number] | null;
   right_orientation: [number, number] | null;
+  face?: FaceContours | null;
 }
 
 export interface ReferenceBuckets {
@@ -67,6 +79,7 @@ export interface VideoResponse {
   video_url: string;
   frame_start: number | null;
   frame_end: number | null;
+  fps: number | null;
 }
 
 export interface Prediction {
@@ -128,11 +141,21 @@ export interface CoachingMessage {
   attempt_skeleton_canonical?: SkeletonFrame[] | null;
   reference_skeleton?: SkeletonFrame[] | null;
   divergent_snapshots?: Record<string, SkeletonFrame> | null;
+  divergent_frames?: Record<string, number> | null;
+  looks_like?: string | null;
+  looks_like_skeleton?: SkeletonFrame[] | null;
 }
 
 export interface WeakSign {
   sign: string;
   accuracy: number;
+}
+
+export interface ReviewDueSign {
+  sign: string;
+  accuracy: number;
+  days_since_practiced: number;
+  overdue_days: number;
 }
 
 export interface SignProgressDetail {

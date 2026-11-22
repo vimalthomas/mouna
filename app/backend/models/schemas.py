@@ -21,6 +21,7 @@ class VideoResponse(BaseModel):
     video_url: str
     frame_start: int | None = None
     frame_end: int | None = None
+    fps: int | None = None
 
 
 class Prediction(BaseModel):

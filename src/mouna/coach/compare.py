@@ -82,6 +82,7 @@ def score_attempt(
     references: dict,
     model,
     idx_to_label: Optional[dict] = None,
+    reference_bucket_index: Optional[dict] = None,
 ) -> dict:
     """Score a live attempt's RAW (pre-canonicalization) keypoints against
     `target_word`'s reference.
@@ -197,6 +198,7 @@ def score_attempt(
     # hand geometry can't be read (e.g. attempt never showed a hand).
     parameters = None
     divergent_frames: dict = {}
+    looks_like: Optional[str] = None
     if reference_raw_canon is not None:
         attempt_signal = extract_dominant_hand_signal(canon)
         reference_signal = extract_dominant_hand_signal(reference_raw_canon)
@@ -209,6 +211,23 @@ def score_attempt(
                     frame_idx = find_divergent_frame(attempt_signal, reference_signal, param)
                     if frame_idx is not None:
                         divergent_frames[param] = frame_idx
+
+            # "This looks more like X" -- real, not hypothetical: a 5-way
+            # bucket collision (basketball/bed/decide/hot/need) was found
+            # and confirmed against actual reference data in the
+            # 2026-11-01 research pass. If the attempt's own 3-parameter
+            # bucket triple matches a DIFFERENT known word, surface it so
+            # the learner can see exactly which other sign they drifted
+            # toward -- not just that this one didn't match.
+            if reference_bucket_index:
+                attempt_triple = (
+                    parameters["handshape"]["yours"],
+                    parameters["location"]["yours"],
+                    parameters["orientation"]["yours"],
+                )
+                candidates = [w for w in reference_bucket_index.get(attempt_triple, []) if w != target_word]
+                if candidates:
+                    looks_like = sorted(candidates)[0]
 
     # --- verdict ---
     # Design decision: the coarse classifier (open-set, 100-way softmax)
@@ -233,6 +252,12 @@ def score_attempt(
     else:
         verdict = "wrong_sign"
 
+    # Only worth surfacing "this looks like X" when the attempt ISN'T
+    # already judged good -- a correct attempt landing in the same coarse
+    # bucket as another word is diagnostic noise, not something to flag.
+    if verdict == "good":
+        looks_like = None
+
     if not hand_count_match:
         notes.append(
             f"used {'two hands' if attempt_count == 'two' else ('one hand' if attempt_count == 'one' else 'no detected hand')}, "
@@ -256,8 +281,11 @@ def score_attempt(
 
     if parameters:
         for name, result in parameters.items():
-            if not result["match"]:
-                notes.append(f"{name}: expected '{result['target']}', you showed '{result['yours']}'.")
+            if not result["match"] and result.get("why"):
+                notes.append(result["why"])
+
+    if looks_like:
+        notes.append(f"Your attempt's handshape/location/orientation actually matched '{looks_like}' more closely than '{target_word}'.")
 
     if not notes:
         notes.append("Looks good -- matches the target sign's reference closely.")
@@ -270,6 +298,7 @@ def score_attempt(
         "hand_count_match": hand_count_match,
         "parameters": parameters,
         "divergent_frames": divergent_frames,
+        "looks_like": looks_like,
         "overall_verdict": verdict,
         "notes": notes,
     }

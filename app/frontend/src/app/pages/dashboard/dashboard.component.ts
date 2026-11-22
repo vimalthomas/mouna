@@ -1,9 +1,9 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { UserProgressService } from '../../core/services/user-progress.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { SignProgressDetail, UserStats } from '../../core/models/sign.model';
+import { ReviewDueSign, SignProgressDetail, UserStats } from '../../core/models/sign.model';
 
 // Apple system colors: blue, green, orange, red
 const CARD_RGB = [
@@ -26,7 +26,7 @@ const DARK_LABEL  = ['rgba(77,163,255,0.8)', 'rgba(76,214,113,0.8)', 'rgba(255,1
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, DecimalPipe],
   template: `
     <div class="max-w-6xl mx-auto">
       <div class="mb-8">
@@ -61,6 +61,36 @@ const DARK_LABEL  = ['rgba(77,163,255,0.8)', 'rgba(76,214,113,0.8)', 'rgba(255,1
           <p class="text-sm text-ink-muted">Get real-time coaching powered by Gemini AI</p>
         </a>
       </div>
+
+      <!-- Due for Review -- spaced-repetition-ish resurfacing (P10 in the
+           late-signers paper: "going back over what you learned last week,
+           what you learned a month ago"), computed from last-practiced time
+           + accuracy, not shown as more rigorous than it is. -->
+      @if (reviewQueue.length > 0) {
+        <div class="rounded-2xl border mb-8 overflow-hidden" [style]="panelStyle">
+          <div class="px-6 pt-6 pb-4">
+            <h3 class="text-base font-semibold text-ink">Due for review</h3>
+            <p class="text-xs text-ink-muted mt-0.5">Signs you've practiced before that are due to come back around</p>
+          </div>
+          <div>
+            @for (r of reviewQueue; track r.sign) {
+              <a [routerLink]="['/coach']" [queryParams]="{ sign: r.sign }"
+                 class="flex items-center justify-between gap-4 px-6 py-3 border-t border-border/50 hover:bg-border/10 transition-colors">
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="text-sm text-ink capitalize truncate">{{ r.sign }}</span>
+                  <span class="shrink-0 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded bg-border/50 text-ink-muted">
+                    last practiced {{ r.days_since_practiced | number:'1.0-0' }}d ago
+                  </span>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="text-xs text-ink-muted font-mono">{{ r.accuracy }}% last time</span>
+                  <span class="text-xs font-semibold text-accent">Practice →</span>
+                </div>
+              </a>
+            }
+          </div>
+        </div>
+      }
 
       <!-- Sign Progress detail -->
       @if (signs.length > 0) {
@@ -160,6 +190,7 @@ export class DashboardComponent implements OnInit {
   statCards: { label: string; value: string | number }[] = [];
   weakSigns: { sign: string; accuracy: number }[] = [];
   signs: SignProgressDetail[] = [];
+  reviewQueue: ReviewDueSign[] = [];
 
   private get dark(): boolean { return this.themeService.isDark(); }
 
@@ -233,6 +264,11 @@ export class DashboardComponent implements OnInit {
     this.progressService.refresh().subscribe({
       complete: () => (this.loading = false),
       error: () => (this.loading = false),
+    });
+
+    this.progressService.getReviewQueue().subscribe({
+      next: due => (this.reviewQueue = due),
+      error: () => (this.reviewQueue = []),
     });
   }
 }

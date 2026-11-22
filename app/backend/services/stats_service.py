@@ -9,6 +9,16 @@ MIN_ATTEMPTS_FOR_WEAK_SIGN = 3
 WEAK_SIGN_ACCURACY_THRESHOLD = 0.70
 MAX_WEAK_SIGNS = 5
 
+# Review-queue spacing: a first, legible pass at spaced repetition (P10 in
+# the late-signers paper: "going back over what you learned last week, what
+# you learned a month ago"), NOT a real SM-2/Leitner implementation -- no
+# ease factors, no per-review history, just a linear interval from current
+# accuracy. Disclosed as a simple heuristic on purpose rather than presented
+# as more rigorous than it is, same as the NMS thresholds' honesty pattern.
+REVIEW_INTERVAL_MIN_DAYS = 1.0   # accuracy 0% -> due again after 1 day
+REVIEW_INTERVAL_MAX_DAYS = 10.0  # accuracy 100% -> due again after 10 days
+MAX_REVIEW_QUEUE = 10
+
 
 def get_user_stats(db: Session, user_id: int) -> dict:
     total_sessions = (
@@ -90,6 +100,45 @@ def _get_weak_signs(db: Session, user_id: int) -> list[dict]:
 
     weak.sort(key=lambda w: w["accuracy"])
     return weak[:MAX_WEAK_SIGNS]
+
+
+def get_review_queue(db: Session, user_id: int) -> list[dict]:
+    """Signs the user has already attempted at least once, ranked by how
+    overdue they are for review. `updated_at` on SignProgress already
+    tracks "last touched" (see db/models.py), so this needs no new schema
+    -- just a priority computed from data that already exists.
+
+    interval_days scales linearly with accuracy: a sign the user gets right
+    often resurfaces less often, one they struggle with resurfaces sooner.
+    A sign is "due" once days since last practiced >= its interval."""
+    rows = (
+        db.query(Sign.gloss, SignProgress)
+        .join(Sign, Sign.id == SignProgress.sign_id)
+        .filter(SignProgress.user_id == user_id, SignProgress.total_attempts > 0)
+        .all()
+    )
+
+    now = datetime.now(timezone.utc)
+    queue = []
+    for gloss, progress in rows:
+        accuracy = progress.correct_attempts / progress.total_attempts
+        updated_at = progress.updated_at
+        if updated_at.tzinfo is None:
+            updated_at = updated_at.replace(tzinfo=timezone.utc)
+        days_since = (now - updated_at).total_seconds() / 86400
+        interval_days = REVIEW_INTERVAL_MIN_DAYS + accuracy * (REVIEW_INTERVAL_MAX_DAYS - REVIEW_INTERVAL_MIN_DAYS)
+        overdue_days = days_since - interval_days
+        if overdue_days < 0:
+            continue
+        queue.append({
+            "sign": gloss,
+            "accuracy": round(accuracy * 100),
+            "days_since_practiced": round(days_since, 1),
+            "overdue_days": round(overdue_days, 1),
+        })
+
+    queue.sort(key=lambda q: -q["overdue_days"])
+    return queue[:MAX_REVIEW_QUEUE]
 
 
 def _get_all_sign_progress(db: Session, user_id: int) -> list[dict]:

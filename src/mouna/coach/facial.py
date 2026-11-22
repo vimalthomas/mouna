@@ -1,18 +1,42 @@
 """Facial non-manual-marker (NMM) checks: brow furrow (for wh-question-marked
 signs) and headshake (for negation-marked signs).
 
-UNVALIDATED, first pass -- unlike handshape/location/orientation (see
-parameters.py), these have NOT been through a within-word-vs-across-word
-calibration. That check needs a broad set of confirmed reference clips for
-multiple NMS-tagged words to compare against each other, and right now we
-only have the 4 words (what/who/how/no) this feature was built for, built
-via an explicitly weaker "auto_screened" method (see
-scripts/auto_screen_references.py), not human QA. The brow-furrow threshold
-was at least checked against those 3 reference clips' real blendshape
-values (see BROW_FURROW_THRESHOLD's comment) -- the headshake threshold is
-still a reasoned guess, not checked against anything. Report results as
-informational, with that caveat, not as reliable as the three validated
-manual parameters.
+VALIDATED (2026-11-21, scripts/validate_nms_thresholds.py) against held-out
+clips -- not just the 1 representative clip per word the thresholds were
+originally eyeballed against. Positive set: every auto-screened what/who/how
+clip (n=105) for brow furrow, every auto-screened no clip (n=35) for
+headshake. Negative set: a random sample of 12 non-NMS words, 10 clips each
+(n=120), to measure false positives. Results, honestly:
+
+  brow furrow (wh_question_marker), threshold=0.3:
+    true positive rate (recall) 53.3%, false positive rate 27.5%.
+    Youden's-J-optimal threshold is 0.098 (J=0.298 vs current J=0.258) --
+    barely better, and only by trading most of the false-positive gain for
+    recall at the very low end of the range. The real finding is NOT "the
+    threshold was wrong" -- it's that peak brow-furrow alone is a real but
+    WEAK, noisy signal (no single cutpoint cleanly separates positive from
+    negative). Kept at 0.3, favoring precision over recall, as a deliberate
+    (if debatable) choice, not a default -- see git history for the
+    distribution means if revisiting this.
+
+  headshake (negation_marker), threshold=8.0 degrees:
+    true positive rate 71.4%, false positive rate 34.2%. Youden's-J-optimal
+    threshold is 7.03 degrees (J=0.383 vs current J=0.373) -- current
+    threshold was already near-optimal for this one-feature split; this
+    is NOT a miscalibration, the signal itself still has real overlap
+    between positive and negative (natural head movement during ANY sign
+    crosses 7-8 degrees of yaw often enough to cost a third false-positive
+    rate here).
+
+Conclusion for both: single-scalar peak/range features are real, validated,
+better-than-chance signals, but neither is reliable enough on its own to
+present as a solved NMS detector -- report results as informational with
+this caveat, not as validated the way handshape/location/orientation are
+(see parameters.py). A genuine improvement would need a richer feature
+(sustained-duration not just peak, multi-blendshape combination, or
+per-signer neutral-face baselining) or the same discrete-bucket-ensemble
+approach that rescued the geometric parameters after continuous distances
+failed -- not a different single threshold on the same single feature.
 
 Reference side: scripts/auto_screen_references.py stores
 references[word]["representative_face_signal"] = {

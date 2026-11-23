@@ -133,6 +133,33 @@ def _get_client() -> anthropic.AsyncAnthropic | None:
     return _client
 
 
+_gemini_client = None
+
+
+async def _gemini(system: str, turns: list[dict]) -> str | None:
+    """Gemini fallback when only GEMINI_API_KEY is set. `turns` use the
+    Claude roles (user/assistant). Returns None on any failure, so callers
+    fall back to the template text."""
+    global _gemini_client
+    if not settings.gemini_api_key:
+        return None
+    try:
+        from google import genai
+        from google.genai import types
+        if _gemini_client is None:
+            _gemini_client = genai.Client(api_key=settings.gemini_api_key)
+        contents = [{"role": "model" if t["role"] == "assistant" else "user", "parts": [{"text": t["content"]}]}
+                    for t in turns]
+        resp = await _gemini_client.aio.models.generate_content(
+            model=settings.gemini_model, contents=contents,
+            config=types.GenerateContentConfig(system_instruction=system, max_output_tokens=1024),
+        )
+        return (resp.text or "").strip() or None
+    except Exception as e:  # noqa: BLE001 -- any SDK/network/key error means "use the template"
+        logger.warning("Gemini unavailable (%s: %s)", type(e).__name__, str(e)[:120])
+        return None
+
+
 async def write_feedback(target: str, description: str, score: dict) -> tuple[str, str]:
     """Returns (message, source) where source is "claude" or "template".
     The message is a short summary followed by the per-part checklist."""
@@ -154,9 +181,11 @@ async def write_feedback(target: str, description: str, score: dict) -> tuple[st
 async def _summary(facts: dict) -> tuple[str, str]:
     template = compose_template(facts)
     client = _get_client()
-    if client is None:
-        return template, "template"
     facts = {k: v for k, v in facts.items() if not k.startswith("_")}
+    if client is None:
+        text = await _gemini(SYSTEM_PROMPT, [{"role": "user", "content": "Results for this attempt:\n"
+                                             + json.dumps(facts, indent=2) + "\n\nWrite the feedback the learner reads."}])
+        return (text, "gemini") if text else (template, "template")
     try:
         response = await client.beta.messages.create(
             model=settings.coach_llm_model,
@@ -215,18 +244,21 @@ async def answer_chat(question: str, target: str, description: str, last_feedbac
     a truthful fixed answer for the common question, and a plain note that
     free-form chat needs a key -- never a fake 'connection' error."""
     client = _get_client()
+    context = f"Sign being practiced: '{target}'. Sign description: {description or 'n/a'}.\n"
+    context += f"Latest attempt feedback shown to the learner:\n{last_feedback}" if last_feedback else "No attempt recorded yet."
+    messages = [*history[-6:], {"role": "user", "content": f"{context}\n\nLearner's question: {question}"}]
+    if client is None and settings.gemini_api_key:
+        text = await _gemini(CHAT_SYSTEM, messages)
+        return (text, "gemini") if text else ("I couldn't reach the AI coach just now. Please try again in a moment.", "template")
     if client is None:
         q = question.lower()
         if any(w in q for w in ("grade", "graded", "movement", "motion", "move")):
             return MOVEMENT_EXPLAINER, "template"
         return (
-            "I can only answer free-form questions once an AI key is set up for the app (ANTHROPIC_API_KEY in the "
-            "backend .env). Your results above don't need it: they come from the app's own checks.",
+            "I can only answer free-form questions once an AI key is set up for the app (ANTHROPIC_API_KEY or GEMINI_API_KEY "
+            "in the backend .env). Your results above don't need it: they come from the app's own checks.",
             "template",
         )
-    context = f"Sign being practiced: '{target}'. Sign description: {description or 'n/a'}.\n"
-    context += f"Latest attempt feedback shown to the learner:\n{last_feedback}" if last_feedback else "No attempt recorded yet."
-    messages = [*history[-6:], {"role": "user", "content": f"{context}\n\nLearner's question: {question}"}]
     try:
         response = await client.beta.messages.create(
             model=settings.coach_llm_model,

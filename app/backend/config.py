@@ -6,6 +6,10 @@ class Settings(BaseSettings):
     # (services/coach_writer.py); without it, plain-language templates are used.
     anthropic_api_key: str = ""
     coach_llm_model: str = "claude-opus-5-5"
+    # Optional alternative when no Claude key is set: Google Gemini writes the
+    # same messages from the same facts (services/coach_writer.py).
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
     model_checkpoint_path: str = "./checkpoints/pose_transformer_best.pt"
     signs_json_path: str = "./data/signs.json"
     wlasl_json_path: str = "../wlasl/WLASL_v0.3.json"

@@ -139,8 +139,8 @@ export interface CoachingMessage {
   hand_count_match?: boolean | null;
   parameters?: Record<string, ParameterResult> | null;
   feedback?: string;
-  /** "claude" when Claude wrote the message, "template" otherwise. */
-  feedback_source?: 'claude' | 'template';
+  /** Which AI wrote the message ("claude" / "gemini"), or "template" without a key. */
+  feedback_source?: 'claude' | 'gemini' | 'template';
   charts?: AttemptCharts | null;
   /** False when the sign has no reference recording, so nothing was compared. */
   graded?: boolean;

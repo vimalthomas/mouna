@@ -1,0 +1,18 @@
+{
+  "correct": 163,
+  "handshape_differs": 3667,
+  "minimal_pairs": 100,
+  "auc_all": {
+    "vector": 0.797,
+    "old": 0.804
+  },
+  "auc_minimal_pairs": {
+    "vector": 0.771,
+    "old": 0.747
+  },
+  "correct_typical": 0.791,
+  "settings": {
+    "depth": false,
+    "own_weight": 0.0
+  }
+}

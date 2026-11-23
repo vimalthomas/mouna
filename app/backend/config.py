@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     cors_origins: str = "http://localhost:4200"
+    # Optional pattern of extra allowed origins, e.g. https://.*\.vercel\.app for a
+    # Vercel-hosted frontend (production and preview deployments). Empty = off.
+    cors_origin_regex: str = ""
     confidence_threshold: float = 0.25
     max_seq_len: int = 150
     num_classes: int = 2000

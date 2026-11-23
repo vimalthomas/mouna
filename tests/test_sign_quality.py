@@ -149,3 +149,47 @@ def test_variation_clips_left_out_of_reference(word):
     if word not in REFS or REFS[word].get("qa_method") == "auto_screened":
         pytest.skip("no reference")
     assert REFS[word].get("variation_hands") == [v["n_hands"] for v in VARIANTS[word]["variations"]]
+
+
+# ---- v3: 3D skin (scripts/build_sign_skin.py) -----------------------------
+
+import gzip  # noqa: E402
+
+SKIN_DIR = ROOT / "data/references/skin"
+
+
+def _skin(word):
+    path = SKIN_DIR / f"{word}.json.gz"
+    return json.loads(gzip.decompress(path.read_bytes())) if path.exists() else None
+
+
+@pytest.mark.parametrize("word", PRACTICE)
+def test_skin_exists_and_follows_the_example_video(word):
+    s = _skin(word)
+    assert s is not None, f"{word}: no 3D skin; run scripts/build_sign_skin.py {word}"
+    assert s["video_id"] == EXAMPLES[word]["video_id"], f"{word}: skin built from another video than the example shown"
+    assert len(s["frames"]) == s["n_frames"] > 0
+
+
+@pytest.mark.parametrize("word", PRACTICE)
+def test_skin_shows_the_signer(word):
+    s = _skin(word)
+    if s is None:
+        pytest.skip("no skin")
+    # 0.6, not higher: in signs like hot and black the hand passes over the face
+    assert s["quality"]["face_found"] >= 0.6, f"{word}: face found in only {s['quality']['face_found']:.0%} of frames"
+    assert s["quality"]["hand_found"] >= 0.3, f"{word}: a hand found in only {s['quality']['hand_found']:.0%} of frames"
+
+
+@pytest.mark.parametrize("word", PRACTICE)
+def test_skin_shows_both_hands_for_two_handed_signs(word):
+    from choose_display_clips import target_hands
+    s = _skin(word)
+    if s is None or target_hands()[word] != 2:
+        pytest.skip("one-handed or no skin")
+    both = sum(all(h is not None for h in f["h"]) for f in s["frames"]) / s["n_frames"]
+    from choose_display_clips import VERIFIED_TWO_HANDED
+    if both < 0.1 and word in VERIFIED_TWO_HANDED:
+        # known gap: hands pressed together (bed) are seen as one by the tracker
+        pytest.xfail(f"{word}: pressed hands tracked as one; skin shows one hand")
+    assert both >= 0.1, f"{word}: two-handed sign, but both hands appear in only {both:.0%} of skin frames"

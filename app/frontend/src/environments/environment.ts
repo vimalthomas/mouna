@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:8001',
-  wsBaseUrl: 'ws://localhost:8001',
+  apiBaseUrl: 'http://localhost:8002',
+  wsBaseUrl: 'ws://localhost:8002',
   mediaPipe: {
     wasmPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm',
     handLandmarkerModel: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task',

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
 from models.schemas import SignListResponse, VideoResponse
 from services import example_videos
@@ -19,6 +19,21 @@ async def get_reference_skeleton(word: str) -> list:
     if frames is None:
         raise HTTPException(status_code=404, detail=f"No reference data for '{word}' yet.")
     return frames
+
+
+_SKIN = Path(__file__).resolve().parents[3] / "data" / "references" / "skin"
+
+
+@router.get("/signs/{word}/skin")
+async def get_skin(word: str) -> Response:
+    """3D skin data for the Learn screen (v3): per frame of the sign's example
+    video, both hands (video position + 3D finger shape), upper body and the
+    face mesh, from scripts/build_sign_skin.py. Stored gzipped; sent as-is."""
+    path = _SKIN / f"{word.lower().replace('/', '')}.json.gz"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail=f"No 3D skin for '{word}' yet.")
+    return Response(path.read_bytes(), media_type="application/json",
+                    headers={"Content-Encoding": "gzip", "Cache-Control": "max-age=3600"})
 
 
 @router.get("/signs/{word}/variations")

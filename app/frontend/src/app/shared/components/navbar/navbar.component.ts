@@ -14,8 +14,9 @@ import { AuthService } from '../../../core/services/auth.service';
     <nav class="w-60 min-w-60 h-screen flex flex-col bg-surface border-r border-border/70">
 
       <!-- Wordmark -->
-      <a routerLink="/" class="block px-5 pt-7 pb-6" aria-label="mouna home">
+      <a routerLink="/" class="relative block px-5 pt-7 pb-6" aria-label="mouna home">
         <img [src]="theme.isDark() ? 'brand/mouna-logo-dark.png' : 'brand/mouna-logo.png'" alt="mouna" class="w-full h-auto" />
+        <span class="absolute top-3 right-4 text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded bg-accent text-white">v3</span>
       </a>
 
       <!-- Nav -->

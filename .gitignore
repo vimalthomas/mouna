@@ -155,3 +155,6 @@ wandb/
 .ruff_cache/
 data/references/backups/
 app/backend/*.db
+data/skin_models/
+data/references/skin_raw/
+app/frontend/public/__skin_check.html

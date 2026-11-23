@@ -7,6 +7,7 @@ import { CameraViewComponent } from '../../shared/components/camera-view/camera-
 import { SkeletonCompareComponent } from '../../shared/components/skeleton-compare/skeleton-compare.component';
 import { AttemptOverlayComponent } from '../../shared/components/attempt-overlay/attempt-overlay.component';
 import { Hand3dComponent } from '../../shared/components/hand-3d/hand-3d.component';
+import { SignSkinComponent } from '../../shared/components/sign-skin/sign-skin.component';
 import { AttemptChartsComponent } from '../../shared/components/attempt-charts/attempt-charts.component';
 import { SignFrameComponent } from '../../shared/components/sign-frame/sign-frame.component';
 import { CoachSessionService } from '../../core/services/coach-session.service';
@@ -57,7 +58,7 @@ const CHECK_HOLD_MS = 1200;
 @Component({
   selector: 'app-coach',
   standalone: true,
-  imports: [CameraViewComponent, SkeletonCompareComponent, AttemptOverlayComponent, Hand3dComponent, AttemptChartsComponent, SignFrameComponent, FormsModule],
+  imports: [CameraViewComponent, SkeletonCompareComponent, AttemptOverlayComponent, Hand3dComponent, SignSkinComponent, AttemptChartsComponent, SignFrameComponent, FormsModule],
   template: `
     <div class="max-w-7xl mx-auto" [style.paddingRight]="showChat ? '380px' : '0'">
 
@@ -164,7 +165,10 @@ const CHECK_HOLD_MS = 1200;
               </div>
             </div>
             <div>
-              @if (referenceSkeleton?.length) {
+              <!-- v3: face and hands as a 3D skin, following the video; older 3D hand if a sign has no skin yet -->
+              @if (skinAvailable !== false) {
+                <app-sign-skin [word]="targetSignWord" [videoHost]="previewVideosEl?.nativeElement ?? null" (available)="skinAvailable = $event" />
+              } @else if (referenceSkeleton?.length) {
                 <app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="playbackRate" [loopSeconds]="signSeconds" />
               }
             </div>
@@ -779,6 +783,8 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
     { label: 'End', phase: 'end', caption: 'The arrowhead shows where it finishes.' },
   ];
   variations: { video_url: string; label?: string }[] = [];
+  /** v3: null while the 3D skin loads, false if this sign has none (show the older 3D hand). */
+  skinAvailable: boolean | null = null;
   get variantLabel(): string | null { return this.variations.find(v => v.label)?.label ?? null; }
   unavailableNotice = '';
 
@@ -996,6 +1002,7 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
     const info = this.targetSignInfo;
     this.requiredSteps = info ? [...(info.manual_checks as PrepStep[]), ...(info.nms_required ? ['facial' as PrepStep] : [])] : [];
     this.loadReferenceVideo();
+    this.skinAvailable = null;  // try the 3D skin again for the new sign
     this.referenceBuckets = null;
     this.prepIndex = 0;
     this.liveFeedback = null;

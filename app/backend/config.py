@@ -4,6 +4,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Optional: when set, Claude writes the post-attempt coaching message
     # (services/coach_writer.py); without it, plain-language templates are used.
+    # Demo / guest mode: requests without a login are served as one shared
+    # guest account (no sign-in or sign-up needed). Off unless set in .env.
+    allow_guest: bool = False
     anthropic_api_key: str = ""
     coach_llm_model: str = "claude-opus-5-5"
     # Optional alternative when no Claude key is set: Google Gemini writes the

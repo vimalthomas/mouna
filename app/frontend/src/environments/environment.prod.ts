@@ -1,5 +1,8 @@
 export const environment = {
   production: true,
+  /** Demo deployment: no sign-in or sign-up; the backend serves everyone as a
+   * shared guest (needs ALLOW_GUEST=true on the backend). */
+  guestMode: true,
   apiBaseUrl: '/api',
   wsBaseUrl: `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`,
   mediaPipe: {

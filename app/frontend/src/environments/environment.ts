@@ -1,5 +1,7 @@
 export const environment = {
   production: false,
+  /** Local: normal sign-in. The deployed build turns guest mode on. */
+  guestMode: false,
   apiBaseUrl: 'http://localhost:8002',
   wsBaseUrl: 'ws://localhost:8002',
   mediaPipe: {

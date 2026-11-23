@@ -23,8 +23,13 @@ export class AuthService {
     return localStorage.getItem(REFRESH_TOKEN_KEY);
   }
 
+  /** Guest mode (demo deployment): no login; the backend treats everyone as the shared guest. */
+  get guestMode(): boolean {
+    return !!(environment as { guestMode?: boolean }).guestMode;
+  }
+
   get isAuthenticated(): boolean {
-    return !!this.accessToken;
+    return this.guestMode || !!this.accessToken;
   }
 
   signup(payload: SignupRequest): Observable<AuthResponse> {

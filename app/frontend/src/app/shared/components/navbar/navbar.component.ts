@@ -51,14 +51,16 @@ import { AuthService } from '../../../core/services/auth.service';
             <span class="shrink-0 w-8 h-8 rounded-full bg-surface-sunk text-ink-muted text-xs font-semibold flex items-center justify-center uppercase">{{ initials(user.name || user.email) }}</span>
             <div class="min-w-0 flex-1">
               <p class="text-sm text-ink truncate">{{ user.name || 'You' }}</p>
-              <p class="text-[11px] text-ink-faint truncate">{{ user.email }}</p>
+              <p class="text-[11px] text-ink-faint truncate">{{ auth.guestMode ? 'Demo, no sign-in needed' : user.email }}</p>
             </div>
+            @if (!auth.guestMode) {
             <button (click)="onLogout()" title="Log out" aria-label="Log out"
               class="shrink-0 text-ink-faint hover:text-ink transition-colors p-1">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
               </svg>
             </button>
+            }
           </div>
         }
         <div class="flex items-center gap-2 px-1">

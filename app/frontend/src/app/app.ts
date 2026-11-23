@@ -37,7 +37,9 @@ export class App {
         this.isStandalone.set(STANDALONE_ROUTES.includes(event.urlAfterRedirects.split('?')[0]));
       });
 
-    if (this.authService.isAuthenticated) {
+    if (this.authService.guestMode) {
+      this.authService.loadMe().subscribe({ error: () => {} });   // the shared guest
+    } else if (this.authService.isAuthenticated) {
       this.authService.loadMe().subscribe({ error: () => this.authService.logout() });
     }
   }

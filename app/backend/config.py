@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     # Demo / guest mode: requests without a login are served as one shared
     # guest account (no sign-in or sign-up needed). Off unless set in .env.
     allow_guest: bool = False
+    # The /ws/debug route runs the models on any frames sent to it, without a
+    # login. Fine locally; turned off in the public container image.
+    enable_debug_routes: bool = True
     anthropic_api_key: str = ""
     coach_llm_model: str = "claude-opus-5-5"
     # Optional alternative when no Claude key is set: Google Gemini writes the

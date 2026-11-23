@@ -52,7 +52,8 @@ app.include_router(signs.router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(coach_frames.router)
-app.include_router(debug.router)
+if settings.enable_debug_routes:
+    app.include_router(debug.router)
 
 videos_dir = Path(settings.videos_dir)
 if videos_dir.exists():

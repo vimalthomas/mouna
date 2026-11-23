@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Assemble the Hugging Face Space (Docker) for the Mouna backend.
+"""Assemble the public backend container (Docker) for the Mouna demo.
 
-Writes deploy/hf-space/ (not in git: it holds videos) with exactly what the
+Runs on Google Cloud Run (see scripts/deploy_cloud_run.sh), and also works as
+a Hugging Face Docker Space or on Railway/Fly. Writes deploy/backend/ (not in
+git: it holds videos) with exactly what the
 backend needs to serve the practice signs:
   app/backend/            API code (no local DB, .env or unused models)
   src/mouna/              shared code the backend imports
@@ -15,7 +17,7 @@ The container runs in guest mode (no sign-in), keeps its database in /tmp
 (resets on restart), and allows a Vercel-hosted frontend (*.vercel.app).
 
 Run:  ./venv/bin/python scripts/build_hf_space.py
-Then upload deploy/hf-space/ to the Space (see the printed instructions).
+Then deploy it: scripts/deploy_cloud_run.sh
 """
 import json
 import os
@@ -24,7 +26,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "deploy" / "hf-space"
+OUT = ROOT / "deploy" / "backend"
 BACKEND = ROOT / "app" / "backend"
 VIDEOS = ROOT / "app" / "wlasl" / "videos"
 OTHER_SIGNERS = 3  # matches the Learn screen's "Other people signing it" (routers/signs.py)
@@ -58,7 +60,7 @@ ENV MODEL_CHECKPOINT_PATH=../../data/best_model_v4canon.pth \\
     DATABASE_URL=sqlite:////tmp/mouna.db \\
     NUM_CLASSES=100 MAX_SEQ_LEN=150 FEATURE_DIM=225 CONFIDENCE_THRESHOLD=0.25 \\
     MIN_ATTEMPTS_FOR_COMPLETION=5 COMPLETION_ACCURACY_THRESHOLD=0.70 \\
-    ALLOW_GUEST=true \\
+    ALLOW_GUEST=true ENABLE_DEBUG_ROUTES=false \\
     CORS_ORIGINS=http://localhost:4200 \\
     CORS_ORIGIN_REGEX=https://.*\\\\.vercel\\\\.app \\
     PYTHONUNBUFFERED=1
@@ -75,7 +77,8 @@ cd app/backend
 # valid across restarts; otherwise a random one is made at each start.
 export JWT_SECRET_KEY="${JWT_SECRET_KEY:-$(python -c 'import secrets; print(secrets.token_urlsafe(48))')}"
 alembic upgrade head
-exec uvicorn main:app --host 0.0.0.0 --port 7860 --proxy-headers --forwarded-allow-ips='*'
+# Cloud Run (and most hosts) say which port to use in $PORT; Hugging Face uses 7860
+exec uvicorn main:app --host 0.0.0.0 --port "${PORT:-7860}" --proxy-headers --forwarded-allow-ips='*'
 """
 
 REQUIREMENTS = """\
@@ -184,7 +187,7 @@ def main() -> None:
     (OUT / ".dockerignore").write_text("__pycache__\n*.pyc\n.git\n")
 
     total = sum(f.stat().st_size for f in OUT.rglob("*") if f.is_file())
-    print(f"{len(signs)} practice signs, {len(keep)} videos ({size / 1e6:.0f} MB); Space folder {total / 1e6:.0f} MB -> {OUT.relative_to(ROOT)}")
+    print(f"{len(signs)} practice signs, {len(keep)} videos ({size / 1e6:.0f} MB); image folder {total / 1e6:.0f} MB -> {OUT.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

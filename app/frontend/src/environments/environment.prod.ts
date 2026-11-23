@@ -3,8 +3,9 @@ export const environment = {
   /** Demo deployment: no sign-in or sign-up; the backend serves everyone as a
    * shared guest (needs ALLOW_GUEST=true on the backend). */
   guestMode: true,
-  apiBaseUrl: '/api',
-  wsBaseUrl: `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`,
+  // Backend on Railway (deploy/backend, scripts/build_backend_image.py); guest mode on there.
+  apiBaseUrl: 'https://mouna-backend-production.up.railway.app',
+  wsBaseUrl: 'wss://mouna-backend-production.up.railway.app',
   mediaPipe: {
     wasmPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm',
     handLandmarkerModel: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task',

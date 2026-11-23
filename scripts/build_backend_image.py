@@ -185,6 +185,10 @@ def main() -> None:
     (OUT / "requirements.txt").write_text(REQUIREMENTS)
     (OUT / "README.md").write_text(README)
     (OUT / ".dockerignore").write_text("__pycache__\n*.pyc\n.git\n")
+    # Uploaders like `railway up` honour the repo's .gitignore (which drops
+    # *.mp4 and *.pth); this folder must ship the videos and the model.
+    (OUT / ".railwayignore").write_text("!*.mp4\n!*.pth\n")
+    (OUT / ".gitignore").write_text("!*.mp4\n!*.pth\n")
 
     total = sum(f.stat().st_size for f in OUT.rglob("*") if f.is_file())
     print(f"{len(signs)} practice signs, {len(keep)} videos ({size / 1e6:.0f} MB); image folder {total / 1e6:.0f} MB -> {OUT.relative_to(ROOT)}")

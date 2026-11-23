@@ -1322,6 +1322,14 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
       if (msg.prediction && msg.prediction !== this.targetSignWord) {
         this.pushChat({ role: 'system', text: `Recognizer's own guess: "${msg.prediction}" (${Math.round((msg.confidence || 0) * 100)}%), a second opinion, not your grade` });
       }
+    } else if (msg.type === 'coaching_update') {
+      // The AI's wording of the result already shown (decided locally).
+      // Swap it into that attempt's message; ignore it if a newer attempt
+      // has been recorded since.
+      if (!this.lastResult || msg.attempt_number !== this.lastResult.attempt_number) return;
+      this.lastResult = { ...this.lastResult, feedback: msg.feedback, feedback_source: msg.feedback_source };
+      const i = this.chatMessages.map(m => m.coachingData?.attempt_number).lastIndexOf(msg.attempt_number);
+      if (i >= 0) this.chatMessages[i] = { ...this.chatMessages[i], text: msg.feedback || this.chatMessages[i].text, coachingData: this.lastResult };
     } else if (msg.type === 'retry') {
       this.recordState = 'ready';
       this.pushChat({ role: 'system', text: msg.message || 'Please try the sign again.' });

@@ -16,3 +16,12 @@ os.chdir(BACKEND)
 @pytest.fixture(scope="session")
 def root() -> Path:
     return ROOT
+
+
+@pytest.fixture(autouse=True)
+def no_ai_keys(monkeypatch):
+    """Tests check the app's own logic and never call a paid AI API, even
+    when a key is in app/backend/.env."""
+    from config import settings
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+    monkeypatch.setattr(settings, "gemini_api_key", "")

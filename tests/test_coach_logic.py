@@ -146,3 +146,15 @@ def test_other_form_is_named_not_called_wrong():
     facts = coach_writer._facts("same", "", score)
     assert "one-handed version" in facts["fixes"][0]["fix"]
     assert "one-handed version" in coach_writer.checklist(facts)
+
+
+def test_result_is_decided_locally_before_any_ai():
+    # Bug: the result screen waited on the AI ("nothing happens after
+    # recording"). The local message must be complete on its own, and the AI
+    # step must be skipped entirely without a key.
+    from services import coach_writer
+    score = {"overall_verdict": "needs_work", "embedding_similarity": 0.6, "hand_count_match": True, "parameters": {
+        "orientation": {"match": False, "why": "Turn your palm."}}}
+    msg = coach_writer.local_feedback("who", "", score)
+    assert "Turn your palm." in msg and "Palm direction" in msg
+    assert asyncio.run(coach_writer.ai_feedback("who", "", score)) is None

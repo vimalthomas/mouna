@@ -9,7 +9,9 @@ class Settings(BaseSettings):
     # Optional alternative when no Claude key is set: Google Gemini writes the
     # same messages from the same facts (services/coach_writer.py).
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    # Tried in order; the next is used when one is busy (503) or retired (404).
+    # "-latest" aliases follow Google's current models.
+    gemini_model: str = "gemini-flash-latest,gemini-flash-lite-latest"
     model_checkpoint_path: str = "./checkpoints/pose_transformer_best.pt"
     signs_json_path: str = "./data/signs.json"
     wlasl_json_path: str = "../wlasl/WLASL_v0.3.json"

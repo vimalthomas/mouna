@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import uuid
@@ -54,6 +55,19 @@ def _is_supported(sign: str) -> bool:
     # always see the pre-startup empty list (Python's `from x import y` copies
     # the reference once, it doesn't track later reassignment in x).
     return sign.lower() in {w.lower() for w in model_service.idx_to_label.values()}
+
+
+async def _send_ai_wording(websocket: WebSocket, target: str, description: str, score: dict, attempt_number: int) -> None:
+    """Follow-up to a "coaching" message: the AI's wording of the same,
+    already-shown result. Silent if the AI fails or the learner has left."""
+    try:
+        upgraded = await coach_writer.ai_feedback(target, description, score)
+        if upgraded:
+            text, source = upgraded
+            await websocket.send_json({"type": "coaching_update", "attempt_number": attempt_number,
+                                       "feedback": text, "feedback_source": source})
+    except Exception as e:  # noqa: BLE001 -- socket closed, etc.; the local message already stands
+        logger.info("AI wording not delivered (%s)", type(e).__name__)
 
 
 @router.websocket("/ws/coach-frames")
@@ -274,12 +288,13 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                             session_id=session_id,
                         )
 
-                # Coaching message from the validated CP results: Claude when
-                # ANTHROPIC_API_KEY is set, plain-language templates otherwise.
+                # Decided locally first: the verdict and checklist come from
+                # the app's own checks and go out immediately. Only then is
+                # the finished status sent to the AI (if a key is set) to
+                # reword the summary; that arrives as "coaching_update".
                 sign_info = signs_service.signs_by_word.get(target_sign.lower())
-                feedback_text, feedback_source = await coach_writer.write_feedback(
-                    target_sign, sign_info.description if sign_info else "", score,
-                )
+                description = sign_info.description if sign_info else ""
+                feedback_text, feedback_source = coach_writer.local_feedback(target_sign, description, score), "template"
                 feedback_data = {"feedback": feedback_text, "tips": []}
                 last_feedback = feedback_text
                 if not feedback_data.get("tips"):
@@ -324,6 +339,8 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                         "completed": sign_progress.completed,
                     } if sign_progress else None,
                 })
+                if coach_writer.ai_enabled():
+                    asyncio.create_task(_send_ai_wording(websocket, target_sign, description, score, coaching.attempts))
 
             elif msg_type == "chat":
                 user_text = data.get("text", "")

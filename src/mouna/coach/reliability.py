@@ -12,6 +12,9 @@ from functools import lru_cache
 from pathlib import Path
 
 SUMMARY = Path(__file__).resolve().parents[3] / "data/references/judgement_benchmark/summary.json"
+# the CP-profile checks (mouna.coach.cp_profile), scored on held-out TEST signs by scripts/calibrate_cp_checks.py
+PROFILE_SCORES = Path(__file__).resolve().parents[3] / "data/references/cp_tolerances.json"
+PROFILE_CHECKS = {"fingers": "fingers", "location_profile": "location", "movement_profile": "movement"}
 MAX_FALSE_ALARM = 0.10   # wrongly flags at most 1 in 10 correct attempts
 MIN_CATCHES = 0.50       # catches at least half of real differences (where measurable)
 CHECKS = ("hand_count", "handshape", "location", "orientation")
@@ -32,4 +35,21 @@ def check_reliability(path: str = str(SUMMARY)) -> dict[str, dict]:
         ca = (m.get("catches_when_different") or {}).get("rate")
         reliable = fa is not None and fa <= MAX_FALSE_ALARM and (ca is None or ca >= MIN_CATCHES)
         out[c] = {"false_alarm": fa, "catches": ca, "reliable": reliable}
+    out.update(profile_reliability())
+    return out
+
+
+@lru_cache(maxsize=1)
+def profile_reliability(path: str = str(PROFILE_SCORES)) -> dict[str, dict]:
+    """Same bar for the CP-profile checks, using their TEST-half scores."""
+    try:
+        fams = json.loads(Path(path).read_text())["families"]
+    except (OSError, ValueError, KeyError):
+        return {c: {"false_alarm": None, "catches": None, "reliable": False} for c in PROFILE_CHECKS}
+    out = {}
+    for check, fam in PROFILE_CHECKS.items():
+        t = fams.get(fam, {}).get("test", {})
+        fa, ca = t.get("false_alarm_on_correct"), t.get("catches_when_different")
+        out[check] = {"false_alarm": fa, "catches": ca,
+                      "reliable": fa is not None and ca is not None and fa <= MAX_FALSE_ALARM and ca >= MIN_CATCHES}
     return out

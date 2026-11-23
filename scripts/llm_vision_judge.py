@@ -168,6 +168,7 @@ def main() -> None:
                 second[g] = v
                 break
     df = df[df.target.isin(second)]
+    groups = {k: g[g.target.isin(second)] for k, g in groups.items()}   # signs with a second reference only
     sample = pd.concat([g.sample(min(N, len(g)), random_state=3).assign(group=k) for k, g in groups.items()]).drop_duplicates("video_id")
     print(f"{len(sample)} attempts to judge", flush=True)
 
@@ -188,6 +189,7 @@ def main() -> None:
                     **{f"llm_{k}": ans[k] for k in PARTS}, "llm_note": ans["note"], "llm_model": ans["model"]})
         if (i + 1) % 20 == 0:
             print(f"  {i + 1}/{len(sample)}", flush=True)
+            pd.DataFrame(out).to_csv(OUT / f"llm_vision_{os.environ.get('JUDGE_TAG', 'v2')}_rows.partial.csv", index=False)
         time.sleep(1.5)
 
     res = pd.DataFrame(out)

@@ -17,6 +17,9 @@ when an attempt falls clearly outside that range, and says what to do in
 plain words. Every finding is a hint until the judgement benchmark shows the
 underlying check is reliable (mouna.coach.reliability).
 """
+import json
+from pathlib import Path
+
 import numpy as np
 
 FINGERS = {"thumb": (1, 4), "index": (5, 8), "middle": (9, 12), "ring": (13, 16), "little": (17, 20)}
@@ -110,22 +113,39 @@ def _outside(x, r, rel=0.25, abs_=0.0):
 FINGER_WORDS = {"thumb": "thumb", "index": "index finger", "middle": "middle finger", "ring": "ring finger", "little": "little finger"}
 
 
-def compare(att: dict, prof: dict, sign: str) -> list[dict]:
+# How far outside the fluent range counts as different, per family: a multiple
+# of the range's width (plus a small absolute floor). Chosen by
+# scripts/calibrate_cp_checks.py on half the signs, reported on the other half;
+# stored in data/references/cp_tolerances.json.
+TOL_FILE = Path(__file__).resolve().parents[3] / "data/references/cp_tolerances.json"
+DEFAULT_TOL = {"finger": 0.25, "thumb": 0.25, "location": 0.25, "travel": 0.4}
+
+
+def tolerances() -> dict:
+    try:
+        return {**DEFAULT_TOL, **json.loads(TOL_FILE.read_text())["chosen"]}
+    except (OSError, ValueError, KeyError):
+        return dict(DEFAULT_TOL)
+
+
+def compare(att: dict, prof: dict, sign: str, tol: dict | None = None) -> list[dict]:
     """Findings: {"part", "feature", "say"} -- only where the attempt is clearly
     outside what fluent signers do."""
+    t = tol or tolerances()
     S, out = sign.upper(), []
     for name, word in FINGER_WORDS.items():
         k = f"finger_{name}"
-        o = _outside(att.get(k), prof.get(k), abs_=0.12)
+        o = _outside(att.get(k), prof.get(k), rel=t["finger"], abs_=0.12)
         if o < 0:
             out.append({"part": "handshape", "feature": k, "say": f"Your {word} is more bent than fluent signers' in {S}; straighten it."})
         elif o > 0:
             out.append({"part": "handshape", "feature": k, "say": f"Your {word} is straighter than fluent signers' in {S}; bend it more."})
-    o = _outside(att.get("thumb_out"), prof.get("thumb_out"), abs_=0.15)
+    o = _outside(att.get("thumb_out"), prof.get("thumb_out"), rel=t["thumb"], abs_=0.15)
     if o:
         out.append({"part": "handshape", "feature": "thumb_out",
                     "say": f"Your thumb is {'tucked in' if o < 0 else 'sticking out'} more than in {S}."})
-    ox, oy = _outside(att.get("loc_x"), prof.get("loc_x"), abs_=0.2), _outside(att.get("loc_y"), prof.get("loc_y"), abs_=0.2)
+    ox = _outside(att.get("loc_x"), prof.get("loc_x"), rel=t["location"], abs_=0.2)
+    oy = _outside(att.get("loc_y"), prof.get("loc_y"), rel=t["location"], abs_=0.2)
     if oy:
         out.append({"part": "location", "feature": "loc_y", "say": f"Your hand is {'higher' if oy < 0 else 'lower'} than where {S} is signed."})
     if ox:
@@ -141,7 +161,7 @@ def compare(att: dict, prof: dict, sign: str) -> list[dict]:
             out.append({"part": "movement", "feature": "strokes", "say": f"In {S} the movement repeats; you did it once."})
         elif st["p90"] <= 1 and att["strokes"] >= 3:
             out.append({"part": "movement", "feature": "strokes", "say": f"In {S} the movement happens once; you repeated it."})
-    o = _outside(att.get("travel"), prof.get("travel"), rel=0.4, abs_=0.1)
+    o = _outside(att.get("travel"), prof.get("travel"), rel=t["travel"], abs_=0.1)
     if o:
         out.append({"part": "movement", "feature": "travel",
                     "say": f"Your hand moved {'much less' if o < 0 else 'much more'} than fluent signers' in {S}; make the movement {'bigger' if o < 0 else 'smaller'}."})

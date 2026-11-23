@@ -20,10 +20,14 @@ cosine similarity.
 
 from typing import Optional
 
+import json
+from pathlib import Path
+
 import numpy as np
 import torch
 
 from mouna.coach.reliability import check_reliability
+from mouna.coach import cp_profile
 from mouna.coach.parameters import compare_discrete, extract_dominant_hand_signal, find_divergent_frame
 from mouna.data.handedness import canonicalize_handedness, detect_dominant_hand
 from mouna.data.part_normalize import normalize_per_part
@@ -312,6 +316,7 @@ def score_attempt(
         "coarse_confidence": coarse_confidence,
         "embedding_similarity": embedding_similarity,
         "check_reliability": reliability,
+        "cp_findings": cp_findings(canon, target_word, reliability),
         "hand_count_match": hand_count_match,
         "parameters": parameters,
         "divergent_frames": divergent_frames,
@@ -319,3 +324,28 @@ def score_attempt(
         "overall_verdict": verdict,
         "notes": notes,
     }
+
+
+_PROFILES: dict | None = None
+_FAMILY = {"handshape": "fingers", "location": "location_profile", "movement": "movement_profile"}
+
+
+def cp_findings(canon: np.ndarray, target_word: str, reliability: dict) -> list[dict]:
+    """The learner's own CPs vs the range fluent signers use for this sign
+    (mouna.coach.cp_profile): what specifically differs, each marked reliable
+    or not by the judgement benchmark."""
+    global _PROFILES
+    if _PROFILES is None:
+        try:
+            _PROFILES = json.loads((Path(__file__).resolve().parents[3] / "data/references/cp_profiles.json").read_text())
+        except (OSError, ValueError):
+            _PROFILES = {}
+    prof = _PROFILES.get(target_word)
+    feats = cp_profile.features(canon) if prof else None
+    if not feats:
+        return []
+    out = []
+    for f in cp_profile.compare(feats, prof, target_word):
+        fam = _FAMILY.get(f["part"], "movement_profile")
+        out.append({**f, "reliable": bool(reliability.get(fam, {}).get("reliable", False))})
+    return out

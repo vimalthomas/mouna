@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Most important first: a wrong number of hands or wrong place changes the
 # sign more than a slightly-off handshape or palm angle.
-PRIORITY = ["hand_count", "location", "handshape", "orientation"]
-NAMES = {"hand_count": "number of hands", "location": "location", "handshape": "handshape", "orientation": "palm direction"}
+PRIORITY = ["hand_count", "location", "handshape", "movement", "orientation"]
+NAMES = {"hand_count": "number of hands", "location": "location", "handshape": "handshape", "movement": "movement", "orientation": "palm direction"}
 
 SYSTEM_PROMPT = """You are a friendly ASL practice coach inside a learning app. After each practice attempt you get structured results from the app's checker and write the feedback the learner reads.
 
@@ -50,7 +50,16 @@ def _facts(target: str, description: str, score: dict) -> dict:
         (fixes if reliable("hand_count") or variant_note else hints).append({"part": "hand_count", "fix": fix})
     elif score.get("hand_count_match") is True:
         correct.append(NAMES["hand_count"])
-    for key in PRIORITY[1:]:
+    # what the learner's own hand did vs the fluent-signer range (cp_findings):
+    # specific ("your middle finger is bent"), and it replaces the coarse
+    # bucket line for the same part
+    findings = score.get("cp_findings") or []
+    measured = {f["part"] for f in findings}
+    for f in findings:
+        (fixes if f.get("reliable") else hints).append({"part": f["part"], "fix": f["say"]})
+    for key in ("location", "handshape", "orientation"):
+        if key in measured:
+            continue
         p = params.get(key)
         if not p or p.get("uncertain"):
             continue  # signers vary on this part: neither right nor wrong
@@ -73,6 +82,7 @@ def _facts(target: str, description: str, score: dict) -> dict:
         "_hand_count": score.get("hand_count_match"),
         "_variant_note": variant_note,
         "_reliable": {k: reliable(k) for k in PRIORITY},
+        "_findings": findings,
     }
 
 
@@ -93,7 +103,15 @@ def checklist(facts: dict) -> str:
             lines.append("~ Number of hands: worth a look; compare with the example (this check isn't reliable yet).")
         else:
             lines.append("! Number of hands: use the same number of hands as the target sign.")
+    found = {}
+    for f in facts.get("_findings") or []:
+        found.setdefault(f["part"], []).append(f)
     for key, label in LABELS.items():
+        if key in found:
+            for f in found[key]:
+                lines.append(f"! {label}: {f['say']}" if f.get("reliable")
+                             else f"~ {label}: worth a look: {f['say']} (this check isn't reliable yet)")
+            continue
         p = facts["_params"].get(key)
         if not p:
             continue
@@ -107,7 +125,11 @@ def checklist(facts: dict) -> str:
             lines.append(f"~ {label}: worth a look: {p.get('why') or 'might differ from the target.'} (this check isn't reliable yet)")
         else:
             lines.append(f"! {label}: {p.get('why') or 'different from the target.'}")
-    if facts["sign_description"]:
+    if found.get("movement"):
+        for f in found["movement"]:
+            lines.append(f"! Movement: {f['say']}" if f.get("reliable")
+                         else f"~ Movement: worth a look: {f['say']} (this check isn't reliable yet)")
+    elif facts["sign_description"]:
         lines.append(f"· Movement: counted in your overall result, but not checked on its own yet ({facts['sign_description'].lower()}). Compare with the example clip.")
     return "\n".join(lines)
 
@@ -120,12 +142,14 @@ def compose_template(facts: dict) -> str:
     if not fixes:
         if facts["verdict"] == "good" and hints:
             return (f"Nice, that looks like '{target}'. One thing worth a look on your next try: "
-                    f"your {NAMES[hints[0]['part']]}; compare it with the example.")
+                    f"{hints[0]['fix'][0].lower() + hints[0]['fix'][1:] if hints[0].get('fix') else 'compare with the example.'}")
         if facts["verdict"] == "good":
             return f"Nice, that looks like '{target}'. Keep it up, and try it once more to make it stick."
         if hints:
-            return (f"Close to '{target}'. Watch the example clip and try again; your {NAMES[hints[0]['part']]} "
-                    "and the movement are worth a look.")
+            opener = (f"That looked more like a different sign than '{target}'." if facts["verdict"] == "wrong_sign"
+                      else f"Close to '{target}'.")
+            return (f"{opener} Worth a look on your next try: {hints[0]['fix']}"
+                    + (f" Also check: {hints[1]['fix'][0].lower() + hints[1]['fix'][1:]}" if len(hints) > 1 else ""))
         return f"Close. Your hand matched '{target}' on every part we check, so the difference is probably in the movement. Watch the example clip and try the motion again."
     parts = [f"Not quite '{target}' yet." if facts["verdict"] != "needs_work" else f"Close to '{target}'."]
     if correct:

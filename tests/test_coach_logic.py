@@ -229,3 +229,18 @@ def test_reliable_check_still_says_fix_this():
     facts = coach_writer._facts("who", "", score)
     assert "Most important: Turn your palm." in coach_writer.compose_template(facts)
     assert "! Palm direction: Turn your palm." in coach_writer.checklist(facts)
+
+
+def test_measured_finding_is_named_specifically():
+    # v4: the learner's own finger, measured against fluent signers, not a generic "handshape differs"
+    from services import coach_writer
+    score = {"overall_verdict": "wrong_sign", "embedding_similarity": 0.3, "hand_count_match": True,
+             "check_reliability": {"handshape": {"reliable": False}},
+             "parameters": {"handshape": {"match": False, "why": "Open your hand more.", "reliable": False}},
+             "cp_findings": [{"part": "handshape", "feature": "finger_middle", "reliable": False,
+                              "say": "Your middle finger is more bent than fluent signers' in PAPER; straighten it."}]}
+    facts = coach_writer._facts("paper", "", score)
+    msg = coach_writer.compose_template(facts)
+    assert msg.startswith("That looked more like a different sign") and "middle finger" in msg
+    lines = coach_writer.checklist(facts)
+    assert "middle finger" in lines and "Open your hand more" not in lines   # replaces the coarse line

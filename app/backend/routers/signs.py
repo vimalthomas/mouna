@@ -29,9 +29,16 @@ async def get_variations(word: str) -> list[dict]:
     key = word.lower().replace("_", " ")
     main = signs_service.get_video(word)
     out = []
+    # The sign's other form (one hand vs two, see scripts/assign_variants.py)
+    # comes first, labelled, so learners know it's also correct ASL.
+    chosen = example_videos.get(word) or {}
+    for v in chosen.get("variations", []):
+        out.append({"video_url": f"/static/videos/{v['video_id']}.mp4", "frame_start": v.get("frame_start"),
+                    "frame_end": v.get("frame_end"), "fps": v.get("fps"),
+                    "label": "One-handed version" if v["n_hands"] == 1 else "Two-handed version"})
     for e in signs_service.video_index.get(key, []):
         url = f"/static/videos/{e['video_id']}.mp4"
-        if main and url == main.video_url:
+        if (main and url == main.video_url) or any(o["video_url"] == url for o in out):
             continue
         out.append({"video_url": url, "frame_start": e.get("frame_start"), "frame_end": e.get("frame_end"), "fps": e.get("fps")})
         if len(out) >= 3:

@@ -1,0 +1,56 @@
+{
+  "same": {
+    "primary_hands": 2,
+    "primary_video_ids": [
+      "46307633640967283-SAME 2.mp4",
+      "5044773538381033-SAME 2.mp4",
+      "5784540598927743-SAME 2.mp4",
+      "6457559546393306-SAME 2.mp4",
+      "7874979779434099-seedSAME 2.mp4",
+      "7965200255372531-SAME 2.mp4",
+      "8607608244043903-SAME 2.mp4"
+    ],
+    "variations": [
+      {
+        "n_hands": 1,
+        "video_ids": [
+          "02439415548797319-SAME.mp4",
+          "285027381058337-SAME.mp4",
+          "msasl2_same_train_70_921",
+          "msasl2_same_train_70_922"
+        ],
+        "share": 0.36
+      }
+    ]
+  },
+  "short": {
+    "primary_hands": 1,
+    "primary_video_ids": [
+      "51206",
+      "51221",
+      "51223",
+      "51224",
+      "51226",
+      "51227",
+      "msasl2_short_train_498_1288",
+      "msasl2_short_train_498_1396",
+      "msasl2_short_train_498_1397",
+      "msasl2_short_train_498_1759",
+      "msasl2_short_train_498_2476",
+      "msasl2_short_train_498_745",
+      "msasl2_short_train_498_746"
+    ],
+    "variations": [
+      {
+        "n_hands": 2,
+        "video_ids": [
+          "51220",
+          "51225",
+          "msasl2_short_train_498_495",
+          "msasl2_short_train_498_859"
+        ],
+        "share": 0.24
+      }
+    ]
+  }
+}

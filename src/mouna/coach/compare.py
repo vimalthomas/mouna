@@ -262,7 +262,16 @@ def score_attempt(
     if verdict == "good":
         looks_like = None
 
-    if not hand_count_match:
+    variation_hands = references[target_word].get("variation_hands") or []
+    attempt_n = {"one": 1, "two": 2}.get(attempt_count)
+    if not hand_count_match and attempt_n in variation_hands:
+        # The learner signed the sign's accepted other form (e.g. one-handed
+        # SAME). Say so, rather than calling it a wrong hand count.
+        notes.append(
+            f"used the {'one' if attempt_n == 1 else 'two'}-handed version of this sign -- that's correct ASL too, "
+            f"but practice here uses the {'two' if attempt_n == 1 else 'one'}-handed version shown in the example."
+        )
+    elif not hand_count_match:
         notes.append(
             f"used {'two hands' if attempt_count == 'two' else ('one hand' if attempt_count == 'one' else 'no detected hand')}, "
             f"this sign typically uses {'two hands' if reference_count == 'two' else ('one hand' if reference_count == 'one' else 'a hand')}."

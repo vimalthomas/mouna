@@ -38,8 +38,12 @@ Rules:
 def _facts(target: str, description: str, score: dict) -> dict:
     params = score.get("parameters") or {}
     fixes, correct = [], []
+    variant_note = next((n for n in score.get("notes") or [] if "-handed version of this sign" in n), None)
     if score.get("hand_count_match") is False:
-        fixes.append({"part": "hand_count", "fix": "Use the same number of hands as the target sign."})
+        fix = "Use the same number of hands as the target sign."
+        if variant_note:  # e.g. one-handed SAME: correct ASL, just not the form practised here
+            fix = "You " + variant_note.replace(" -- ", " - ").rstrip(".") + "."
+        fixes.append({"part": "hand_count", "fix": fix})
     elif score.get("hand_count_match") is True:
         correct.append(NAMES["hand_count"])
     for key in PRIORITY[1:]:
@@ -60,6 +64,7 @@ def _facts(target: str, description: str, score: dict) -> dict:
         # Not part of the facts sent to Claude; used for the checklist.
         "_params": params,
         "_hand_count": score.get("hand_count_match"),
+        "_variant_note": variant_note,
     }
 
 
@@ -72,7 +77,12 @@ def checklist(facts: dict) -> str:
     lines = []
     hc = facts["_hand_count"]
     if hc is not None:
-        lines.append("✓ Number of hands: right." if hc else "! Number of hands: use the same number of hands as the target sign.")
+        if hc:
+            lines.append("✓ Number of hands: right.")
+        elif facts.get("_variant_note"):
+            lines.append("! Number of hands: you " + facts["_variant_note"].replace(" -- ", " - "))
+        else:
+            lines.append("! Number of hands: use the same number of hands as the target sign.")
     for key, label in LABELS.items():
         p = facts["_params"].get(key)
         if not p:

@@ -278,15 +278,6 @@
       "orientation": "-z"
     }
   },
-  "same": {
-    "n_hands": 1,
-    "similarity": 0.874,
-    "targets": {
-      "handshape": "closed",
-      "location": "chest_region",
-      "orientation": "-z"
-    }
-  },
   "school": {
     "n_hands": 1,
     "similarity": 0.858,

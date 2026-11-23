@@ -24,6 +24,14 @@ QA = ROOT / "data/silver/qa/new_aslc_clips_qa.csv"
 OUT = ROOT / "data/silver/keypoints_v2/keypoints_official_split_v5new8.parquet"
 
 v4 = pd.read_parquet(V4)
+# Main-form rule (scripts/assign_variants.py): a sign's minority hand-count
+# form is not trained as that sign, so the model learns the majority form.
+VARIANTS = ROOT / "data/references/sign_variants.json"
+if VARIANTS.exists():
+    import json
+    for word, v in json.loads(VARIANTS.read_text()).items():
+        drop = {i for alt in v["variations"] for i in alt["video_ids"]}
+        v4 = v4[~((v4.gloss == word) & v4.video_id.astype(str).isin(drop))]
 split = pd.read_csv(QA).set_index("video_file").asl_citizen_split
 rows = []
 for _, r in pd.read_parquet(NEW).query("success").iterrows():

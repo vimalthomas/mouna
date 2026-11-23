@@ -116,3 +116,33 @@ def test_hand_paths_follow_position_not_label():
     assert len(paths) == 2
     left, right = paths
     assert left["x"][-1] > left["x"][0] and right["x"][-1] < right["x"][0]
+
+
+# ---- sign variants (one hand vs two) --------------------------------------
+
+def test_majority_hand_count_is_the_main_form():
+    # Rule: the form most approved clips use is practised and graded; the
+    # other is shown as a variation. A tie keeps two hands.
+    from assign_variants import assign
+    cl = lambda n, k: {"n_hands": n, "video_ids": [f"{n}-{i}-{k}" for i in range(k)]}  # noqa: E731
+    out = assign({
+        "same": {"differs_in": ["hands"], "clusters": [cl(1, 4), cl(2, 7)]},
+        "short": {"differs_in": ["hands"], "clusters": [cl(1, 9), cl(2, 4), cl(1, 4)]},
+        "tie": {"differs_in": ["hands"], "clusters": [cl(1, 5), cl(2, 5)]},
+        "noise": {"differs_in": ["orientation"], "clusters": [cl(1, 5), cl(1, 5)]},
+    })
+    assert out["same"]["primary_hands"] == 2 and out["same"]["variations"][0]["n_hands"] == 1
+    assert out["short"]["primary_hands"] == 1 and len(out["short"]["primary_video_ids"]) == 13
+    assert out["tie"]["primary_hands"] == 2
+    assert "noise" not in out
+
+
+def test_other_form_is_named_not_called_wrong():
+    from services import coach_writer
+    note = ("used the one-handed version of this sign -- that's correct ASL too, "
+            "but practice here uses the two-handed version shown in the example.")
+    score = {"overall_verdict": "needs_work", "embedding_similarity": 0.55, "hand_count_match": False,
+             "notes": [note], "parameters": {}}
+    facts = coach_writer._facts("same", "", score)
+    assert "one-handed version" in facts["fixes"][0]["fix"]
+    assert "one-handed version" in coach_writer.checklist(facts)

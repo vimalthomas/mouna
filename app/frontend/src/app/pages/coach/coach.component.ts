@@ -193,11 +193,18 @@ const CHECK_HOLD_MS = 1200;
           <!-- other recordings of the same sign -->
           @if (variations.length) {
             <h2 class="font-display text-2xl text-ink mt-8 mb-1">Other people signing it</h2>
-            <p class="text-[11px] text-ink-muted mb-2">Signers vary, and some use a different version. The coach grades against the main example above.</p>
+            @if (variantLabel) {
+              <p class="text-[11px] text-ink-muted mb-2">This sign also has a {{ variantLabel.toLowerCase() }}, which is correct ASL too. Practice here uses the main example above, and the coach grades against it.</p>
+            } @else {
+              <p class="text-[11px] text-ink-muted mb-2">Signers vary, and some use a different version. The coach grades against the main example above.</p>
+            }
             <div class="grid grid-cols-3 gap-2">
               @for (v of variations; track v.video_url) {
                 <div class="relative rounded-lg overflow-hidden bg-black border border-border/50" style="aspect-ratio: 16/10;">
                   <video [src]="apiBase + v.video_url" autoplay loop [muted]="true" playsinline class="w-full h-full object-cover"></video>
+                  @if (v.label) {
+                    <span class="absolute left-1.5 top-1.5 px-1.5 py-0.5 rounded bg-surface/90 text-ink text-[10px] font-medium">{{ v.label }}</span>
+                  }
                 </div>
               }
             </div>
@@ -771,7 +778,8 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
     { label: 'Middle', phase: 'middle', caption: 'The arrow shows which way it moves.' },
     { label: 'End', phase: 'end', caption: 'The arrowhead shows where it finishes.' },
   ];
-  variations: { video_url: string }[] = [];
+  variations: { video_url: string; label?: string }[] = [];
+  get variantLabel(): string | null { return this.variations.find(v => v.label)?.label ?? null; }
   unavailableNotice = '';
 
   /** Each hand's path through the example video (for the direction marks). */

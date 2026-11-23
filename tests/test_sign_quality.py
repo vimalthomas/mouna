@@ -126,3 +126,26 @@ def test_no_regression_against_golden_snapshot():
             if cur["targets"].get(part, value) != value:
                 problems.append(f"{w}: {part} target {value} -> {cur['targets'][part]}")
     assert not problems, "Regressions:\n  " + "\n  ".join(problems)
+
+
+# ---- sign variants ---------------------------------------------------------
+
+VARIANTS_PATH = ROOT / "data/references/sign_variants.json"
+VARIANTS = json.loads(VARIANTS_PATH.read_text()) if VARIANTS_PATH.exists() else {}
+
+
+@pytest.mark.parametrize("word", sorted(w for w in VARIANTS if w in PRACTICE))
+def test_variant_sign_practises_its_main_form(word):
+    # Example, 3D and grading reference all use the majority hand count.
+    from choose_display_clips import target_hands
+    main = VARIANTS[word]["primary_hands"]
+    assert target_hands()[word] == main, f"{word}: example shows {target_hands()[word]} hand(s), main form is {main}"
+    n, share = _hands_in(REFS[word]["representative_sequence_raw_canon"])
+    assert n == main or (main == 2 and share >= 0.1), f"{word}: reference uses {n} hand(s), main form is {main}"
+
+
+@pytest.mark.parametrize("word", sorted(VARIANTS))
+def test_variation_clips_left_out_of_reference(word):
+    if word not in REFS or REFS[word].get("qa_method") == "auto_screened":
+        pytest.skip("no reference")
+    assert REFS[word].get("variation_hands") == [v["n_hands"] for v in VARIANTS[word]["variations"]]

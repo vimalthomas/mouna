@@ -41,6 +41,7 @@ from services.model_service import model_service  # noqa: E402
 from services.signs_service import signs_service  # noqa: E402
 
 OUTPUT = ROOT / "data" / "references" / "example_videos.json"
+VARIANTS = ROOT / "data" / "references" / "sign_variants.json"
 CAPTURE_FPS = 10  # matches camera-view.component.ts
 
 
@@ -244,10 +245,13 @@ def main():
     signs_service.load()
 
     words = sorted(w for w in model_service.references if model_service.get_reference_buckets(w) is not None)
+    variants = json.loads(VARIANTS.read_text()) if VARIANTS.exists() else {}
     out = {}
     for word in words:
         entries = signs_service.video_index.get(word, [])[:max_candidates]
         best = None
+        alt_hands = {v["n_hands"] for v in variants.get(word, {}).get("variations", [])}
+        alt_best: dict[int, tuple] = {}
         for entry in entries:
             kps, times = keypoints_for(entry)
             if len(kps) < 5:
@@ -255,6 +259,9 @@ def main():
             score = model_service.score_against_target(kps, word)
             if score.get("embedding_similarity") is None:
                 continue
+            n = count_hands(kps)
+            if n in alt_hands and (n not in alt_best or score["embedding_similarity"] > alt_best[n][0]):
+                alt_best[n] = (score["embedding_similarity"], entry)
             r = rank(score)
             if best is None or r > best[0]:
                 best = (r, entry, score, kps, times)
@@ -278,6 +285,10 @@ def main():
             "n_hands": count_hands(kps),
             "both_hands_share": both_hands_share(kps),
             "candidates_checked": len(entries),
+            # the sign's other form (one hand vs two), shown as a variation
+            "variations": [{"video_id": e["video_id"], "n_hands": n, "frame_start": e.get("frame_start"),
+                            "frame_end": e.get("frame_end"), "fps": e.get("fps")}
+                           for n, (_, e) in sorted(alt_best.items()) if e["video_id"] != entry["video_id"]],
         }
         print(f"{word:12s} {entry['video_id']:>6s} verdict={score['overall_verdict']:10s} sim={score['embedding_similarity']:.2f} "
               f"hands={score['hand_count_match']} params={r[2]}/3 (of {len(entries)} candidates)", flush=True)

@@ -34,7 +34,7 @@ import pandas as pd
 import torch
 
 sys.path.insert(0, "src")
-from mouna.data.handedness import canonicalize_handedness  # noqa: E402
+from mouna.data.handedness import canonicalize_handedness, detect_dominant_hand  # noqa: E402
 from mouna.data.openpose_convert import convert_video as op_convert_video  # noqa: E402
 from mouna.data.part_normalize import normalize_per_part  # noqa: E402
 from mouna.coach.parameters import extract_dominant_hand_signal, majority_targets  # noqa: E402
@@ -88,6 +88,17 @@ def main():
     v4 = pd.read_parquet(V4CANON_PATH)
     v4["_vid"] = v4["video_id"].astype(str)
     v4 = v4[v4["_vid"].isin(ok_ids)]
+    # Signs with a one-hand / two-hand split: build only from the main form
+    # (majority; see scripts/assign_variants.py). The other form is a
+    # variation shown on the Learn screen, not part of the grading target.
+    variants_path = Path("data/references/sign_variants.json")
+    main_hands = {}
+    if variants_path.exists():
+        main_hands = {w: v["primary_hands"] for w, v in json.loads(variants_path.read_text()).items()}
+        for word, v in json.loads(variants_path.read_text()).items():
+            drop = {i for alt in v["variations"] for i in alt["video_ids"]}
+            v4 = v4[~((v4["gloss"] == word) & v4["_vid"].isin(drop))]
+            print(f"  {word}: main form {v['primary_hands']}-handed, {len(drop)} variation clips left out")
     print(f"Matched to dataset: {len(v4)} sequences across {v4['gloss'].nunique()} glosses")
 
     raw_lookup = load_raw_lookup()
@@ -134,6 +145,14 @@ def main():
         centroid = np.mean(embeddings, axis=0)
         dists = [np.linalg.norm(e - centroid) for e in embeddings]
         best = int(np.argmin(dists))
+        # Variant signs: the reference clip must be in the main form as
+        # grading counts hands (both hands moving = two), or the example and
+        # the coach would expect the other form.
+        if word in main_hands:
+            want = "both" if main_hands[word] == 2 else None
+            ok = [i for i, c in enumerate(raw_canon_seqs) if (detect_dominant_hand(c) == "both") == (want == "both")]
+            if ok:
+                best = min(ok, key=lambda i: dists[i])
 
         references[word] = {
             "embedding_centroid": centroid,
@@ -145,6 +164,13 @@ def main():
             "target_buckets": majority_targets([extract_dominant_hand_signal(c) for c in raw_canon_seqs]),
         }
         print(f"  {word}: {len(embeddings)} clips")
+
+    # Hand counts of each sign's accepted other form, so the coach can say
+    # "that's the one-handed version" instead of only "wrong hand count".
+    if variants_path.exists():
+        for word, v in json.loads(variants_path.read_text()).items():
+            if word in references:
+                references[word]["variation_hands"] = [alt["n_hands"] for alt in v["variations"]]
 
     covered = set(references.keys())
     SIGNS_JSON = Path("app/backend/signs.json")

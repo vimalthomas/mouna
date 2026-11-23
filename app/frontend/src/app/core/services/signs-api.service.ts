@@ -31,8 +31,8 @@ export class SignsApiService {
     return this.http.get<Record<string, SignCatalogEntry>>(`${this.baseUrl}/sign-catalog`);
   }
 
-  getVariations(word: string): Observable<{ video_url: string }[]> {
-    return this.http.get<{ video_url: string }[]>(`${this.baseUrl}/signs/${word}/variations`);
+  getVariations(word: string): Observable<{ video_url: string; label?: string }[]> {
+    return this.http.get<{ video_url: string; label?: string }[]>(`${this.baseUrl}/signs/${word}/variations`);
   }
 
   getReferenceSkeleton(word: string): Observable<SkeletonFrame[]> {

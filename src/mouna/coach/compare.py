@@ -23,6 +23,7 @@ from typing import Optional
 import numpy as np
 import torch
 
+from mouna.coach.reliability import check_reliability
 from mouna.coach.parameters import compare_discrete, extract_dominant_hand_signal, find_divergent_frame
 from mouna.data.handedness import canonicalize_handedness, detect_dominant_hand
 from mouna.data.part_normalize import normalize_per_part
@@ -248,6 +249,10 @@ def score_attempt(
     # self-test notes). So embedding_similarity against the KNOWN target,
     # together with hand_count_match, is the whole verdict signal.
     notes: list[str] = []
+    reliability = check_reliability()
+    if parameters:
+        for name, result in parameters.items():
+            result["reliable"] = reliability.get(name, {}).get("reliable", True)
 
     if embedding_similarity >= GOOD_SIMILARITY_THRESHOLD:
         verdict = "good"
@@ -276,13 +281,11 @@ def score_attempt(
             f"used {'two hands' if attempt_count == 'two' else ('one hand' if attempt_count == 'one' else 'no detected hand')}, "
             f"this sign typically uses {'two hands' if reference_count == 'two' else ('one hand' if reference_count == 'one' else 'a hand')}."
         )
-        # A real hand-count mismatch is a structural error, not noise -- it
-        # should never let a verdict stay at "good". It does not escalate
-        # "needs_work" further down to "wrong_sign" on its own, though,
-        # since embedding_similarity already accounts for the bulk of the
-        # signal and a hand-count slip can still be a recognizable, close
-        # attempt at the right sign.
-        if verdict == "good":
+        # A hand-count mismatch blocks a "good" verdict only when the check is
+        # measured as reliable (mouna.coach.reliability). Benchmark: it wrongly
+        # flagged 22% of correct signing, which alone graded 1 in 5 correct
+        # attempts "needs work" -- so until it improves it's only a hint.
+        if verdict == "good" and reliability["hand_count"]["reliable"]:
             verdict = "needs_work"
 
     if coarse_prediction != target_word:
@@ -294,7 +297,7 @@ def score_attempt(
 
     if parameters:
         for name, result in parameters.items():
-            if result["match"] is False and result.get("why"):
+            if result["match"] is False and result.get("why") and result.get("reliable", True):
                 notes.append(result["why"])
 
     if looks_like:
@@ -308,6 +311,7 @@ def score_attempt(
         "coarse_prediction": coarse_prediction,
         "coarse_confidence": coarse_confidence,
         "embedding_similarity": embedding_similarity,
+        "check_reliability": reliability,
         "hand_count_match": hand_count_match,
         "parameters": parameters,
         "divergent_frames": divergent_frames,

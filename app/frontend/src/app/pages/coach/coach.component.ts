@@ -466,14 +466,15 @@ const CHECK_HOLD_MS = 1200;
                 }
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                   @for (p of parameterCards; track p.name) {
-                    <div class="rounded-xl border px-4 py-3" [class]="p.match === true ? 'border-emerald-500/30' : p.match === false ? 'border-amber-500/30' : 'border-border/50 border-dashed opacity-70'">
+                    <div class="rounded-xl border px-4 py-3" [class]="p.match === true ? 'border-emerald-500/30' : p.hint ? 'border-border/60' : p.match === false ? 'border-amber-500/30' : 'border-border/50 border-dashed opacity-70'">
                       <div class="flex items-center justify-between">
                         <span class="text-sm font-semibold text-ink">{{ p.name }}</span>
                         <span class="text-[11px] font-medium px-2 py-0.5 rounded-md"
-                          [class]="p.match === true ? 'bg-emerald-500/15 text-emerald-500' : p.match === false ? 'bg-amber-500/15 text-amber-500' : 'bg-surface text-ink-faint border border-dashed border-border'"
-                        >{{ p.match === true ? 'match' : p.match === false ? 'mismatch' : 'not graded' }}</span>
+                          [class]="p.match === true ? 'bg-emerald-500/15 text-emerald-500' : p.hint ? 'bg-surface-sunk text-ink-muted' : p.match === false ? 'bg-amber-500/15 text-amber-500' : 'bg-surface text-ink-faint border border-dashed border-border'"
+                        >{{ p.match === true ? 'match' : p.hint ? 'worth a look' : p.match === false ? 'mismatch' : 'not graded' }}</span>
                       </div>
                       @if (p.why) { <p class="text-sm text-ink mt-1.5">{{ p.why }}</p> }
+                      @if (p.hint) { <p class="text-[11px] text-ink-faint mt-1">This check isn't reliable yet, so take it as a hint, not a mistake.</p> }
                       @if (p.detail) { <p class="text-[11px] text-ink-faint mt-1">{{ p.detail }}</p> }
                     </div>
                   }
@@ -670,7 +671,7 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
     return this.hasAnalyzedFacial;
   }
 
-  get parameterCards(): { name: string; match: boolean | null; why: string; detail: string }[] {
+  get parameterCards(): { name: string; match: boolean | null; why: string; detail: string; hint: boolean }[] {
     const params = this.lastResult?.parameters || {};
     const cards = ['handshape', 'location', 'orientation'].map(key => {
       const p = params[key];
@@ -682,6 +683,8 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
         // anyone who wants the exact reading, not the headline anymore.
         why: (p && !p.match && p.why) || '',
         detail: p?.target_plain && p?.yours_plain ? `target: ${p.target_plain} · you: ${p.yours_plain}` : '',
+        // a mismatch from a check that isn't reliable yet is a hint, not a mistake
+        hint: !!p && p.match === false && p.reliable === false,
       };
     });
     cards.push({
@@ -689,6 +692,7 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
       match: this.lastResult?.hand_count_match ?? null,
       why: '',
       detail: '',
+      hint: this.lastResult?.hand_count_match === false && this.lastResult?.check_reliability?.['hand_count']?.reliable === false,
     });
     return cards;
   }

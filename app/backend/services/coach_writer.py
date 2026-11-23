@@ -33,18 +33,21 @@ Rules:
 - Briefly acknowledge what was right when the facts list something as correct.
 - Plain, everyday words. Never mention axes, codes, buckets, scores, percentages, models or "the checker".
 - 2 to 4 short sentences, under 80 words. No lists, no headings, no emoji. (A per-part checklist is shown under your text automatically, so do not repeat every part; focus on what to do on the next try.)
+- "hints" are things that might be off but the checker can't judge reliably yet: mention at most one, softly, as something worth a look -- never as a mistake, never as the main fix.
 - If there are no fixes and the verdict is good, give short encouragement."""
 
 
 def _facts(target: str, description: str, score: dict) -> dict:
     params = score.get("parameters") or {}
-    fixes, correct = [], []
+    rel = score.get("check_reliability") or {}
+    reliable = lambda k: rel.get(k, {}).get("reliable", True)  # noqa: E731 -- unmeasured = trusted, as before
+    fixes, correct, hints = [], [], []
     variant_note = next((n for n in score.get("notes") or [] if "-handed version of this sign" in n), None)
     if score.get("hand_count_match") is False:
         fix = "Use the same number of hands as the target sign."
         if variant_note:  # e.g. one-handed SAME: correct ASL, just not the form practised here
             fix = "You " + variant_note.replace(" -- ", " - ").rstrip(".") + "."
-        fixes.append({"part": "hand_count", "fix": fix})
+        (fixes if reliable("hand_count") or variant_note else hints).append({"part": "hand_count", "fix": fix})
     elif score.get("hand_count_match") is True:
         correct.append(NAMES["hand_count"])
     for key in PRIORITY[1:]:
@@ -54,18 +57,22 @@ def _facts(target: str, description: str, score: dict) -> dict:
         if p.get("match"):
             correct.append(NAMES[key])
         elif p.get("why"):
-            fixes.append({"part": key, "fix": p["why"]})
+            # an unreliable check's mismatch is only a hint, never a "fix this"
+            (fixes if reliable(key) else hints).append({"part": key, "fix": p["why"]})
     fixes.sort(key=lambda f: PRIORITY.index(f["part"]))
+    hints.sort(key=lambda f: PRIORITY.index(f["part"]))
     return {
         "sign": target,
         "sign_description": description or "",
         "verdict": score.get("overall_verdict"),
         "correct": correct,
         "fixes": fixes,
+        "hints": hints,
         # Not part of the facts sent to Claude; used for the checklist.
         "_params": params,
         "_hand_count": score.get("hand_count_match"),
         "_variant_note": variant_note,
+        "_reliable": {k: reliable(k) for k in PRIORITY},
     }
 
 
@@ -82,6 +89,8 @@ def checklist(facts: dict) -> str:
             lines.append("✓ Number of hands: right.")
         elif facts.get("_variant_note"):
             lines.append("! Number of hands: you " + facts["_variant_note"].replace(" -- ", " - "))
+        elif not facts["_reliable"]["hand_count"]:
+            lines.append("~ Number of hands: worth a look; compare with the example (this check isn't reliable yet).")
         else:
             lines.append("! Number of hands: use the same number of hands as the target sign.")
     for key, label in LABELS.items():
@@ -94,6 +103,8 @@ def checklist(facts: dict) -> str:
         if p.get("match"):
             detail = f" ({p['yours_plain']})" if p.get("yours_plain") else ""
             lines.append(f"✓ {label}: right{detail}.")
+        elif not facts["_reliable"].get(key, True):
+            lines.append(f"~ {label}: worth a look: {p.get('why') or 'might differ from the target.'} (this check isn't reliable yet)")
         else:
             lines.append(f"! {label}: {p.get('why') or 'different from the target.'}")
     if facts["sign_description"]:
@@ -105,9 +116,16 @@ def compose_template(facts: dict) -> str:
     target = facts["sign"]
     fixes = facts["fixes"]
     correct = facts["correct"]
+    hints = facts.get("hints") or []
     if not fixes:
+        if facts["verdict"] == "good" and hints:
+            return (f"Nice, that looks like '{target}'. One thing worth a look on your next try: "
+                    f"your {NAMES[hints[0]['part']]}; compare it with the example.")
         if facts["verdict"] == "good":
             return f"Nice, that looks like '{target}'. Keep it up, and try it once more to make it stick."
+        if hints:
+            return (f"Close to '{target}'. Watch the example clip and try again; your {NAMES[hints[0]['part']]} "
+                    "and the movement are worth a look.")
         return f"Close. Your hand matched '{target}' on every part we check, so the difference is probably in the movement. Watch the example clip and try the motion again."
     parts = [f"Not quite '{target}' yet." if facts["verdict"] != "needs_work" else f"Close to '{target}'."]
     if correct:

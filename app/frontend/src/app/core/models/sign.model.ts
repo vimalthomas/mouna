@@ -27,6 +27,8 @@ export interface ParameterResult {
   /** Plain wording of target/yours buckets; null where not trustworthy (location). */
   target_plain?: string | null;
   yours_plain?: string | null;
+  /** v4: false when this check failed the judgement benchmark (shown as a hint, not a mistake). */
+  reliable?: boolean;
 }
 
 export interface FaceContours {
@@ -154,6 +156,8 @@ export interface CoachingMessage {
   feedback_source?: 'claude' | 'gemini' | 'template';
   /** v3: the learner's own hands and face as 3D skin (mirrored like the camera preview). */
   attempt_skin?: SkinData | null;
+  /** v4: per check, how it scored on the judgement benchmark. */
+  check_reliability?: Record<string, { false_alarm: number | null; catches: number | null; reliable: boolean }>;
   charts?: AttemptCharts | null;
   /** False when the sign has no reference recording, so nothing was compared. */
   graded?: boolean;

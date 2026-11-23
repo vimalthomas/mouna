@@ -5,7 +5,7 @@
   "sign": {
     "auc": 0.994,
     "correct_graded_good": {
-      "rate": 0.761,
+      "rate": 0.948,
       "n": 330
     },
     "wrong_sign_graded_good": {
@@ -117,7 +117,7 @@
     {
       "sign": "basketball",
       "correct_good": null,
-      "wrong_good": 0.0,
+      "wrong_good": 0.006,
       "n_correct": 0
     },
     {
@@ -140,13 +140,13 @@
     },
     {
       "sign": "black",
-      "correct_good": 0.9,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "book",
-      "correct_good": 0.6,
+      "correct_good": 0.9,
       "wrong_good": 0.0,
       "n_correct": 10
     },
@@ -158,13 +158,13 @@
     },
     {
       "sign": "chair",
-      "correct_good": 0.8,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "clothes",
-      "correct_good": 0.7,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
@@ -176,19 +176,19 @@
     },
     {
       "sign": "cook",
-      "correct_good": 0.6,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "dark",
-      "correct_good": 0.2,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "deaf",
-      "correct_good": 0.6,
+      "correct_good": 0.8,
       "wrong_good": 0.0,
       "n_correct": 10
     },
@@ -206,49 +206,49 @@
     },
     {
       "sign": "finish",
-      "correct_good": 0.7,
+      "correct_good": 0.9,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "go",
-      "correct_good": 0.9,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "hearing",
-      "correct_good": 0.8,
-      "wrong_good": 0.0,
-      "n_correct": 10
-    },
-    {
-      "sign": "help",
-      "correct_good": 0.5,
-      "wrong_good": 0.0,
-      "n_correct": 10
-    },
-    {
-      "sign": "hot",
-      "correct_good": 0.6,
-      "wrong_good": 0.0,
-      "n_correct": 10
-    },
-    {
-      "sign": "later",
-      "correct_good": 0.8,
-      "wrong_good": 0.0,
-      "n_correct": 10
-    },
-    {
-      "sign": "man",
       "correct_good": 0.9,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
+      "sign": "help",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "hot",
+      "correct_good": 0.9,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "later",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "man",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
       "sign": "many",
-      "correct_good": 0.8,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
@@ -272,25 +272,25 @@
     },
     {
       "sign": "now",
-      "correct_good": 0.9,
+      "correct_good": 1.0,
       "wrong_good": 0.011,
       "n_correct": 10
     },
     {
       "sign": "orange",
-      "correct_good": 0.9,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "paper",
-      "correct_good": 0.5,
+      "correct_good": 1.0,
       "wrong_good": 0.006,
       "n_correct": 10
     },
     {
       "sign": "school",
-      "correct_good": 0.7,
+      "correct_good": 1.0,
       "wrong_good": 0.006,
       "n_correct": 10
     },
@@ -302,25 +302,25 @@
     },
     {
       "sign": "time",
-      "correct_good": 0.7,
+      "correct_good": 0.9,
       "wrong_good": 0.006,
       "n_correct": 10
     },
     {
       "sign": "walk",
-      "correct_good": 0.2,
+      "correct_good": 0.8,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "who",
-      "correct_good": 0.8,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },
     {
       "sign": "work",
-      "correct_good": 0.8,
+      "correct_good": 1.0,
       "wrong_good": 0.0,
       "n_correct": 10
     },

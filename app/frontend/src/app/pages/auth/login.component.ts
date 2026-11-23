@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -11,9 +12,7 @@ import { AuthService } from '../../core/services/auth.service';
     <div class="min-h-screen flex items-center justify-center bg-background px-4">
       <div class="w-full max-w-sm">
         <div class="text-center mb-8">
-          <h1 class="text-2xl font-semibold tracking-tight text-accent">
-            MOUNA
-          </h1>
+          <img [src]="theme.isDark() ? 'brand/mouna-logo-dark.png' : 'brand/mouna-logo.png'" alt="mouna" class="h-24 w-auto mx-auto mb-2" />
           <p class="text-sm text-ink-muted mt-1">Sign in to continue your practice</p>
         </div>
 
@@ -66,6 +65,7 @@ import { AuthService } from '../../core/services/auth.service';
   `,
 })
 export class LoginComponent {
+  theme = inject(ThemeService);
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);

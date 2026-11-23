@@ -1,10 +1,42 @@
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException
 
 from models.schemas import SignListResponse, VideoResponse
+from services import example_videos
 from services.model_service import model_service
 from services.signs_service import signs_service
 
 router = APIRouter()
+
+
+@router.get("/signs/{word}/reference-skeleton")
+async def get_reference_skeleton(word: str) -> list:
+    """The target's skeleton frames (incl. hand-local 3D) for the prep
+    screen's 3D "how the hand looks" view, before any attempt exists."""
+    frames = model_service.get_reference_skeleton(word.lower())
+    if frames is None:
+        raise HTTPException(status_code=404, detail=f"No reference data for '{word}' yet.")
+    return frames
+
+
+@router.get("/signs/{word}/variations")
+async def get_variations(word: str) -> list[dict]:
+    """Other on-disk recordings of this sign (different signers; some use a
+    different version of the sign). Informational -- grading uses the main
+    example's reference."""
+    key = word.lower().replace("_", " ")
+    main = signs_service.get_video(word)
+    out = []
+    for e in signs_service.video_index.get(key, []):
+        url = f"/static/videos/{e['video_id']}.mp4"
+        if main and url == main.video_url:
+            continue
+        out.append({"video_url": url, "frame_start": e.get("frame_start"), "frame_end": e.get("frame_end"), "fps": e.get("fps")})
+        if len(out) >= 3:
+            break
+    return out
 
 
 @router.get("/signs/{word}/reference-buckets")
@@ -12,12 +44,46 @@ async def get_reference_buckets(word: str) -> dict:
     buckets = model_service.get_reference_buckets(word.lower())
     if buckets is None:
         raise HTTPException(status_code=404, detail=f"No reference data for '{word}' yet.")
+    chosen = example_videos.get(word)
+    if chosen and chosen.get("hand_bbox"):
+        # Crop/still timing from the example video actually shown, not from
+        # the (different) reference recording.
+        buckets = {**buckets, "hand_bbox": chosen["hand_bbox"], "hands_up_seconds": chosen.get("hands_up_seconds"),
+                   "hand_paths": chosen.get("hand_paths") or []}
     return buckets
 
 
 @router.get("/signs", response_model=SignListResponse)
 async def get_signs() -> SignListResponse:
     return SignListResponse(signs=signs_service.get_all_signs())
+
+
+_CATALOG = Path(__file__).resolve().parents[3] / "data" / "references" / "sign_catalog.json"
+
+
+@router.get("/sign-catalog")
+async def get_sign_catalog() -> dict:
+    """ASL-CDI category, ASL-LEX frequency and "essential" flag per sign
+    (built by scripts/build_sign_catalog.py from published sources)."""
+    try:
+        return json.loads(_CATALOG.read_text())
+    except FileNotFoundError:
+        return {}
+
+
+@router.get("/signs-with-reference")
+async def get_signs_with_reference() -> list[str]:
+    """The practice set: signs the coach can fully support -- a reviewed
+    reference recording with a readable CP breakdown, plus an example video."""
+    words = [
+        w for w in model_service.references
+        if model_service.get_reference_buckets(w) is not None and signs_service.get_video(w) is not None
+    ]
+    # Once example videos have been checked against their references, keep
+    # only signs whose shown example itself passes grading.
+    if example_videos.all_choices():
+        words = [w for w in words if example_videos.practice_ready(w)]
+    return sorted(words)
 
 
 @router.get("/signs-with-video")

@@ -189,41 +189,126 @@ def classify_orientation_bucket(signal: dict) -> str:
 
 
 HANDSHAPE_PLAIN = {
+    # The handshape bucket only measures overall openness, so "closed"
+    # covers fists AND pointing shapes (index out, rest curled) -- phrase it
+    # as "mostly curled in", never "fist".
     "open": "your fingers extended open",
-    "half": "your fingers half-curled",
-    "closed": "your fingers curled into a fist",
+    "half": "your fingers half-bent",
+    "closed": "most of your fingers curled in",
 }
 LOCATION_PLAIN = {
     "face_region": "near your face",
     "chest_region": "near your chest",
     "neutral_space": "out in neutral space in front of you",
 }
+# Orientation buckets are the dominant axis of the mean palm normal in the
+# CANONICAL frame (dominant hand = the "right_hand" array, MediaPipe image
+# axes: +y down, +z away from the camera). Two facts make these phrases
+# safe to state, both measured on the 23 reference signs, not assumed:
+#   - +cross(index-wrist, pinky-wrist) points out of the PALM for this
+#     array: fingertips curl to that side in 96% of signs;
+#   - the dominant hand sits on the -x side of mid-shoulder in 23/23
+#     signs, so +x points from that hand toward the body's midline.
+# Phrased relative to the body (midline / you / out), not left/right, so
+# it stays true for left-handed signers, whose attempts are mirrored into
+# the same canonical frame before bucketing. Caveat: this is the palm's
+# MAIN direction averaged over the whole sign; signs whose palm rotates
+# partway through are summarized by their dominant direction.
+ORIENTATION_PLAIN = {
+    "+x": "your palm facing sideways, toward the middle of your body",
+    "-x": "your palm facing sideways, away from your body",
+    "+y": "your palm facing down",
+    "-y": "your palm facing up",
+    "+z": "your palm facing you",
+    "-z": "your palm facing out, toward the person you're signing to",
+}
+PLAIN = {"handshape": HANDSHAPE_PLAIN, "location": LOCATION_PLAIN, "orientation": ORIENTATION_PLAIN}
+
+# Imperative "how to do it" phrasing for the prep checklist.
+HOWTO = {
+    "handshape": {
+        "open": "Open your hand with your fingers extended.",
+        "half": "Bend your fingers about halfway, as in the picture.",
+        "closed": "Curl most of your fingers in. Check the picture for any finger that stays out.",
+    },
+    # No "location" entry on purpose: the location buckets are consistent
+    # (same classifier on attempt and reference, so match/mismatch is a fair
+    # comparison) but their REGION NAMES are not trustworthy yet -- 0 of the
+    # 9 face/head reference signs (apple, who, orange, ...) classify as
+    # face_region, because the bucket averages the wrist over the whole
+    # clip against a "chest" anchor that is really the shoulder line.
+    # Until location is recalibrated with labels, the UI uses the sign's
+    # own description for where to sign, and mismatches point at the ghost.
+    "orientation": {
+        "+x": "Turn your palm sideways, facing the middle of your body.",
+        "-x": "Turn your palm sideways, facing away from your body.",
+        "+y": "Turn your palm to face down.",
+        "-y": "Turn your palm to face up.",
+        "+z": "Turn your palm to face you.",
+        "-z": "Turn your palm to face out, toward the person you're signing to.",
+    },
+}
+
+
+def plain_bucket(param: str, bucket: str) -> str | None:
+    """Plain description of a bucket value ("your palm facing up"); None for
+    location, whose region names aren't trustworthy yet (see HOWTO)."""
+    if param == "location":
+        return None
+    return PLAIN.get(param, {}).get(bucket, bucket)
+
+
+def howto_bucket(param: str, bucket: str) -> str | None:
+    """Imperative instruction for a target bucket ("Turn your palm to face up.")."""
+    return HOWTO.get(param, {}).get(bucket)
 
 
 def _describe_mismatch(param: str, target: str, yours: str) -> str:
-    """Plain-language reason a mismatched parameter is wrong -- not just
-    the raw bucket labels (which is what this used to surface, literally
-    as "target: open · you: closed" in the UI). Modeled on the "coaches
-    show AND tell" distinction from AgentCoach (CHI 2026): a highlighted
-    joint/segment tells you WHERE something's off, this is what explains
-    WHY. Handshape/location get a specific, directional sentence because
-    their buckets are validated and genuinely map to a plain description.
-    Orientation does NOT get a confident left/right/up/down claim here --
-    the palm-normal axis convention was never verified against enough real
-    signs to state a direction with confidence (checked 23 real reference
-    signs' buckets against their text descriptions and found no reliable
-    pattern worth asserting) -- so it points at the one place that IS
-    reliable: the actual direction arrow already drawn on the skeleton."""
+    """Plain-language reason a mismatched parameter is wrong, so the UI never
+    has to show raw bucket codes like "+x" (see ORIENTATION_PLAIN for why
+    the orientation directions can now be stated)."""
     if param == "handshape":
-        return f"This sign needs {HANDSHAPE_PLAIN[target]}, but {HANDSHAPE_PLAIN[yours]}."
+        return f"This sign needs {HANDSHAPE_PLAIN[target]}, but you had {HANDSHAPE_PLAIN[yours]}."
     if param == "location":
-        return f"This sign is made {LOCATION_PLAIN[target]}, but your hand was {LOCATION_PLAIN[yours]}."
+        # Region names withheld -- see the HOWTO comment above.
+        return "Your hand was in a different place than in the target sign. Move it to where the white ghost hand is on your video."
     if param == "orientation":
-        return "Your palm faced a different direction than the target needs -- compare the direction arrow on the skeleton panels."
+        return f"This sign needs {ORIENTATION_PLAIN[target]}, but you had {ORIENTATION_PLAIN[yours]}."
     return ""
 
 
-def compare_discrete(attempt_signal: dict, reference_signal: dict) -> dict:
+CLASSIFIERS = {
+    "handshape": lambda s: classify_handshape_bucket(s),
+    "location": lambda s: classify_location_bucket(s),
+    "orientation": lambda s: classify_orientation_bucket(s),
+}
+# A part counts as settled for a sign when at least this share of its
+# approved clips agree; below it, signers genuinely differ (or the sign sits
+# on a bucket border), so the part isn't graded for that sign.
+MIN_AGREEMENT = 0.6
+
+
+def majority_targets(signals: list[dict]) -> dict:
+    """Target bucket per parameter by majority vote over ALL approved clips
+    of a sign, instead of whatever a single representative clip happens to
+    show (a single clip near a bucket border flipped e.g. who's handshape
+    between closed and half, contradicting its own example video).
+      {param: {"value": bucket, "agreement": share, "n": clips,
+               "votes": {bucket: count}, "settled": agreement >= MIN_AGREEMENT}}"""
+    from collections import Counter
+    out = {}
+    for name, classify in CLASSIFIERS.items():
+        votes = Counter(classify(s) for s in signals if s is not None)
+        n = sum(votes.values())
+        if not n:
+            continue
+        value, top = votes.most_common(1)[0]
+        out[name] = {"value": value, "agreement": round(top / n, 3), "n": n,
+                     "votes": dict(votes), "settled": top / n >= MIN_AGREEMENT}
+    return out
+
+
+def compare_discrete(attempt_signal: dict, reference_signal: dict, targets: dict | None = None) -> dict:
     """Bucket both sides and report target vs. yours + match, for each of
     the 3 validated parameters, plus a plain-language "why" when they
     mismatch. No score number, no verdict -- this is explanatory detail
@@ -235,13 +320,43 @@ def compare_discrete(attempt_signal: dict, reference_signal: dict) -> dict:
         ("location", classify_location_bucket),
         ("orientation", classify_orientation_bucket),
     ):
-        target_bucket = classify(reference_signal)
+        t = (targets or {}).get(name)
+        target_bucket = t["value"] if t else classify(reference_signal)
         yours_bucket = classify(attempt_signal)
+        if t and not t.get("settled", True):
+            # Approved signers split on this part: don't grade it.
+            out[name] = {
+                "target": target_bucket, "yours": yours_bucket, "match": None, "uncertain": True,
+                "why": "Signers do this part in different ways, so it isn't graded for this sign.",
+                "target_plain": None, "yours_plain": plain_bucket(name, yours_bucket),
+            }
+            continue
         match = target_bucket == yours_bucket
         out[name] = {
             "target": target_bucket,
             "yours": yours_bucket,
             "match": match,
             "why": None if match else _describe_mismatch(name, target_bucket, yours_bucket),
+            "target_plain": plain_bucket(name, target_bucket),
+            "yours_plain": plain_bucket(name, yours_bucket),
         }
     return out
+
+
+def chart_series(signal: dict, n_points: int = 40) -> dict:
+    """Per-attempt chart data (same signals the CP buckets use):
+      finger_openness: mean fingertip-to-wrist distance per finger, in hand
+        lengths (bigger = more extended) -- the per-finger view of CP1;
+      travel: distance of the dominant wrist from where it started, in
+        shoulder widths, resampled to n_points over the sign's own 0..1
+        time -- its peaks are the big movements (CP2/CP3)."""
+    curl = signal["handshape_curl"]
+    loc = signal["location_traj"]
+    travel = np.linalg.norm(loc - loc[0], axis=-1)
+    x = np.linspace(0, 1, len(travel)) if len(travel) > 1 else np.array([0.0])
+    grid = np.linspace(0, 1, n_points)
+    resampled = np.interp(grid, x, travel) if len(travel) > 1 else np.zeros(n_points)
+    return {
+        "finger_openness": [round(float(v), 3) for v in curl.mean(axis=0)],
+        "travel": [round(float(v), 3) for v in resampled],
+    }

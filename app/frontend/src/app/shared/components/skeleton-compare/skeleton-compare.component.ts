@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
-import * as THREE from 'three';
+import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ParameterResult, SkeletonFrame } from '../../../core/models/sign.model';
 
 // MediaPipe Hands landmark topology -- fixed, not sign-specific. Fingers
@@ -16,30 +16,75 @@ const FINGER_CHAINS: Record<string, number[]> = {
 // Palm outline: wrist + the five knuckle bases, in order across the hand --
 // traces the actual palm shape instead of a circle that didn't match it.
 const PALM_OUTLINE = [0, 1, 5, 9, 13, 17];
-// Face contours drawn as raised 3D features, not flat decals.
-const FACE_CONTOUR_KEYS: (keyof NonNullable<SkeletonFrame['face']>)[] = [
-  'left_eye', 'right_eye', 'lips_outer', 'lips_inner',
-];
 
 const HEAD_RADIUS = 0.34;
 const FRAME_MS = 140;
-// Fixed cosmetic torso thickness -- NOT a real tracked depth value (we only
-// have 2D video, see this session's VRM retargeting post-mortem on why
-// fabricating real depth from flat data broke things). This is just a
-// rounding/bevel applied to the already-2D silhouette shape so it reads as
-// a solid form under lighting, same honest-depth rule the whole scene follows.
-const TORSO_DEPTH = 0.26;
-const FACE_Z_OFFSET = TORSO_DEPTH / 2 + 0.03; // just in front of the torso's own front face, no z-fighting
 
 @Component({
   selector: 'app-skeleton-compare',
   standalone: true,
+  imports: [NgTemplateOutlet],
   template: `
     <div class="relative rounded-xl overflow-hidden bg-surface-sunk border border-border/50" [style.aspect-ratio]="mode === 'body' ? '4/4.4' : '16/10'">
-      <canvas #canvasRef class="w-full h-full block"></canvas>
+      <svg [attr.viewBox]="viewBox" class="w-full h-full">
+        @if (frame) {
+          @if (mode === 'body') {
+            <polygon [attr.points]="torsoPoints(frame)" [attr.fill]="bodyColor" opacity="0.3"/>
+            @if (frame.face?.face_oval?.length) {
+              <polygon [attr.points]="pts(frame.face!.face_oval)" [attr.fill]="bodyColor" opacity="0.3" [attr.stroke]="bodyColor" stroke-width="0.03"/>
+            } @else {
+              <circle [attr.cx]="headCenter(frame)[0]" [attr.cy]="headCenter(frame)[1]" [attr.r]="HEAD_RADIUS" [attr.fill]="bodyColor" opacity="0.3" [attr.stroke]="bodyColor" stroke-width="0.04"/>
+            }
+            <g [attr.stroke]="locationColor" stroke-width="0.11" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <polyline [attr.points]="armPoints(frame, 'l')"/>
+              <polyline [attr.points]="armPoints(frame, 'r')"/>
+            </g>
+          }
+          @if (frame.face && mode !== 'hands') {
+            <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+              @if (mode === 'face') {
+                <polygon [attr.points]="pts(frame.face.face_oval)" [attr.fill]="bodyColor" fill-opacity="0.12" [attr.stroke]="bodyColor" stroke-width="0.012"/>
+              }
+              @for (key of FACE_FEATURES; track key) {
+                @if (frame.face[key]?.length) {
+                  <polygon [attr.points]="pts(frame.face[key])" [attr.stroke]="bodyColor" [attr.stroke-width]="mode === 'face' ? 0.01 : 0.02"/>
+                }
+              }
+              <polyline [attr.points]="pts(frame.face.left_eyebrow)" [attr.stroke]="eyebrowColor" [attr.stroke-width]="mode === 'face' ? 0.016 : 0.03"/>
+              <polyline [attr.points]="pts(frame.face.right_eyebrow)" [attr.stroke]="eyebrowColor" [attr.stroke-width]="mode === 'face' ? 0.016 : 0.03"/>
+            </g>
+          }
+          @if (mode !== 'face' && frame.left_hand) { <ng-container [ngTemplateOutlet]="handTpl" [ngTemplateOutletContext]="{hand: frame.left_hand}"/> }
+          @if (mode !== 'face' && frame.right_hand) { <ng-container [ngTemplateOutlet]="handTpl" [ngTemplateOutletContext]="{hand: frame.right_hand}"/> }
+
+          @if (mode !== 'face' && frame.right_hand && frame.right_orientation) {
+            <line [attr.x1]="frame.right_hand[0][0]" [attr.y1]="frame.right_hand[0][1]"
+                  [attr.x2]="frame.right_hand[0][0] + frame.right_orientation[0]*0.7" [attr.y2]="frame.right_hand[0][1] + frame.right_orientation[1]*0.7"
+                  [attr.stroke]="orientationColor" stroke-width="0.045" stroke-linecap="round"/>
+          }
+          @if (mode !== 'face' && frame.left_hand && frame.left_orientation) {
+            <line [attr.x1]="frame.left_hand[0][0]" [attr.y1]="frame.left_hand[0][1]"
+                  [attr.x2]="frame.left_hand[0][0] + frame.left_orientation[0]*0.7" [attr.y2]="frame.left_hand[0][1] + frame.left_orientation[1]*0.7"
+                  [attr.stroke]="orientationColor" stroke-width="0.045" stroke-linecap="round"/>
+          }
+        }
+
+        <!-- reusable hand: real palm outline + tapered capsule fingers,
+             widest at the knuckle, narrowing to the tip, with a small
+             joint-circle at each segment start so the taper doesn't show
+             a visible seam between segments. Chosen from a 6-way comparison
+             after a thin-line version read as claws fanning from the wrist. -->
+        <ng-template #handTpl let-hand="hand">
+          <polygon [attr.points]="palmPoints(hand)" [attr.fill]="handshapeColor" opacity="0.3"/>
+          @for (seg of fingerCapsules(hand); track $index) {
+            <polygon [attr.points]="seg.poly" [attr.fill]="handshapeColor" opacity="0.85"/>
+            <circle [attr.cx]="seg.jx" [attr.cy]="seg.jy" [attr.r]="seg.jr" [attr.fill]="handshapeColor" opacity="0.85"/>
+          }
+        </ng-template>
+      </svg>
 
       @if (label) {
-        <div class="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide text-ink-faint bg-surface/80 px-2 py-0.5 rounded">{{ label }}</div>
+        <div class="absolute top-2 left-2 text-[11px] font-medium text-ink-muted bg-surface/85 px-2 py-0.5 rounded-md">{{ label }}</div>
       }
       @if (!frame) {
         <div class="absolute inset-0 flex items-center justify-center text-ink-faint text-xs px-4 text-center">No skeleton data</div>
@@ -47,7 +92,7 @@ const FACE_Z_OFFSET = TORSO_DEPTH / 2 + 0.03; // just in front of the torso's ow
     </div>
   `,
 })
-export class SkeletonCompareComponent implements OnChanges, AfterViewInit, OnDestroy {
+export class SkeletonCompareComponent implements OnChanges, OnDestroy {
   @Input() frames: SkeletonFrame[] | null = null;
   @Input() parameters: Record<string, ParameterResult> | null = null;
   @Input() label: string | null = null;
@@ -61,12 +106,9 @@ export class SkeletonCompareComponent implements OnChanges, AfterViewInit, OnDes
    * Preview screen's video speed buttons, applied to the animation loop. */
   @Input() speedMultiplier = 1;
 
-  @ViewChild('canvasRef') private canvasRef!: ElementRef<HTMLCanvasElement>;
-
+  private readonly BODY_VIEWBOX = '-2.6 -2.6 5.2 5.6';
   private readonly HAND_ZOOM_RADIUS = 1.1;
   private readonly FACE_ZOOM_RADIUS = 0.55;
-  private readonly BODY_CENTER: [number, number] = [0, 0.2];
-  private readonly BODY_RADIUS_Y = 2.8;
 
   readonly HEAD_RADIUS = HEAD_RADIUS;
 
@@ -80,85 +122,40 @@ export class SkeletonCompareComponent implements OnChanges, AfterViewInit, OnDes
   get locationColor(): string { return this.mismatch('location') ? this.warnColor : this.color; }
   get handshapeColor(): string { return this.mismatch('handshape') ? this.warnColor : this.color; }
   get orientationColor(): string { return this.mismatch('orientation') ? this.warnColor : this.color; }
-  /** Reacts to a future `parameters['facial']` result the same way the
-   * other three already do -- harmless no-op today since the facial NMS
-   * check runs through a separate check_facial_step flow, not the main
-   * `parameters` object, but wired here so turning that on later is a
-   * one-line change elsewhere, not a template change. */
+
+  /** Reacts to a future `parameters['facial']` result like the other three;
+   * a no-op today since the facial check runs through check_facial_step. */
   get eyebrowColor(): string { return this.mismatch('facial') ? this.warnColor : this.color; }
+
+  readonly FACE_FEATURES: ('left_eye' | 'right_eye' | 'lips_outer' | 'lips_inner')[] = ['left_eye', 'right_eye', 'lips_outer', 'lips_inner'];
+
+  pts(points: [number, number][] | undefined | null): string {
+    return (points ?? []).map(([x, y]) => `${x},${y}`).join(' ');
+  }
 
   private mismatch(key: string): boolean {
     return this.parameters?.[key]?.match === false;
   }
 
-  // ---- Three.js scene plumbing ----
-  private renderer: THREE.WebGLRenderer | null = null;
-  private scene: THREE.Scene | null = null;
-  private camera: THREE.OrthographicCamera | null = null;
-  private dynamicGroup: THREE.Group | null = null;
-  private resizeObserver: ResizeObserver | null = null;
-  private viewInitialized = false;
-
-  ngAfterViewInit(): void {
-    this.initScene();
-    this.viewInitialized = true;
-    this.renderFrame();
+  get viewBox(): string {
+    if (this.mode === 'body') return this.BODY_VIEWBOX;
+    const center = this.mode === 'face' ? this.faceCenter() : this.handsCenter();
+    if (!center) return this.BODY_VIEWBOX;
+    // Match the container's 16/10 aspect -- a square viewBox in a wider box
+    // would just letterbox (empty bars either side) instead of actually
+    // using the extra width to show the hand bigger.
+    const rY = this.mode === 'face' ? this.FACE_ZOOM_RADIUS : this.HAND_ZOOM_RADIUS;
+    const rX = rY * 1.6;
+    return `${center[0] - rX} ${center[1] - rY} ${rX * 2} ${rY * 2}`;
   }
 
-  private initScene(): void {
-    const canvas = this.canvasRef.nativeElement;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-
-    this.scene = new THREE.Scene();
-    this.dynamicGroup = new THREE.Group();
-    this.scene.add(this.dynamicGroup);
-
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-    const key = new THREE.DirectionalLight(0xffffff, 0.9);
-    key.position.set(-1.2, 1.6, 2.2);
-    this.scene.add(key);
-    const rim = new THREE.DirectionalLight(0xffffff, 0.3);
-    rim.position.set(1.5, -0.6, 1.0);
-    this.scene.add(rim);
-
-    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-    this.camera.position.set(0, 0, 10);
-
-    this.resizeObserver = new ResizeObserver(() => this.resizeToContainer());
-    this.resizeObserver.observe(canvas);
-    this.resizeToContainer();
-  }
-
-  private resizeToContainer(): void {
-    if (!this.renderer || !this.canvasRef) return;
-    const canvas = this.canvasRef.nativeElement;
-    const w = canvas.clientWidth || 1;
-    const h = canvas.clientHeight || 1;
-    this.renderer.setSize(w, h, false);
-    this.renderFrame();
-  }
-
-  // ---- coordinate helpers ----
-  // SVG-space point (y grows downward) -> Three.js scene point (y grows
-  // upward). z stays 0 for anything we don't have a real tracked depth
-  // value for -- see TORSO_DEPTH comment on why we don't fabricate one.
-  private toVec3(p: [number, number], z = 0): THREE.Vector3 {
-    return new THREE.Vector3(p[0], -p[1], z);
-  }
-
-  /** Centers on the actual face-oval centroid each frame when face data
-   * exists (more accurate than the nose-derived headCenter estimate used
-   * for the plain-circle fallback), falling back to headCenter for frames/
-   * words without facial reference data so the zoom doesn't jump wildly
-   * between "has face" and "doesn't" frames in the same clip. */
-  private faceZoomCenter(): [number, number] | null {
+  /** Face-oval centroid when this frame has face data, else the nose-based
+   * head estimate, so the zoom doesn't jump between frames with/without it. */
+  private faceCenter(): [number, number] | null {
     if (!this.frame) return null;
     const oval = this.frame.face?.face_oval;
     if (oval && oval.length > 0) {
-      const x = oval.reduce((s, p) => s + p[0], 0) / oval.length;
-      const y = oval.reduce((s, p) => s + p[1], 0) / oval.length;
-      return [x, y];
+      return [oval.reduce((s, p) => s + p[0], 0) / oval.length, oval.reduce((s, p) => s + p[1], 0) / oval.length];
     }
     return this.headCenter(this.frame);
   }
@@ -174,207 +171,53 @@ export class SkeletonCompareComponent implements OnChanges, AfterViewInit, OnDes
     return [x, y];
   }
 
+  /** One tapered-quad + joint-circle per finger segment -- width shrinks
+   * from base (knuckle) to tip so fingers read as fleshy, not wireframe.
+   * Picked from a 6-option visual comparison. */
+  fingerCapsules(hand: [number, number][]): { poly: string; jx: number; jy: number; jr: number }[] {
+    const out: { poly: string; jx: number; jy: number; jr: number }[] = [];
+    const BASE_WIDTH = 0.055;
+    const TAPER = 0.18; // width shrinks ~18% per joint moving toward the tip
+    for (const chain of Object.values(FINGER_CHAINS)) {
+      for (let i = 0; i < chain.length - 1; i++) {
+        const a = hand[chain[i]];
+        const b = hand[chain[i + 1]];
+        const wA = BASE_WIDTH * (1 - i * TAPER);
+        const wB = BASE_WIDTH * (1 - (i + 1) * TAPER);
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const len = Math.hypot(dx, dy) || 1;
+        const px = -dy / len;
+        const py = dx / len;
+        const poly = [
+          [a[0] + px * wA, a[1] + py * wA],
+          [b[0] + px * wB, b[1] + py * wB],
+          [b[0] - px * wB, b[1] - py * wB],
+          [a[0] - px * wA, a[1] - py * wA],
+        ].map(([x, y]) => `${x},${y}`).join(' ');
+        out.push({ poly, jx: a[0], jy: a[1], jr: wA });
+      }
+    }
+    return out;
+  }
+
+  palmPoints(hand: [number, number][]): string {
+    return PALM_OUTLINE.map(i => hand[i]).map(([x, y]) => `${x},${y}`).join(' ');
+  }
+
+  armPoints(frame: SkeletonFrame, side: 'l' | 'r'): string {
+    const pts: [number, number][] = [frame.pose[`${side}_shoulder`], frame.pose[`${side}_elbow`], frame.pose[`${side}_wrist`]];
+    return pts.map(([x, y]) => `${x},${y}`).join(' ');
+  }
+
+  torsoPoints(frame: SkeletonFrame): string {
+    const pts: [number, number][] = [frame.pose['l_shoulder'], frame.pose['r_shoulder'], frame.pose['r_hip'], frame.pose['l_hip']];
+    return pts.map(([x, y]) => `${x},${y}`).join(' ');
+  }
+
   headCenter(frame: SkeletonFrame): [number, number] {
     const nose = frame.pose['nose'];
     return [nose[0], nose[1] - HEAD_RADIUS * 0.4]; // nudge up -- nose sits low in the face, not at head center
-  }
-
-  /** Updates the orthographic camera's framing box each frame, matching the
-   * old SVG viewBox behavior 1:1 (same centers/radii), just expressed as
-   * an ortho camera box instead of a viewBox string. */
-  private updateCameraFraming(): void {
-    if (!this.camera || !this.canvasRef) return;
-    const aspect = (this.canvasRef.nativeElement.clientWidth || 1) / (this.canvasRef.nativeElement.clientHeight || 1);
-
-    let centerSvg: [number, number] | null = this.BODY_CENTER;
-    let rY = this.BODY_RADIUS_Y;
-    if (this.mode === 'hands') { centerSvg = this.handsCenter() ?? this.BODY_CENTER; rY = this.HAND_ZOOM_RADIUS; }
-    if (this.mode === 'face') { centerSvg = this.faceZoomCenter() ?? this.BODY_CENTER; rY = this.FACE_ZOOM_RADIUS; }
-
-    const rX = rY * aspect; // fills the container's real aspect exactly, same idea the old hands/face viewBox used (there, hardcoded at 1.6; here, read from the actual canvas)
-    const centerX = centerSvg[0];
-    const centerY = -centerSvg[1]; // flipped into scene space
-
-    this.camera.left = -rX;
-    this.camera.right = rX;
-    this.camera.top = rY;
-    this.camera.bottom = -rY;
-    this.camera.position.set(centerX, centerY, 10);
-    this.camera.lookAt(centerX, centerY, 0);
-    this.camera.updateProjectionMatrix();
-  }
-
-  // ---- 3D geometry builders ----
-  private capsuleMesh(a: [number, number], b: [number, number], rA: number, rB: number, material: THREE.Material): THREE.Group {
-    const group = new THREE.Group();
-    const va = this.toVec3(a);
-    const vb = this.toVec3(b);
-    const dir = new THREE.Vector3().subVectors(vb, va);
-    const len = dir.length() || 0.001;
-    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(rB, rA, len, 10, 1), material);
-    const mid = new THREE.Vector3().addVectors(va, vb).multiplyScalar(0.5);
-    cyl.position.copy(mid);
-    cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
-    group.add(cyl);
-    const joint = new THREE.Mesh(new THREE.SphereGeometry(rA, 12, 10), material);
-    joint.position.copy(va);
-    group.add(joint);
-    return group;
-  }
-
-  private fingerCapsules(hand: [number, number][], material: THREE.Material): THREE.Group {
-    const group = new THREE.Group();
-    const BASE_WIDTH = 0.055;
-    const TAPER = 0.18;
-    for (const chain of Object.values(FINGER_CHAINS)) {
-      for (let i = 0; i < chain.length - 1; i++) {
-        const wA = BASE_WIDTH * (1 - i * TAPER);
-        const wB = BASE_WIDTH * (1 - (i + 1) * TAPER);
-        group.add(this.capsuleMesh(hand[chain[i]], hand[chain[i + 1]], wA, wB, material));
-      }
-    }
-    return group;
-  }
-
-  private armCapsules(frame: SkeletonFrame, side: 'l' | 'r', material: THREE.Material): THREE.Group {
-    const group = new THREE.Group();
-    const shoulder = frame.pose[`${side}_shoulder`];
-    const elbow = frame.pose[`${side}_elbow`];
-    const wrist = frame.pose[`${side}_wrist`];
-    group.add(this.capsuleMesh(shoulder, elbow, 0.14, 0.09, material));
-    group.add(this.capsuleMesh(elbow, wrist, 0.09, 0.06, material));
-    return group;
-  }
-
-  private palmMesh(hand: [number, number][], material: THREE.Material): THREE.Mesh {
-    const pts = PALM_OUTLINE.map(i => new THREE.Vector2(hand[i][0], -hand[i][1]));
-    const shape = new THREE.Shape(pts);
-    return new THREE.Mesh(new THREE.ShapeGeometry(shape), material);
-  }
-
-  /** Same hips -> shoulders -> head-bump silhouette as before, now given
-   * real thickness via extrusion + a bevel so it catches light as a solid
-   * form instead of a flat tinted shape. */
-  private bodySilhouetteMesh(frame: SkeletonFrame, material: THREE.Material): THREE.Mesh {
-    const nose = frame.pose['nose'];
-    const headTop: [number, number] = [nose[0], nose[1] - HEAD_RADIUS * 1.6];
-    const headLeft: [number, number] = [nose[0] - HEAD_RADIUS, nose[1] - HEAD_RADIUS * 0.4];
-    const headRight: [number, number] = [nose[0] + HEAD_RADIUS, nose[1] - HEAD_RADIUS * 0.4];
-    const points: [number, number][] = [
-      frame.pose['l_hip'], frame.pose['l_shoulder'], headLeft, headTop, headRight, frame.pose['r_shoulder'], frame.pose['r_hip'],
-    ];
-    const toScene = (p: [number, number]): THREE.Vector2 => new THREE.Vector2(p[0], -p[1]);
-    const mid = (a: THREE.Vector2, b: THREE.Vector2) => new THREE.Vector2((a.x + b.x) / 2, (a.y + b.y) / 2);
-    const scenePts = points.map(toScene);
-    const shape = new THREE.Shape();
-    const start = mid(scenePts[scenePts.length - 1], scenePts[0]);
-    shape.moveTo(start.x, start.y);
-    for (let i = 0; i < scenePts.length; i++) {
-      const cur = scenePts[i];
-      const next = scenePts[(i + 1) % scenePts.length];
-      const m = mid(cur, next);
-      shape.quadraticCurveTo(cur.x, cur.y, m.x, m.y);
-    }
-    const geo = new THREE.ExtrudeGeometry(shape, {
-      depth: TORSO_DEPTH, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3, curveSegments: 12,
-    });
-    geo.translate(0, 0, -TORSO_DEPTH / 2); // center on z=0 so the front face sits at +TORSO_DEPTH/2
-    return new THREE.Mesh(geo, material);
-  }
-
-  /** Face contours as thin raised tube-chains sitting just in front of the
-   * torso's own front face -- real 3D features, not a flat decal. */
-  private faceFeatureMesh(points: [number, number][], radius: number, material: THREE.Material): THREE.Group {
-    const group = new THREE.Group();
-    for (let i = 0; i < points.length; i++) {
-      const a = points[i];
-      const b = points[(i + 1) % points.length];
-      group.add(this.capsuleMesh(a, b, radius, radius, material));
-    }
-    group.position.z = FACE_Z_OFFSET; // raised just in front of the torso's own front face, no z-fighting
-    return group;
-  }
-
-  private orientationArrow(origin: [number, number], dir: [number, number], material: THREE.Material): THREE.Group {
-    const tip: [number, number] = [origin[0] + dir[0] * 0.7, origin[1] + dir[1] * 0.7];
-    return this.capsuleMesh(origin, tip, 0.045, 0.02, material);
-  }
-
-  private disposeGroup(group: THREE.Group): void {
-    // Materials are shared across many meshes per frame (one per logical
-    // part, not per mesh), so track and dispose each unique one once --
-    // disposing per-mesh would double-dispose the shared ones.
-    const disposedMaterials = new Set<THREE.Material>();
-    group.traverse(obj => {
-      if (obj instanceof THREE.Mesh) {
-        obj.geometry.dispose();
-        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-        for (const m of mats) {
-          if (!disposedMaterials.has(m)) { m.dispose(); disposedMaterials.add(m); }
-        }
-      }
-    });
-  }
-
-  private material(colorHex: string): THREE.Material {
-    return new THREE.MeshStandardMaterial({ color: new THREE.Color(colorHex), roughness: 0.55, metalness: 0.05 });
-  }
-
-  private renderFrame(): void {
-    if (!this.renderer || !this.scene || !this.camera || !this.dynamicGroup) return;
-
-    this.disposeGroup(this.dynamicGroup);
-    this.scene.remove(this.dynamicGroup);
-    this.dynamicGroup = new THREE.Group();
-    this.scene.add(this.dynamicGroup);
-
-    this.updateCameraFraming();
-
-    const frame = this.frame;
-    if (frame) {
-      const bodyMat = this.material(this.bodyColor);
-      const locationMat = this.material(this.locationColor);
-      const handshapeMat = this.material(this.handshapeColor);
-      const orientationMat = this.material(this.orientationColor);
-      const eyebrowMat = this.material(this.eyebrowColor);
-
-      if (this.mode === 'body') {
-        const torso = this.bodySilhouetteMesh(frame, bodyMat);
-        (torso.material as THREE.MeshStandardMaterial).transparent = true;
-        (torso.material as THREE.MeshStandardMaterial).opacity = 0.9;
-        this.dynamicGroup.add(torso);
-        this.dynamicGroup.add(this.armCapsules(frame, 'l', locationMat));
-        this.dynamicGroup.add(this.armCapsules(frame, 'r', locationMat));
-      }
-
-      if ((this.mode === 'body' || this.mode === 'face') && frame.face) {
-        for (const key of FACE_CONTOUR_KEYS) {
-          const pts = frame.face[key] as [number, number][] | undefined;
-          if (pts && pts.length > 1) this.dynamicGroup.add(this.faceFeatureMesh(pts, 0.012, bodyMat));
-        }
-        if (frame.face.left_eyebrow?.length) this.dynamicGroup.add(this.faceFeatureMesh(frame.face.left_eyebrow, 0.016, eyebrowMat));
-        if (frame.face.right_eyebrow?.length) this.dynamicGroup.add(this.faceFeatureMesh(frame.face.right_eyebrow, 0.016, eyebrowMat));
-      }
-
-      if (this.mode !== 'face') {
-        if (frame.left_hand) {
-          this.dynamicGroup.add(this.palmMesh(frame.left_hand, handshapeMat.clone()));
-          this.dynamicGroup.add(this.fingerCapsules(frame.left_hand, handshapeMat));
-        }
-        if (frame.right_hand) {
-          this.dynamicGroup.add(this.palmMesh(frame.right_hand, handshapeMat.clone()));
-          this.dynamicGroup.add(this.fingerCapsules(frame.right_hand, handshapeMat));
-        }
-        if (frame.right_hand && frame.right_orientation) {
-          this.dynamicGroup.add(this.orientationArrow(frame.right_hand[0], frame.right_orientation, orientationMat));
-        }
-        if (frame.left_hand && frame.left_orientation) {
-          this.dynamicGroup.add(this.orientationArrow(frame.left_hand[0], frame.left_orientation, orientationMat));
-        }
-      }
-    }
-
-    this.renderer.render(this.scene, this.camera);
   }
 
   ngOnChanges(): void {
@@ -382,18 +225,15 @@ export class SkeletonCompareComponent implements OnChanges, AfterViewInit, OnDes
     this.progress = 0;
     this.updateFrame();
     const hasData = this.frames && this.frames.length > 0;
-    if (hasData && this.animate) {
-      this.timer = setInterval(() => {
-        this.progress = (this.progress + 1 / 24) % 1; // ~24 steps per loop, independent of array length
-        this.updateFrame();
-      }, FRAME_MS / Math.max(this.speedMultiplier, 0.1));
-    }
-    if (this.viewInitialized) this.renderFrame();
+    if (!hasData || !this.animate) return;
+    this.timer = setInterval(() => {
+      this.progress = (this.progress + 1 / 24) % 1; // ~24 steps per loop, independent of array length
+      this.updateFrame();
+    }, FRAME_MS / Math.max(this.speedMultiplier, 0.1));
   }
 
   private updateFrame(): void {
     this.frame = this.frameAt(this.frames);
-    if (this.viewInitialized) this.renderFrame();
   }
 
   private frameAt(seq: SkeletonFrame[] | null | undefined): SkeletonFrame | null {
@@ -404,8 +244,5 @@ export class SkeletonCompareComponent implements OnChanges, AfterViewInit, OnDes
 
   ngOnDestroy(): void {
     if (this.timer) clearInterval(this.timer);
-    this.resizeObserver?.disconnect();
-    if (this.dynamicGroup) this.disposeGroup(this.dynamicGroup);
-    this.renderer?.dispose();
   }
 }

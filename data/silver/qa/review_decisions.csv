@@ -1,0 +1,1185 @@
+video_id,decision,comment
+70212,bad_video,
+70263,bad_video,"has multiple signs in the same video
+"
+24969,ok,
+24970,ok,
+70244,bad_video,"again, multipe signs. this video contains multiple colors"
+70361,unsure,starts with unit 8. multiple signs again. review this. 
+21954,unsure,
+21955,unsure,
+28119,ok,
+28120,ok,
+33279,bad_video,this looks good but he is doing teh same sign on the side too.
+33280,bad_video,
+33281,unsure,
+33282,unsure,
+39001,ok,
+39002,ok,
+40118,ok,
+40119,ok,
+70323,unsure,multiple signs in a same video. 
+08945,ok,
+08946,ok,
+70176,bad_video,starts with a title unit 5 and contains multiple signs
+26712,ok,
+70016,unsure,
+70245,bad_video,it is flagged as white but the sign starts saying black and there is no sign in the video.
+11774,ok,
+11775,ok,
+70051,wrong_sign,i dont think this is the sign for enjoy
+70356,bad_video,trimming issue and it says TIME as title but the video starts with a title ALL
+62253,ok,
+62254,ok,
+15039,ok,
+15040,ok,
+37887,ok,
+37888,ok,
+41033,ok,
+41034,ok,
+00628,ok,there are two versions for the word accident. one using one hands and another two hands. we need to be careful on this word. This is a great lighted video. so we need more of this. 
+00633,wrong_sign,no video.
+04487787596749482-ACCIDENT.mp4,bad_video,
+0516106106258869-ACCIDENT.mp4,ok,two hand sign. need to track.
+05642494807341181-ACCIDENT.mp4,ok,
+08442183866728903-ACCIDENT.mp4,ok,
+09218836326656632-ACCIDENT.mp4,ok,
+20706644268783325-ACCIDENT.mp4,ok,
+21734385004764167-ACCIDENT.mp4,ok,
+2557583609246288-ACCIDENT.mp4,ok,
+2564008903644184-ACCIDENT.mp4,ok,
+3056853851535579-ACCIDENT.mp4,ok,
+3802527701650662-seedACCIDENT.mp4,ok,
+39909914365475907-ACCIDENT.mp4,ok,
+4085470742522179-ACCIDENT.mp4,ok,
+4120236052549755-ACCIDENT.mp4,ok,
+4337179121121768-ACCIDENT.mp4,ok,
+46144949329047735-ACCIDENT.mp4,ok,
+5187973451212378-ACCIDENT.mp4,ok,
+5587163060400597-ACCIDENT.mp4,ok,
+574389810940992-ACCIDENT.mp4,ok,
+5977951646216033-ACCIDENT.mp4,ok,
+6193594957219881-ACCIDENT.mp4,ok,
+6530217528561999-ACCIDENT.mp4,ok,
+7236629829826864-ACCIDENT.mp4,ok,
+7423935245472906-ACCIDENT.mp4,ok,
+8115127991954083-ACCIDENT.mp4,ok,
+9288644673117121-ACCIDENT.mp4,ok,
+9554132075283888-ACCIDENT.mp4,ok,
+9824910885537608-ACCIDENT.mp4,ok,
+9825553011596289-ACCIDENT.mp4,ok,
+00618,bad_video,this video starts with a different sign. i think we need to trim the first few seconds.
+00623,ok,single hand accident. I think it shows more than accident.
+00624,ok,
+00625,ok,single hand accident.
+00626,ok,this user uses two fingers instead of all the fingers. need to know the key points.
+00627,ok,single hand accident.
+00629,ok,
+00635,ok,
+msasl2_accident_train_538_1019,ok,single hand accident.
+msasl2_accident_train_538_1020,bad_video,side pose of the single hand accident sign.
+msasl2_accident_train_538_1367,bad_video,closed hands all the way.
+msasl2_accident_train_538_1927,ok,using three fingers.
+msasl2_accident_train_538_311,ok,
+msasl2_accident_train_538_525,ok,
+msasl2_accident_train_538_871,ok,
+msasl2_accident_train_538_872,ok,
+msasl2_accident_train_538_899,ok,
+00630,bad_video,no video available. 
+00631,bad_video,
+00632,bad_video,no vidoe
+00634,bad_video,no video
+00636,bad_video,no video
+00638,bad_video,no video
+00639,bad_video,no video
+65009,bad_video,no video
+67342,bad_video,no video
+msasl2_africa_train_265_1828,unsure,
+003572310576983817-AFRICA.mp4,unsure,
+06692352920060629-AFRICA.mp4,ok,
+08517753210619161-AFRICA.mp4,ok,
+09527426336436773-AFRICA.mp4,ok,
+10761069132949075-AFRICA.mp4,ok,different dominant hand. need to mirror.
+16459122877931254-AFRICA.mp4,ok,
+1668171271304839-seedAFRICA.mp4,ok,
+17385909555482848-AFRICA.mp4,ok,mirror hand.
+21136497831492562-AFRICA.mp4,ok,
+2388367529920481-AFRICA.mp4,ok,
+24525417922017678-AFRICA.mp4,ok,
+2619604519568257-AFRICA.mp4,ok,
+27777681903933904-AFRICA.mp4,ok,
+3549469017628022-AFRICA.mp4,ok,
+5481272962971873-AFRICA.mp4,ok,
+5512685830107804-AFRICA.mp4,ok,
+5514474824834099-AFRICA.mp4,ok,mirror hand.
+5529975627878434-AFRICA.mp4,ok,
+5682555572391592-AFRICA.mp4,ok,
+5772767905335048-AFRICA.mp4,ok,
+5916550114284793-AFRICA.mp4,ok,
+6434800018838922-AFRICA.mp4,ok,
+666949361074225-AFRICA.mp4,bad_video,no video.
+7226000773274008-AFRICA.mp4,ok,
+7322646663115284-AFRICA.mp4,ok,
+8150427560737685-AFRICA.mp4,ok,
+82319728157989-AFRICA.mp4,ok,mirror hand.
+8231992423177013-AFRICA.mp4,ok,
+8372736528087885-AFRICA.mp4,ok,mirror hand
+8570633136421932-AFRICA.mp4,ok,
+874780309037607-AFRICA.mp4,ok,mirror hand
+01382,ok,
+01383,ok,
+01384,ok,
+01385,unsure,i dont think it is a africa sign or it could be a variation.
+01386,unsure,
+01387,ok,
+01388,ok,
+01392,ok,variation
+01393,ok,
+01394,ok,
+01395,ok,
+msasl2_africa_train_265_1672,ok,
+msasl2_africa_train_265_1673,ok,variation
+msasl2_africa_train_265_1742,ok,another variation
+msasl2_africa_train_265_1825,ok,
+msasl2_africa_train_265_1826,ok,variation
+msasl2_africa_train_265_1827,ok,variation
+msasl2_africa_train_265_1829,bad_video,bad trimming
+msasl2_africa_train_265_1830,ok,variation.
+msasl2_africa_train_265_1831,ok,variation
+msasl2_africa_train_265_1928,ok,has address in the first few seconds.
+msasl2_africa_train_265_1936,bad_video,totally different way. try to review.
+msasl2_africa_train_265_2000,ok,
+msasl2_africa_train_265_2420,ok,
+msasl2_africa_train_265_369,ok,
+msasl2_africa_train_265_422,ok,
+msasl2_africa_train_265_437,ok,
+msasl2_africa_train_265_602,ok,variation
+msasl2_africa_train_265_801,ok,
+msasl2_africa_train_265_802,ok,
+msasl2_africa_train_265_87,ok,totally different variation
+msasl2_africa_val_265_2765,ok,variation
+01390,unsure,
+01391,unsure,
+01396,ok,variation
+01397,ok,
+01398,ok,
+65029,ok,
+67350,ok,
+057126086628274564-ALL.mp4,ok,
+05901009748897512-ALL.mp4,ok,different hand
+06327853237943692-ALL.mp4,ok,
+08327228555001609-ALL.mp4,ok,
+12844166526089085-ALL.mp4,ok,
+14271576596096258-ALL.mp4,ok,
+14648382672488958-ALL.mp4,bad_video,i cant see the video.
+1977023637643942-ALL.mp4,ok,
+27090394504631754-ALL.mp4,ok,
+280454610189935-ALL.mp4,ok,signed this with a different hand movement than others.
+2845953650416435-ALL.mp4,ok,
+3384107181443896-ALL.mp4,ok,mirror hand.
+40507215869597446-ALL.mp4,ok,
+41609856180263693-ALL.mp4,ok,
+5032194947341728-ALL.mp4,ok,
+5332603758730681-ALL.mp4,ok,slightly different hand movement
+5641697091947413-ALL.mp4,bad_video,unable to see the video.
+5699019995816961-ALL.mp4,ok,
+5986140318809434-ALL.mp4,ok,mirror hand.
+6345921613868126-ALL.mp4,ok,
+6444159193280847-ALL.mp4,ok,
+7131258239121734-ALL.mp4,ok,
+7188630671751595-ALL.mp4,ok,
+7962669167520577-ALL.mp4,bad_video,no video
+8622188011930683-ALL.mp4,ok,mirror hand
+8633963006612502-ALL.mp4,ok,
+8644015761056447-ALL.mp4,ok,
+8790279150116067-ALL.mp4,ok,
+9139842022194566-seedALL.mp4,ok,
+926861907005698-ALL.mp4,ok,mirror hand.
+9449592378441061-ALL.mp4,ok,
+01912,ok,trimmming issue.
+01986,ok,
+01987,ok,
+01988,ok,
+01995,ok,
+01996,ok,
+01997,unsure,this looks different.
+02000,unsure,this looks differentl does not look like all.
+68001,unsure,another variation.
+69206,ok,
+msasl2_all_train_134_101,ok,
+msasl2_all_train_134_1016,ok,
+msasl2_all_train_134_1860,ok,variation
+msasl2_all_train_134_1938,wrong_sign,another vairation. this looks like pray.
+msasl2_all_train_134_2065,ok,variation.
+msasl2_all_train_134_228,ok,variation.
+msasl2_all_train_134_2298,unsure,variation.
+msasl2_all_train_134_2386,ok,
+msasl2_all_train_134_2387,ok,variation.
+msasl2_all_train_134_2388,ok,
+msasl2_all_train_134_2445,ok,mirror hand.
+msasl2_all_train_134_2542,ok,another variation
+msasl2_all_train_134_2543,ok,
+msasl2_all_train_134_521,ok,
+msasl2_all_train_134_526,ok,at the end there is a trimming issue.
+msasl2_all_train_134_627,ok,
+msasl2_all_train_134_637,ok,variation.
+msasl2_all_train_134_638,ok,variation and the signer is on the side.
+msasl2_all_train_134_838,ok,variation.
+msasl2_all_train_134_948,ok,trimming issue and variation.
+msasl2_all_train_134_949,ok,
+msasl2_all_val_134_2771,ok,
+01989,unsure,
+01990,unsure,I think variation.
+01991,ok,variation.
+01992,ok,beautiful
+01998,ok,variation.
+01999,unsure,
+02002,ok,variation.
+02003,ok,
+65043,ok,
+67356,ok,
+68720,unsure,
+011716531366529281-APPLE.mp4,ok,
+02278260656013753-APPLE.mp4,ok,
+050694111976633094-APPLE.mp4,ok,
+06571173343741843-APPLE.mp4,ok,
+10506892472594931-APPLE.mp4,ok,
+1242799684009872-APPLE.mp4,ok,
+15890366051589533-APPLE.mp4,ok,
+250480772445395-APPLE.mp4,unsure,no video.
+2661859902709265-APPLE.mp4,ok,
+3219737697335432-APPLE.mp4,ok,
+32244369390325667-APPLE.mp4,ok,
+3876948819633417-APPLE.mp4,ok,
+39628385869626626-APPLE.mp4,ok,
+4087545522469531-APPLE.mp4,ok,
+43040594979190994-APPLE.mp4,ok,
+5182719290588473-APPLE.mp4,ok,
+60085579467325-APPLE.mp4,unsure,different finger usage.
+6028092526149813-APPLE.mp4,ok,
+6100485201369457-APPLE.mp4,ok,
+6162988797399023-APPLE.mp4,ok,
+654679171689897-APPLE.mp4,ok,
+6671187735704913-APPLE.mp4,ok,mirror hand
+7146499232909553-APPLE.mp4,ok,
+7798157575833962-APPLE.mp4,ok,
+789374508489777-APPLE.mp4,ok,mirror hand
+8239094276726386-seedAPPLE.mp4,ok,
+8258055659654735-APPLE.mp4,ok,mirror hand
+8470559627358119-APPLE.mp4,ok,
+8893172628755586-APPLE.mp4,ok,
+8894617756348819-APPLE.mp4,ok,mirror hand.
+9761845244833474-APPLE.mp4,ok,
+9765414961236116-APPLE.mp4,ok,mirror hand.
+02997,ok,there is a flicker.
+02999,ok,
+03000,ok,
+03001,ok,
+03002,ok,
+03003,ok,
+03006,ok,
+68003,ok,
+69213,ok,
+70309,wrong_sign,i think this is wrong sign. also it says MANNY
+msasl2_apple_train_100_1002,ok,
+msasl2_apple_train_100_1064,ok,
+msasl2_apple_train_100_1095,ok,
+msasl2_apple_train_100_1112,ok,
+msasl2_apple_train_100_1488,ok,
+msasl2_apple_train_100_1489,ok,
+msasl2_apple_train_100_1519,ok,
+msasl2_apple_train_100_1520,ok,
+msasl2_apple_train_100_181,ok,
+msasl2_apple_train_100_182,unsure,the signer is on the side.
+msasl2_apple_train_100_1870,ok,
+msasl2_apple_train_100_2177,ok,
+msasl2_apple_train_100_2185,ok,
+msasl2_apple_train_100_2196,ok,
+msasl2_apple_train_100_2259,ok,
+msasl2_apple_train_100_2260,ok,
+msasl2_apple_train_100_2312,ok,
+msasl2_apple_train_100_2376,ok,
+msasl2_apple_train_100_238,ok,
+msasl2_apple_train_100_239,ok,
+msasl2_apple_train_100_2525,ok,
+msasl2_apple_train_100_412,ok,
+msasl2_apple_train_100_591,ok,
+msasl2_apple_train_100_724,ok,
+msasl2_apple_train_100_882,ok,
+msasl2_apple_train_100_996,ok,
+msasl2_apple_val_100_2885,ok,
+03004,ok,
+03005,unsure,wrong key points.
+03007,unsure,i think this looks good but the non-dominant hand has an extra long line.
+03008,ok,
+65084,ok,"same long line on the non-dom hand.
+"
+65085,ok,mirror hand.
+65086,ok,
+67367,ok,
+68576,ok,
+6165635095496385-BASKETBALL 3.mp4,ok,
+6172780889696174-BASKETBALL 3.mp4,ok,
+019113149258163764-BASKETBALL.mp4,unsure,variation?
+02127544513426116-BASKETBALL.mp4,unsure,variaion?
+03646201569063057-BASKETBALL 3.mp4,unsure,cant see the video.
+03744280255090171-BASKETBALL 3.mp4,ok,
+04962514019781339-BASKETBALL.mp4,ok,variation?
+05043302933121163-BASKETBALL.mp4,ok,
+06003899001497115-BASKETBALL.mp4,ok,variation?
+060562031925950555-BASKETBALL.mp4,ok,variation?
+06250679912910284-BASKETBALL.mp4,ok,variation?
+06779656223967634-BASKETBALL.mp4,ok,variation?
+08361669746584477-BASKETBALL.mp4,bad_video,cant see the video.
+08625639395858675-BASKETBALL 2.mp4,bad_video,variation?
+09318680773691468-BASKETBALL 3.mp4,ok,mirror hand.
+1525720105773678-BASKETBALL 3.mp4,ok,mirror hand
+16013066938264542-BASKETBALL 3.mp4,ok,
+16099487151956193-BASKETBALL.mp4,ok,variation
+1745452785017827-BASKETBALL.mp4,ok,variation
+1936724717609739-BASKETBALL 2.mp4,ok,variation
+20453046947578213-BASKETBALL 3.mp4,ok,
+24515852343907651-BASKETBALL 2.mp4,ok,variation
+26540643811273745-BASKETBALL.mp4,ok,variation
+2695862674384528-BASKETBALL 2.mp4,ok,variation
+27993271241210227-BASKETBALL 2.mp4,unsure,cant see the video
+2868450170530843-BASKETBALL 2.mp4,ok,variation
+306186249835092-BASKETBALL.mp4,ok,variation
+31742888688212156-BASKETBALL 2.mp4,ok,variation
+31751363195904125-BASKETBALL 2.mp4,ok,variation
+33282959086389163-BASKETBALL.mp4,ok,mirror hand
+34361513389950504-BASKETBALL.mp4,ok,variation
+34628833251266156-BASKETBALL 2.mp4,ok,variation
+3597275294574689-BASKETBALL.mp4,ok,variation
+3606564491385813-BASKETBALL 2.mp4,ok,variation
+3748668152168735-BASKETBALL 2.mp4,ok,"variation
+"
+38661684159752396-BASKETBALL.mp4,ok,variation
+3908502639532043-BASKETBALL.mp4,ok,variation
+41247241504607346-seedBASKETBALL.mp4,ok,variation
+4141832419761349-BASKETBALL 2.mp4,ok,variation
+4299214673266345-BASKETBALL 3.mp4,ok,mirror hand
+4307462450858488-BASKETBALL 3.mp4,ok,
+44461635757004814-BASKETBALL 3.mp4,ok,
+4503391546688418-BASKETBALL 2.mp4,ok,variation
+4632797200971899-seedBASKETBALL.mp4,ok,
+4707692122950564-BASKETBALL.mp4,ok,variation
+4747623892063422-BASKETBALL.mp4,ok,variation
+5064940376290201-BASKETBALL.mp4,ok,variation
+5097988079895936-BASKETBALL 3.mp4,ok,
+5237754675340665-BASKETBALL 3.mp4,ok,mirror hand
+5248742066900234-BASKETBALL.mp4,ok,variation
+5277617172355613-BASKETBALL 3.mp4,ok,
+5343394629701335-BASKETBALL.mp4,ok,variation
+5400974773968819-BASKETBALL 2.mp4,ok,variation
+5552456698729644-BASKETBALL.mp4,ok,
+57337857006252-BASKETBALL.mp4,ok,variation
+6004944388944689-BASKETBALL.mp4,ok,
+6108589693515236-BASKETBALL 3.mp4,ok,variation
+6152714959604932-BASKETBALL.mp4,ok,
+6251993314243527-BASKETBALL.mp4,ok,variation
+6308893790777685-BASKETBALL 3.mp4,ok,variation
+634367181659016-BASKETBALL.mp4,ok,variation
+6355598616436169-BASKETBALL.mp4,ok,variation
+6443760370172218-BASKETBALL 2.mp4,ok,variation
+6921792305251517-BASKETBALL 2.mp4,ok,variation
+6932089918973738-BASKETBALL.mp4,ok,variation
+6993782178496888-BASKETBALL.mp4,ok,variation
+7029845806718837-BASKETBALL.mp4,ok,variation
+7151149920814892-BASKETBALL 3.mp4,ok,mirror hand
+7201139167303696-BASKETBALL.mp4,ok,
+7203692682452196-BASKETBALL 2.mp4,ok,variation
+7394024045879728-BASKETBALL 2.mp4,bad_video,no video
+7637315063320489-BASKETBALL 3.mp4,ok,mirror hand
+792719481166883-BASKETBALL.mp4,ok,mirror hand
+8017819493197522-BASKETBALL 2.mp4,ok,mirror hand
+8176008821957905-BASKETBALL 3.mp4,ok,
+8275784411364397-BASKETBALL.mp4,ok,mirror hand
+8277007481649858-BASKETBALL 2.mp4,ok,variation
+8392684568979598-BASKETBALL 2.mp4,ok,variation
+8411356645660348-BASKETBALL.mp4,ok,variation
+8423017864044668-BASKETBALL.mp4,ok,variation
+8520012956955552-BASKETBALL 3.mp4,ok,
+8631882844083429-BASKETBALL 3.mp4,ok,
+8953609863462233-BASKETBALL 3.mp4,ok,
+9065308331231714-BASKETBALL.mp4,ok,variation
+9248063910755118-BASKETBALL.mp4,ok,variation
+9432574110287932-seedBASKETBALL.mp4,ok,variation
+9474917526716478-BASKETBALL.mp4,ok,variation
+9556969092611263-BASKETBALL 2.mp4,ok,variation
+9644274787195919-BASKETBALL.mp4,ok,variation
+9779859866933089-BASKETBALL.mp4,ok,variation
+9884802661426331-BASKETBALL 2.mp4,ok,variation
+9968817402911712-BASKETBALL 3.mp4,ok,
+05227,ok,variation
+05229,ok,variation
+05230,unsure,variation and the hands are above head.
+05231,wrong_sign,variation
+05232,ok,variation
+05233,ok,variation
+05234,ok,variation
+05241,ok,variation
+69225,ok,variation
+msasl2_basketball_train_259_1004,ok,variation
+msasl2_basketball_train_259_1005,ok,variation
+msasl2_basketball_train_259_103,ok,variation
+msasl2_basketball_train_259_114,ok,variation
+msasl2_basketball_train_259_1299,ok,variation
+msasl2_basketball_train_259_1793,ok,variation
+msasl2_basketball_train_259_2520,unsure,variation with broader hands.
+msasl2_basketball_train_259_2521,ok,variation broader hands.
+msasl2_basketball_train_259_2649,ok,variation
+msasl2_basketball_train_259_670,ok,variation
+msasl2_basketball_train_259_720,ok,variation above the head.
+msasl2_basketball_train_259_886,ok,variation
+msasl2_basketball_val_259_2841,ok,variation
+05236,ok,variation
+05237,ok,variation
+05238,ok,variation
+05239,ok,variation
+05243,ok,variation
+65144,ok,variation
+65145,ok,variation
+67392,ok,variation
+68612,ok,variatiokn
+007556095078846248-BED 2.mp4,ok,
+010505572845943778-BED.mp4,ok,one hand
+0440499613505525-BED 2.mp4,ok,
+046595070103822245-BED.mp4,ok,variation
+07478185392264436-BED.mp4,ok,"mirror hand, variation"
+1248507910408927-BED.mp4,ok,variation
+14412165989104997-seedBED 2.mp4,ok,
+1561023536919608-BED 2.mp4,ok,mirror hand
+17887646260763734-BED 2.mp4,ok,
+20913799153047496-BED 2.mp4,ok,
+23498704883362675-BED.mp4,ok,variation
+23585140868095378-BED 2.mp4,ok,mirror hand
+2408420538926983-BED.mp4,ok,variation
+2767301605274206-BED 2.mp4,ok,
+27766510578240666-BED 2.mp4,ok,mirror hand
+281962275035226-BED.mp4,ok,variation
+3061455946213081-BED 2.mp4,ok,
+30658114683051063-BED.mp4,bad_video,no video
+33550023121939865-BED.mp4,ok,variation
+364470520343124-BED.mp4,ok,"mirror hand, variation"
+38078046724800196-BED.mp4,ok,variation
+384934252853842-BED.mp4,ok,"variation, mirror hand"
+39343633777497744-BED.mp4,ok,variation
+39391120246843614-BED 2.mp4,ok,
+4708512735143906-BED 2.mp4,ok,
+47405159977062383-BED.mp4,ok,variation
+5087208567483212-BED 2.mp4,ok,mirror hand
+5210609441885852-BED.mp4,ok,variation
+5350432124376727-BED 2.mp4,ok,
+5803380844903856-BED 2.mp4,ok,
+5860298500998569-BED 2.mp4,ok,
+586395817126711-BED.mp4,ok,variation
+6085999425709865-seedBED.mp4,ok,variation
+6111456866182194-BED.mp4,ok,variation
+6529066037089684-BED.mp4,ok,"mirror hand, variation"
+6897280672292563-BED 2.mp4,ok,
+6980223412655981-BED 2.mp4,ok,variation
+699773681744323-BED 2.mp4,bad_video,no video
+7041456864385043-BED.mp4,ok,"variation, mirror hand"
+7100719460900693-BED 2.mp4,ok,variation
+7189489923194294-BED 2.mp4,ok,
+7325110500516043-BED 2.mp4,ok,
+7504571212627438-BED.mp4,ok,variation
+7523828240380874-BED 2.mp4,ok,mirror hand
+7699503992300363-BED 2.mp4,ok,mirror hand
+7767586064310084-BED.mp4,ok,variation
+7792037640059655-BED.mp4,ok,variation
+8095655324161697-BED.mp4,ok,variation
+8157297751263874-BED.mp4,ok,variation
+8215299233325997-BED 2.mp4,ok,
+8290052980281477-BED.mp4,ok,variation
+830537237619974-BED 2.mp4,ok,mirror hand
+833013532810184-BED.mp4,ok,variation
+860063381086841-BED 2.mp4,ok,mirror hand
+8756807143676495-BED 2.mp4,ok,
+8954637787648481-BED 2.mp4,ok,
+9054193437872764-BED.mp4,ok,
+919198427407482-BED.mp4,ok,variation
+9344616599761175-BED 2.mp4,ok,mirror hand
+9351465869786617-BED 2.mp4,ok,
+9527007531687322-BED.mp4,ok,variation
+9692510604431204-BED.mp4,ok,variation
+05628,ok,variation
+05629,ok,variation
+05630,ok,
+05631,ok,variation
+05632,ok,"variation, mirror hand"
+05633,ok,
+05634,ok,
+05639,ok,variation
+05641,ok,variation
+msasl2_bed_train_188_104,ok,variation
+msasl2_bed_train_188_1084,ok,
+msasl2_bed_train_188_1628,ok,
+msasl2_bed_train_188_1917,ok,variation
+msasl2_bed_train_188_2047,ok,variation
+msasl2_bed_train_188_2048,ok,variation
+msasl2_bed_train_188_2240,ok,variation
+msasl2_bed_train_188_2319,ok,variation
+msasl2_bed_train_188_2469,ok,variation
+msasl2_bed_train_188_27,ok,
+msasl2_bed_train_188_560,ok,
+msasl2_bed_train_188_561,ok,variation
+msasl2_bed_train_188_562,ok,
+msasl2_bed_train_188_703,ok,variation
+msasl2_bed_train_188_799,ok,variation
+05635,ok,
+05636,ok,variation
+05637,ok,variation
+05638,ok,variation
+05642,ok,variation
+05643,ok,mirror hand
+05644,ok,
+65161,ok,variation
+65162,ok,
+65163,ok,variation
+67400,ok,variation
+05741,unsure,
+05742,unsure,
+05743,unsure,
+06131823386898638-BEFORE.mp4,ok,
+10191750851054593-BEFORE.mp4,ok,
+11574898513671861-BEFORE.mp4,ok,
+147667439674817-BEFORE.mp4,ok,
+18140021240558846-BEFORE.mp4,ok,
+18482423085140032-BEFORE.mp4,ok,
+18555657453585117-BEFORE.mp4,ok,
+2510897626267057-BEFORE.mp4,ok,mirror hand
+4197770326170689-BEFORE.mp4,ok,
+4405635468661042-BEFORE.mp4,ok,
+4446495422982424-BEFORE.mp4,unsure,no video
+5152655352749118-BEFORE.mp4,ok,
+5268798024931471-BEFORE.mp4,ok,
+5369984582921237-BEFORE.mp4,ok,mirror hand
+5417596504832145-BEFORE.mp4,ok,
+5486612939933115-BEFORE.mp4,ok,variation
+6140513895293755-BEFORE.mp4,ok,
+6180980581851638-BEFORE.mp4,ok,
+6424562415149335-BEFORE.mp4,ok,
+6424922559625883-BEFORE.mp4,ok,
+6769051062367408-BEFORE.mp4,ok,mirror hand
+7464177985790723-BEFORE.mp4,ok,
+7636219949743834-BEFORE.mp4,ok,mirror hand
+776528000465337-BEFORE.mp4,ok,
+7772435217793601-BEFORE.mp4,ok,
+7895464151268321-BEFORE.mp4,ok,
+8509389835079619-seedBEFORE.mp4,ok,
+8719171974792299-BEFORE.mp4,ok,
+8871402726040725-BEFORE.mp4,ok,
+9518771111871103-BEFORE.mp4,ok,
+05724,ok,variation
+05727,ok,
+05728,ok,variation
+05729,ok,
+05730,ok,
+05731,ok,"variation, this looks odd."
+05732,ok,variation
+05733,ok,
+05734,ok,variation
+05744,ok,
+07969,unsure,
+51206,ok,
+51220,ok,variation
+51221,ok,variation
+51223,ok,
+51224,ok,
+51225,ok,variation
+51226,ok,
+51227,ok,
+70355,unsure,different sign - it says far in the future.
+msasl2_short_train_498_1288,ok,
+msasl2_short_train_498_1396,ok,
+msasl2_short_train_498_1397,ok,
+msasl2_short_train_498_1635,unsure,variation
+msasl2_short_train_498_1759,ok,
+msasl2_short_train_498_2476,ok,
+msasl2_short_train_498_2477,unsure,side view.
+msasl2_short_train_498_495,ok,variation
+msasl2_short_train_498_745,ok,
+msasl2_short_train_498_746,ok,
+msasl2_short_train_498_859,ok,variation
+51228,ok,
+51229,unsure,
+51230,unsure,
+51231,unsure,
+51232,unsure,
+51233,ok,
+51234,unsure,
+51235,unsure,
+51236,ok,
+66469,unsure,
+05746,ok,variation
+05747,ok,
+68007,ok,variation
+70348,wrong_sign,wrong sign.
+msasl2_before_train_387_1454,ok,
+msasl2_before_train_387_1467,ok,
+msasl2_before_train_387_1480,ok,
+msasl2_before_train_387_1539,ok,
+msasl2_before_train_387_1914,ok,
+msasl2_before_train_387_1929,ok,
+msasl2_before_train_387_2403,ok,
+msasl2_before_train_387_2515,ok,
+msasl2_before_train_387_493,ok,variation
+05735,ok,variation
+05736,unsure,
+05737,ok,variation
+05739,unsure,
+05740,unsure,
+05748,ok,
+05749,ok,variation
+05750,unsure,
+65167,ok,
+msasl2_bird_train_14_1457,ok,
+06336,bad_video,no hand checkpoints
+006303021438919254-BIRD.mp4,ok,
+01207267097409459-BIRD.mp4,ok,mirror hand
+024599489089319748-BIRD.mp4,ok,
+025206286555369273-BIRD.mp4,ok,
+047954989065146725-BIRD.mp4,ok,
+058506224158483056-BIRD.mp4,unsure,no video
+07273368098019439-BIRD.mp4,ok,mirror hand
+07390110032238817-BIRD.mp4,ok,mirror hand
+08798637884196503-BIRD.mp4,ok,mirror hand
+1228693178848621-BIRD.mp4,ok,
+13745394912782793-BIRD.mp4,ok,mirror hand
+19632033474430832-BIRD.mp4,ok,
+2475683909646651-BIRD.mp4,ok,
+26033769855759514-BIRD.mp4,ok,
+268515073446421-BIRD.mp4,ok,
+30664148320348894-BIRD.mp4,ok,
+32004316932420407-BIRD.mp4,ok,
+3775027040220682-seedBIRD.mp4,ok,
+4306595548556691-BIRD.mp4,ok,
+47495313948748796-BIRD.mp4,ok,
+5001083458241053-BIRD.mp4,ok,
+5933855211400432-BIRD.mp4,ok,
+6230415830085574-BIRD.mp4,ok,
+6305425022101252-BIRD.mp4,ok,
+6546214101257959-BIRD.mp4,ok,
+7681454721815406-BIRD.mp4,ok,
+772180570303282-BIRD.mp4,ok,
+9124605309904161-BIRD.mp4,ok,
+9195002987087413-BIRD.mp4,ok,
+9620404145985224-BIRD.mp4,ok,
+9769693490028684-BIRD.mp4,ok,
+06326,ok,
+06330,bad_video,no video
+06331,ok,
+06332,ok,
+06333,ok,
+06334,ok,
+06335,ok,
+06338,ok,
+06340,ok,
+06341,ok,
+69233,ok,
+70107,unsure,looks like a variation
+msasl2_bird_train_14_1161,ok,
+msasl2_bird_train_14_1264,ok,
+msasl2_bird_train_14_1374,ok,
+msasl2_bird_train_14_1375,ok,
+msasl2_bird_train_14_1402,ok,
+msasl2_bird_train_14_1878,ok,
+msasl2_bird_train_14_2176,ok,
+msasl2_bird_train_14_224,ok,
+msasl2_bird_train_14_2347,ok,
+msasl2_bird_train_14_654,ok,
+msasl2_bird_train_14_655,ok,
+msasl2_bird_train_14_74,ok,
+msasl2_bird_train_14_749,ok,
+msasl2_bird_train_14_947,ok,
+06337,ok,
+06339,ok,
+06342,unsure,
+06343,ok,
+65187,ok,
+67411,ok,
+70357,unsure,
+msasl2_birthday_train_293_2511,ok,
+msasl2_birthday_train_293_2512,ok,
+msasl2_birthday_train_293_2513,ok,
+msasl2_birthday_train_293_472,ok,
+msasl2_birthday_train_293_473,ok,
+msasl2_birthday_train_293_474,ok,
+06362,unsure,
+67413,unsure,
+09088594591084487-BIRTHDAY.mp4,ok,
+10205867274544311-BIRTHDAY.mp4,ok,
+10442884413640163-BIRTHDAY.mp4,ok,
+11889066456550235-BIRTHDAY.mp4,ok,
+1282289378785375-BIRTHDAY.mp4,ok,
+1594929946907253-BIRTHDAY.mp4,ok,
+20135829183793597-BIRTHDAY.mp4,ok,
+20696236949549407-BIRTHDAY.mp4,ok,
+22319073999521932-BIRTHDAY.mp4,bad_video,
+24982426775062372-BIRTHDAY.mp4,ok,
+2885460470022212-BIRTHDAY.mp4,ok,
+36006256153216487-BIRTHDAY.mp4,ok,
+38911107860942895-BIRTHDAY.mp4,ok,
+4173599958605585-BIRTHDAY.mp4,ok,
+41775128552545326-BIRTHDAY.mp4,ok,
+4184744734894461-seedBIRTHDAY.mp4,ok,
+4788963599302589-BIRTHDAY.mp4,ok,
+5416185220285508-BIRTHDAY.mp4,ok,
+5814239617824926-BIRTHDAY.mp4,ok,
+6159242621142622-BIRTHDAY.mp4,ok,
+6240507061661567-BIRTHDAY.mp4,ok,
+6459627801593182-BIRTHDAY.mp4,ok,
+6977422258459776-BIRTHDAY.mp4,ok,
+758055083619652-BIRTHDAY.mp4,ok,
+7807129234765755-BIRTHDAY.mp4,bad_video,
+8044188623924855-BIRTHDAY.mp4,ok,
+8114811453395248-BIRTHDAY.mp4,ok,
+8433324182255562-BIRTHDAY.mp4,ok,
+8518826039485168-BIRTHDAY.mp4,ok,
+9056166669587513-BIRTHDAY.mp4,ok,
+9340952052439631-BIRTHDAY.mp4,ok,
+06355,ok,
+06359,ok,
+06360,ok,
+06366,unsure,
+06367,ok,
+06368,ok,
+06369,ok,variation
+70359,bad_video,
+msasl2_birthday_train_293_1775,ok,
+msasl2_birthday_train_293_2198,bad_video,
+msasl2_birthday_train_293_2214,ok,
+msasl2_birthday_train_293_2215,ok,
+msasl2_birthday_train_293_2514,ok,
+msasl2_birthday_train_293_33,ok,
+msasl2_birthday_train_293_34,ok,
+msasl2_birthday_train_293_475,ok,
+msasl2_birthday_train_293_496,bad_video,
+msasl2_birthday_train_293_607,unsure,
+msasl2_birthday_train_293_862,ok,
+msasl2_birthday_train_293_863,ok,
+msasl2_birthday_train_293_864,ok,
+06361,bad_video,
+06363,unsure,
+06365,ok,
+06370,ok,
+06371,ok,
+65192,ok,
+68338,ok,
+2943001197646342-BLACK.mp4,ok,
+06477,ok,
+03843442884875414-BLACK.mp4,ok,
+040703853460511974-BLACK.mp4,ok,
+05171855154691851-BLACK.mp4,ok,
+07599384998068448-BLACK.mp4,ok,
+12188761773493884-BLACK.mp4,ok,
+13786429847818238-BLACK.mp4,ok,
+msasl2_yes_train_20_2062,ok,
+msasl2_yes_train_20_1781,ok,
+msasl2_yes_train_20_2118,ok,
+709429051156695-YES.mp4,ok,
+541403296602635-YES.mp4,ok,
+7199652013477922-YES.mp4,ok,
+msasl2_yes_train_20_1567,ok,
+msasl2_yes_train_20_324,ok,
+64284,ok,
+6358167662084229-seedYES.mp4,ok,
+msasl2_yes_train_20_1718,ok,
+1529448369800237-EAT.mp4,ok,
+009883456113471967-EAT.mp4,ok,
+7821457095653572-EAT 2.mp4,ok,
+8917441625336839-EAT.mp4,ok,
+683562173601701-EAT 2.mp4,ok,
+msasl2_eat_train_3_2068,ok,
+5672396093022622-EAT.mp4,ok,
+7327271470470507-EAT.mp4,ok,
+4641646458517976-EAT.mp4,ok,
+69307,ok,
+msasl2_eat_train_3_225,ok,
+8245190559451223-DEAF.mp4,ok,
+4378089019640199-DEAF 2.mp4,ok,
+8038995989097344-DEAF 2.mp4,ok,
+35836254848045535-DEAF 2.mp4,ok,
+1706696537277308-DEAF 2.mp4,bad_video,
+16912580920764397-DEAF 2.mp4,ok,
+43403942633801873-DEAF 2.mp4,ok,
+msasl2_deaf_train_9_1123,ok,
+14662097708148014-DEAF.mp4,ok,
+34347944802774855-DEAF 2.mp4,ok,
+37411103447253136-DEAF 2.mp4,ok,
+06132878384310203-WORK.mp4,ok,
+63769,ok,
+63788,bad_video,
+40443988565760036-seedWORK.mp4,ok,
+6072418103340411-WORK.mp4,ok,
+5227254616703516-WORK.mp4,ok,
+06423831579431782-WORK.mp4,ok,
+23456147121981585-WORK.mp4,ok,
+63789,ok,
+19579370378442884-WORK.mp4,ok,
+30686159780357336-WORK.mp4,ok,
+msasl2_book_train_38_216,ok,
+9573034024847233-BOOK.mp4,ok,
+8170605754700684-BOOK.mp4,ok,
+msasl2_book_train_38_446,ok,
+07076,ok,
+msasl2_book_train_38_713,ok,
+msasl2_book_train_38_2629,ok,
+msasl2_book_train_38_2190,ok,
+msasl2_book_train_38_1221,ok,
+msasl2_book_train_38_1710,ok,
+msasl2_book_train_38_0,ok,
+msasl2_mother_train_19_1275,ok,
+36932,ok,
+839986126568294-MOTHER.mp4,ok,
+10278942340284503-MOTHER.mp4,ok,
+36938,ok,
+3594639642396176-MOTHER.mp4,ok,
+36930,ok,
+2401781217873089-MOTHER.mp4,ok,
+594799660772781-MOTHER.mp4,ok,
+36942,ok,
+7756454968574309-MOTHER.mp4,ok,
+msasl2_paper_train_35_1709,ok,
+6898660293148962-PAPER.mp4,ok,
+msasl2_paper_train_35_714,ok,
+41030,ok,
+msasl2_paper_train_35_2594,ok,
+8091624995741595-PAPER.mp4,ok,
+68127,ok,
+41026,ok,
+msasl2_paper_train_35_583,ok,
+msasl2_no_train_4_1570,ok,
+7931075492698656-NO.mp4,ok,
+msasl2_no_train_4_2063,ok,
+msasl2_no_train_4_2489,ok,
+2140134632834978-NO.mp4,ok,
+01379619951634381-NO.mp4,ok,
+9644130188424822-NO.mp4,ok,
+9616432008129339-NO.mp4,bad_video,
+msasl2_no_train_4_1783,ok,
+38524,ok,
+2688720555507844-seedNO.mp4,ok,
+8405493387581946-WHAT 2.mp4,ok,
+5907336185978251-WHAT 2.mp4,ok,
+msasl2_what_train_15_2029,ok,
+62970,ok,
+msasl2_what_train_15_573,ok,
+62968,ok,
+22798502572928414-WHAT 1.mp4,ok,
+011439809438488657-WHAT 2.mp4,ok,
+2833503746558905-WHAT 2.mp4,ok,
+7084601978683813-WHAT 2.mp4,ok,
+62965,ok,
+msasl2_school_train_10_701,ok,
+msasl2_school_train_10_2436,ok,
+msasl2_school_train_10_582,ok,
+msasl2_school_train_10_191,ok,
+msasl2_school_train_10_2044,ok,
+msasl2_school_train_10_877,ok,
+49603,ok,
+68145,ok,
+msasl2_school_train_10_2385,ok,
+8188942667223229-SCHOOL.mp4,ok,
+msasl2_school_val_10_2895,ok,
+7396831048598065-TIME.mp4,ok,
+msasl2_time_train_116_214,ok,
+msasl2_time_train_116_1865,ok,
+020186094005305577-TIME.mp4,ok,
+msasl2_time_train_116_640,ok,
+58504,ok,
+9956589338184496-seedTIME.mp4,ok,
+45243241024032677-TIME.mp4,ok,
+07866629616489296-TIME.mp4,ok,
+6051890385219476-TIME.mp4,ok,
+6017424580561013-TIME.mp4,ok,
+7536887152060914-DRINK.mp4,ok,
+5600935739224888-DRINK.mp4,ok,
+6196253651803971-DRINK.mp4,ok,
+msasl2_drink_train_56_447,ok,
+msasl2_drink_train_56_2057,ok,
+9757502559319415-DRINK.mp4,ok,
+69302,ok,
+2597508467759426-DRINK.mp4,ok,
+8114625026876388-DRINK.mp4,ok,
+7071450710791192-DRINK.mp4,ok,
+980212048263337-DRINK.mp4,ok,
+241335509121118-HOT.mp4,ok,
+msasl2_hot_train_135_2716,ok,
+28118,ok,
+20951385475100537-HOT.mp4,ok,
+155075391321839-HOT.mp4,ok,
+44853785617317854-HOT.mp4,ok,
+13316006185127205-HOT.mp4,ok,
+28112,ok,
+9174976347516473-HOT.mp4,ok,
+8968665480794054-DOG.mp4,ok,
+17083,ok,
+5728474852441685-DOG.mp4,ok,
+49712155496153154-DOG 4.mp4,ok,"variation
+"
+9766513994870278-DOG.mp4,ok,
+4678175430346809-DOG 4.mp4,ok,variation
+44416976736856184-DOG 4.mp4,ok,
+6187561493400544-DOG 2.mp4,ok,
+49801930250928317-DOG.mp4,ok,variation
+41235392187392317-DOG.mp4,ok,
+5658200184939948-DOG.mp4,bad_video,
+2590814753491968-WHO.mp4,ok,
+1788921553709799-WHO.mp4,ok,
+14452193915198386-WHO.mp4,ok,
+69534,ok,
+msasl2_who_train_69_651,ok,
+msasl2_who_train_69_1571,ok,
+msasl2_who_train_69_2192,ok,
+8040413047655517-WHO.mp4,ok,
+22349971035391758-WHO.mp4,ok,
+63227,ok,
+63225,ok,
+msasl2_like_train_6_73,ok,
+07790071532440357-LIKE.mp4,ok,
+8311673208101575-LIKE.mp4,ok,
+618705132779968-LIKE.mp4,ok,
+7921297303573938-LIKE.mp4,ok,
+14992936899376108-LIKE.mp4,ok,
+8273164081850686-LIKE.mp4,ok,
+6408927707140595-LIKE.mp4,ok,
+11163894424136789-LIKE.mp4,ok,
+msasl2_like_train_6_643,ok,
+754822541664977-LIKE.mp4,ok,
+msasl2_help_train_50_2339,ok,
+3557945550706938-HELP.mp4,bad_video,
+msasl2_help_train_50_2083,ok,
+msasl2_help_train_50_2244,ok,
+15046472702938374-HELP.mp4,ok,
+6967335705063062-HELP.mp4,ok,
+7816987530892228-HELP.mp4,ok,
+msasl2_help_train_50_2053,ok,
+27208,ok,
+7353034835882497-HELP.mp4,ok,
+27206,ok,
+6062846614058834-WALK.mp4,ok,
+62173,ok,
+msasl2_walk_train_80_406,ok,
+7276402302250944-WALK.mp4,ok,
+9742057032396834-WALK.mp4,ok,
+4386641746510429-WALK.mp4,ok,
+023435914846653638-WALK.mp4,ok,
+msasl2_walk_train_80_2417,ok,
+43433349525937115-WALK.mp4,ok,
+62164,ok,
+msasl2_walk_val_80_2729,ok,
+msasl2_cook_train_115_1273,ok,
+13165,ok,
+824628206937627-COOK.mp4,ok,
+msasl2_cook_train_115_729,ok,
+33897237112345024-COOK.mp4,ok,
+msasl2_cook_train_115_2078,ok,
+26929004630905573-COOK.mp4,ok,
+msasl2_cook_train_115_1094,ok,
+8754454943280736-COOK.mp4,ok,
+msasl2_cook_train_115_2332,ok,
+68029,ok,
+24943,ok,
+22762374635521176-GO.mp4,ok,
+9981647509356435-GO.mp4,ok,
+2290456408074184-GO.mp4,ok,
+7701619196687932-GO.mp4,ok,
+19142855644010948-GO.mp4,ok,
+10496700688928162-GO.mp4,ok,
+41579421019094553-GO.mp4,ok,
+5363852654946244-GO.mp4,ok,
+839348480426664-CAN.mp4,ok,
+08937,ok,
+5035740884520834-CAN.mp4,ok,
+6116759456790979-CAN.mp4,ok,
+4738396855755316-CAN.mp4,ok,
+6365190135734609-CAN.mp4,ok,
+6150173366410261-CAN.mp4,ok,
+978762416079457-CAN.mp4,ok,
+msasl2_can_train_142_2103,ok,
+msasl2_table_train_28_1695,ok,
+msasl2_table_train_28_2596,ok,
+7408695612132035-TABLE.mp4,ok,
+3535634360237625-seedTABLE.mp4,ok,
+7407421722319647-TABLE.mp4,bad_video,
+msasl2_table_train_28_386,ok,
+9778902122058954-TABLE.mp4,ok,
+4107831847068073-TABLE.mp4,ok,
+msasl2_table_train_28_2250,ok,
+11918992112461169-TABLE.mp4,ok,
+5757520428166414-TABLE.mp4,ok,
+18139225250054647-PLAY.mp4,ok,
+msasl2_play_train_85_108,ok,
+msasl2_play_train_85_1010,ok,
+6833845760562054-PLAY.mp4,ok,
+msasl2_play_train_85_625,ok,
+5661013932933736-PLAY.mp4,ok,
+5297020534990635-PLAY.mp4,ok,
+msasl2_play_train_85_19,ok,
+7603623235018326-PLAY.mp4,ok,
+5489734048116621-PLAY.mp4,ok,
+msasl2_play_train_85_1339,ok,
+57288,ok,
+msasl2_tell_train_402_711,ok,
+1784447552931374-TELL.mp4,ok,
+9622466467630577-TELL.mp4,ok,
+9885883612306223-TELL.mp4,ok,
+5118902560831018-TELL.mp4,ok,
+msasl2_tell_train_402_288,ok,
+446997652979815-seedTELL.mp4,ok,
+22517045161179094-TELL.mp4,ok,
+9546720188783062-TELL.mp4,ok,
+9662843888411099-TELL.mp4,ok,
+011940798289421295-HEARING.mp4,ok,
+26984,ok,
+msasl2_hearing_train_45_1785,ok,
+msasl2_hearing_train_45_1122,ok,
+8894029431402763-HEARING.mp4,ok,
+6469410545031455-HEARING.mp4,ok,
+38746305220783905-HEARING.mp4,ok,
+26983,ok,
+6711457475275806-HEARING.mp4,ok,
+msasl2_hearing_train_45_1411,ok,
+5630302779356444-HEARING.mp4,ok,
+3844148444722406-FULL.mp4,ok,
+23778,ok,
+6427043769219085-FULL.mp4,ok,
+580677145898294-FULL.mp4,ok,
+9672598473708827-FULL.mp4,ok,
+41580102050529777-FULL.mp4,ok,
+8820036967113078-FULL.mp4,ok,
+8205557129310612-FULL.mp4,ok,
+8523573119723646-FULL.mp4,ok,
+9521519904203779-FULL.mp4,ok,
+7258506246660821-FULL.mp4,ok,
+46307633640967283-SAME 2.mp4,ok,
+02439415548797319-SAME.mp4,ok,
+7965200255372531-SAME 2.mp4,ok,
+msasl2_same_train_70_921,ok,
+5784540598927743-SAME 2.mp4,ok,
+8607608244043903-SAME 2.mp4,ok,
+6457559546393306-SAME 2.mp4,ok,
+msasl2_same_train_70_922,ok,variation
+7874979779434099-seedSAME 2.mp4,ok,
+5044773538381033-SAME 2.mp4,ok,
+285027381058337-SAME.mp4,ok,
+msasl2_finish_train_12_93,ok,
+21953,ok,
+msasl2_finish_train_12_1255,ok,
+msasl2_finish_train_12_1032,ok,
+msasl2_finish_train_12_1286,ok,
+msasl2_finish_train_12_1187,ok,
+5726531690314898-FINISH.mp4,ok,
+21942,ok,
+9116126321060016-FINISH.mp4,ok,
+21945,ok,
+0053290989889420715-FINISH.mp4,ok,
+8822549298208633-NOW.mp4,ok,
+6338605557798189-NOW.mp4,ok,
+5533098415698983-NOW.mp4,ok,
+msasl2_now_train_73_929,ok,
+5295273734383446-NOW.mp4,ok,
+msasl2_now_train_73_400,ok,
+9903010368188014-NOW.mp4,ok,
+720220390455963-seedNOW.mp4,ok,
+674030928817341-NOW.mp4,ok,
+34743,ok,
+msasl2_man_train_58_299,ok,
+20688738499250947-MAN.mp4,ok,
+19315534692992387-MAN.mp4,ok,
+8768559258640949-MAN.mp4,ok,
+34734,ok,
+6147678260624159-MAN.mp4,ok,
+msasl2_man_train_58_1412,ok,
+5803263321986141-MAN.mp4,ok,
+5467979056207073-MAN.mp4,ok,
+1300301228681695-MAN.mp4,ok,
+4157477284484148-CHAIR.mp4,ok,
+09847,ok,
+19101165942054377-CHAIR.mp4,ok,
+8758907620439793-CHAIR.mp4,ok,
+3874768518282099-CHAIR.mp4,ok,
+45165582495328493-CHAIR.mp4,bad_video,
+06332710786774087-CHAIR.mp4,ok,
+3391932545306213-CHAIR.mp4,ok,
+49610123579694454-seedCHAIR.mp4,ok,
+45405346586983186-CHAIR.mp4,ok,
+8018668876575192-CHAIR.mp4,ok,
+6602084562023567-GIVE.mp4,ok,
+24641,ok,
+8287819563463323-GIVE.mp4,ok,variation one hand
+0756193896626629-GIVE.mp4,ok,one hand 
+msasl2_give_train_288_1992,ok,
+69343,ok,
+24638,ok,
+17698818900198532-GIVE.mp4,ok,
+7602780259740458-GIVE.mp4,ok,
+44123846585091897-GIVE.mp4,ok,
+msasl2_give_train_288_1258,ok,
+9842691326863175-DARK 2.mp4,ok,
+6733132641220483-DARK.mp4,ok,
+08763437833459409-DARK.mp4,ok,
+4883631321850692-seedDARK.mp4,ok,
+01997263204709898-DARK.mp4,ok,
+5634764202214337-DARK 2.mp4,ok,
+5156194365351785-DARK.mp4,ok,
+016767219283195578-DARK.mp4,ok,
+6336638422855925-DARK.mp4,ok,
+39383592873799844-DARK 2.mp4,ok,
+14674,ok,
+64213,ok,
+578321221600814-YEAR.mp4,ok,
+6542147977884243-YEAR.mp4,ok,
+msasl2_year_train_158_2276,ok,
+64209,ok,
+msasl2_year_train_158_557,ok,
+64221,ok,
+9417609246035323-YEAR.mp4,bad_video,
+msasl2_year_train_158_1517,ok,
+msasl2_year_train_158_2299,ok,
+64211,ok,
+6512868906743803-MANY.mp4,ok,
+08509548045265491-MANY.mp4,ok,
+34999964049293997-MANY.mp4,ok,
+40513957149506163-MANY.mp4,ok,
+6978081040494541-seedMANY.mp4,ok,
+msasl2_many_train_261_641,ok,
+806716567717475-MANY.mp4,ok,
+43458666756078257-MANY.mp4,ok,
+17019116601755924-MANY.mp4,bad_video,
+34835,ok,
+5692459382093076-MANY.mp4,ok,
+30879418056454777-NEED.mp4,ok,
+08573458832549319-NEED.mp4,ok,
+8172430267718573-seedNEED.mp4,ok,
+msasl2_need_train_29_2326,ok,
+6892111735827193-NEED.mp4,ok,
+msasl2_need_train_29_1320,ok,
+37881,ok,
+8022209797799162-NEED.mp4,ok,
+9701223233159699-NEED.mp4,ok,
+msasl2_clothes_train_444_201,ok,
+7744756142346709-CLOTHES.mp4,ok,
+msasl2_clothes_train_444_1556,ok,
+msasl2_clothes_train_444_1619,ok,
+11311,ok,
+msasl2_clothes_train_444_14,ok,
+313949678337065-CLOTHES.mp4,ok,
+29415572874848217-seedCLOTHES.mp4,ok,
+11309,ok,
+7992382345448215-CLOTHES.mp4,ok,
+68024,ok,
+msasl2_later_train_354_1292,ok,
+08382047993135111-LATER.mp4,ok,
+598478551917363-LATER.mp4,ok,
+5988902458828236-LATER.mp4,ok,
+5484175065329109-LATER.mp4,ok,
+8324149717601046-LATER.mp4,ok,
+32334,ok,
+8202173174663565-LATER.mp4,ok,
+4453752885897677-LATER.mp4,ok,
+msasl2_later_train_354_2109,ok,
+7917571111180717-LATER.mp4,ok,

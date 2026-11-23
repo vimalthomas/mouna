@@ -1,274 +1,211 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { UserProgressService } from '../../core/services/user-progress.service';
-import { ThemeService } from '../../core/services/theme.service';
-import { ReviewDueSign, SignProgressDetail, UserStats } from '../../core/models/sign.model';
-
-// Apple system colors: blue, green, orange, red
-const CARD_RGB = [
-  '10, 132, 255',   // systemBlue   – Sessions
-  '48, 209, 88',    // systemGreen  – Signs Learned
-  '255, 159, 10',   // systemOrange – Accuracy
-  '255, 69, 58',    // systemRed    – Streak
-];
-
-const LIGHT_CARDS = [
-  { bg: '#E5F1FF', border: '#B8DBFF', shadow: 'rgba(0,122,255,0.15)',  label: 'rgba(0,90,200,0.8)',  value: '#0055b8' },
-  { bg: '#E3F9E7', border: '#B7EFC1', shadow: 'rgba(52,199,89,0.15)',  label: 'rgba(30,140,60,0.8)', value: '#1f8a3b' },
-  { bg: '#FFF1E0', border: '#FFD9A8', shadow: 'rgba(255,149,0,0.15)',  label: 'rgba(180,100,0,0.8)', value: '#b35900' },
-  { bg: '#FFE5E5', border: '#FFC1C1', shadow: 'rgba(255,59,48,0.15)',  label: 'rgba(180,30,30,0.8)', value: '#b31f1f' },
-];
-
-const DARK_VALUE  = ['#4da3ff', '#4cd671', '#ffb454', '#ff6b6b'];
-const DARK_LABEL  = ['rgba(77,163,255,0.8)', 'rgba(76,214,113,0.8)', 'rgba(255,180,84,0.8)', 'rgba(255,107,107,0.8)'];
+import { AuthService } from '../../core/services/auth.service';
+import { SignsApiService } from '../../core/services/signs-api.service';
+import { ReviewDueSign, Sign, SignProgressDetail, UserStats } from '../../core/models/sign.model';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe],
+  imports: [RouterLink, DecimalPipe],
   template: `
-    <div class="max-w-6xl mx-auto">
-      <div class="mb-8">
-        <h2 class="text-2xl font-bold text-ink tracking-tight">Dashboard</h2>
-        <p class="text-sm text-ink-muted mt-1">Track your sign language learning progress</p>
-      </div>
+    <div class="max-w-5xl mx-auto pt-2">
+      <!-- Greeting -->
+      <header class="mb-8">
+        <h1 class="font-display text-4xl text-ink">{{ greeting }}{{ firstName ? ', ' + firstName : '' }}</h1>
+        <p class="text-ink-muted mt-2">{{ subline }}</p>
+      </header>
 
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 transition-opacity"
-           [class.opacity-50]="loading">
-        @for (card of statCards; track card.label; let i = $index) {
-          <div class="rounded-2xl p-5 border" [style]="statCardStyle(i)">
-            <p class="text-xs font-medium uppercase tracking-wider mb-2" [style.color]="statLabelColor(i)">{{ card.label }}</p>
-            <p class="text-3xl font-bold" [style.color]="statValueColor(i)">{{ card.value }}</p>
+      <!-- Numbers -->
+      <section class="grid grid-cols-2 md:grid-cols-4 rounded-2xl bg-surface border border-border/70 mb-6 transition-opacity" [class.opacity-60]="loading">
+        @for (s of stats; track s.label; let i = $index) {
+          <div class="px-6 py-5" [class.md:border-l]="i > 0" [class.border-l]="i % 2 === 1" [class.border-t]="i > 1" [class.md:border-t-0]="i > 1" style="border-color: rgb(var(--color-border) / .7)">
+            <div class="font-display text-[40px] leading-none text-ink tabular-nums">{{ s.value }}</div>
+            <div class="text-sm text-ink mt-2">{{ s.label }}</div>
+            <div class="text-xs text-ink-faint mt-0.5">{{ s.note }}</div>
           </div>
         }
-      </div>
+      </section>
 
-      <!-- Quick Actions -->
-      <div class="grid grid-cols-1 gap-5 mb-8">
-        <a routerLink="/coach"
-          class="max-w-md rounded-2xl p-6 border transition-all duration-200 block group hover:-translate-y-0.5"
-          [style]="actionCardStyle()">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center" [style]="actionIconStyle()">
-              <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-              </svg>
-            </div>
-            <h3 class="text-lg font-semibold transition-colors" [style.color]="actionTitleColor()">AI Coach</h3>
+      <!-- Practice next -->
+      @if (nextSign) {
+        <a [routerLink]="['/coach']" [queryParams]="{ sign: nextSign.word }"
+           class="group flex items-center justify-between gap-6 rounded-2xl bg-surface border border-border/70 px-6 py-5 mb-8 hover:border-accent/50 transition-colors">
+          <div class="min-w-0">
+            <div class="text-xs text-ink-faint">{{ nextReason }}</div>
+            <div class="font-display text-3xl text-ink capitalize mt-1">{{ nextSign.word }}</div>
+            <div class="text-sm text-ink-muted mt-1 truncate">{{ nextSign.description }}</div>
           </div>
-          <p class="text-sm text-ink-muted">Get real-time coaching powered by Gemini AI</p>
+          <span class="shrink-0 inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-accent text-white text-sm font-medium group-hover:bg-accent/90 transition-colors">
+            Practice
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg>
+          </span>
         </a>
-      </div>
-
-      <!-- Due for Review -- spaced-repetition-ish resurfacing (P10 in the
-           late-signers paper: "going back over what you learned last week,
-           what you learned a month ago"), computed from last-practiced time
-           + accuracy, not shown as more rigorous than it is. -->
-      @if (reviewQueue.length > 0) {
-        <div class="rounded-2xl border mb-8 overflow-hidden" [style]="panelStyle">
-          <div class="px-6 pt-6 pb-4">
-            <h3 class="text-base font-semibold text-ink">Due for review</h3>
-            <p class="text-xs text-ink-muted mt-0.5">Signs you've practiced before that are due to come back around</p>
-          </div>
-          <div>
-            @for (r of reviewQueue; track r.sign) {
-              <a [routerLink]="['/coach']" [queryParams]="{ sign: r.sign }"
-                 class="flex items-center justify-between gap-4 px-6 py-3 border-t border-border/50 hover:bg-border/10 transition-colors">
-                <div class="flex items-center gap-3 min-w-0">
-                  <span class="text-sm text-ink capitalize truncate">{{ r.sign }}</span>
-                  <span class="shrink-0 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded bg-border/50 text-ink-muted">
-                    last practiced {{ r.days_since_practiced | number:'1.0-0' }}d ago
-                  </span>
-                </div>
-                <div class="flex items-center gap-3 shrink-0">
-                  <span class="text-xs text-ink-muted font-mono">{{ r.accuracy }}% last time</span>
-                  <span class="text-xs font-semibold text-accent">Practice →</span>
-                </div>
-              </a>
-            }
-          </div>
-        </div>
       }
 
-      <!-- Sign Progress detail -->
-      @if (signs.length > 0) {
-        <div class="rounded-2xl border mb-8 overflow-hidden" [style]="panelStyle">
-          <div class="px-6 pt-6 pb-4">
-            <h3 class="text-base font-semibold text-ink">Sign Progress</h3>
-            <p class="text-xs text-ink-muted mt-0.5">Every sign you've practiced, most recent first</p>
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-6">
+        <!-- Your signs -->
+        <section>
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="font-display text-2xl text-ink">Your signs</h2>
+            <span class="text-xs text-ink-faint flex items-center gap-3">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>right</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full border border-ink-faint"></span>missed</span>
+              <span>last 5 tries</span>
+            </span>
           </div>
-          <div>
-            @for (s of signs; track s.sign) {
-              <div class="flex items-center justify-between gap-4 px-6 py-3 border-t border-border/50">
-                <div class="flex items-center gap-3 min-w-0">
+          @if (shownSigns.length) {
+            <div class="rounded-2xl bg-surface border border-border/70 divide-y divide-border/60">
+              @for (s of shownSigns; track s.sign) {
+                <a [routerLink]="['/coach']" [queryParams]="{ sign: s.sign }" class="flex items-center gap-4 px-5 py-3 hover:bg-surface-sunk/60 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
+                  <span class="text-[15px] text-ink capitalize w-32 truncate">{{ s.sign }}</span>
+                  <span class="flex items-center gap-1.5" [attr.aria-label]="dotsLabel(s)">
+                    @for (r of fiveSlots(s.recent); track $index) {
+                      @if (r === null) {
+                        <span class="w-2.5 h-2.5 rounded-full bg-border/60"></span>
+                      } @else if (r) {
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>
+                      } @else {
+                        <span class="w-2.5 h-2.5 rounded-full border-[1.5px] border-ink-faint"></span>
+                      }
+                    }
+                  </span>
+                  <span class="flex-1"></span>
                   @if (s.completed) {
-                    <span class="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full"
-                          style="background: rgba(48,209,88,0.15);">
-                      <svg class="w-3 h-3" style="color: #30d158;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
+                    <span class="text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+                      Learned
                     </span>
                   } @else {
-                    <span class="shrink-0 w-5 h-5 rounded-full border-2 border-border"></span>
+                    <span class="text-xs text-ink-faint">{{ toLearn(s) }}</span>
                   }
-                  <span class="text-sm text-ink capitalize truncate">{{ s.sign }}</span>
-                  @if (s.completed) {
-                    <span class="shrink-0 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded"
-                          style="background: rgba(48,209,88,0.12); color: #30d158;">Learned</span>
-                  } @else {
-                    <span class="shrink-0 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded bg-border/50 text-ink-muted">In Progress</span>
-                  }
-                </div>
-                <div class="flex items-center gap-4 shrink-0">
-                  @if (s.completedAt) {
-                    <span class="text-xs text-ink-muted hidden sm:inline">{{ s.completedAt | date:'MMM d' }}</span>
-                  }
-                  <span class="text-xs text-ink-muted font-mono w-14 text-right">{{ s.correctAttempts }}/{{ s.totalAttempts }}</span>
-                  <div class="w-20 rounded-full h-1.5 hidden md:block" [style]="progressTrackStyle">
-                    <div class="h-1.5 rounded-full" [style.width.%]="s.accuracy"
-                         [style.background]="s.completed ? '#30d158' : '#ff9500'"></div>
-                  </div>
-                  <span class="text-xs font-semibold w-10 text-right" [style.color]="s.completed ? '#30d158' : 'inherit'">{{ s.accuracy }}%</span>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
+                  <span class="text-xs text-ink-faint tabular-nums w-16 text-right">{{ s.correctAttempts }} of {{ s.totalAttempts }}</span>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="rounded-2xl border border-dashed border-border px-6 py-10 text-center">
+              <p class="text-ink">Nothing here yet.</p>
+              <p class="text-sm text-ink-muted mt-1">Practice a sign and your progress will show up here.</p>
+            </div>
+          }
+        </section>
 
-      <!-- Weak Signs / Empty state -->
-      @if (weakSigns.length > 0) {
-        <div class="rounded-2xl p-6 border" [style]="panelStyle">
-          <h3 class="text-base font-semibold text-ink mb-4">Signs to Improve</h3>
-          <div class="space-y-3">
-            @for (ws of weakSigns; track ws.sign) {
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-ink-muted capitalize">{{ ws.sign }}</span>
-                <div class="flex items-center gap-3">
-                  <div class="w-28 rounded-full h-1.5" [style]="progressTrackStyle">
-                    <div class="h-1.5 rounded-full" [style.width.%]="ws.accuracy"
-                         style="background: #ff9500;"></div>
-                  </div>
-                  <span class="text-xs text-ink-muted font-mono w-10 text-right">{{ ws.accuracy }}%</span>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      } @else if (hasPracticed) {
-        <div class="rounded-2xl p-8 border text-center" [style]="panelStyle">
-          <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-               [style]="emptyIconStyle">
-            <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          </div>
-          <p class="text-ink font-medium">All signs looking good</p>
-          <p class="text-sm text-ink-muted mt-1">No signs currently need improvement — keep practicing to learn more</p>
-        </div>
-      } @else {
-        <div class="rounded-2xl p-8 border text-center" [style]="panelStyle">
-          <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-               [style]="emptyIconStyle">
-            <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
-            </svg>
-          </div>
-          <p class="text-ink font-medium">No practice data yet</p>
-          <p class="text-sm text-ink-muted mt-1">Start practicing to track your progress</p>
-        </div>
-      }
+        <!-- Review -->
+        <aside>
+          <h2 class="font-display text-2xl text-ink mb-3">Come back to</h2>
+          @if (shownReview.length) {
+            <div class="rounded-2xl bg-surface border border-border/70 divide-y divide-border/60">
+              @for (r of shownReview; track r.sign) {
+                <a [routerLink]="['/coach']" [queryParams]="{ sign: r.sign }" class="flex items-center justify-between px-5 py-3 hover:bg-surface-sunk/60 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
+                  <span class="text-[15px] text-ink capitalize">{{ r.sign }}</span>
+                  <span class="text-xs text-ink-faint">{{ r.days_since_practiced | number:'1.0-0' }}d ago</span>
+                </a>
+              }
+            </div>
+          } @else {
+            <p class="text-sm text-ink-muted leading-relaxed">Signs you've practiced come back here when it's time to review them, so they stick.</p>
+          }
+        </aside>
+      </div>
     </div>
   `,
 })
 export class DashboardComponent implements OnInit {
   private progressService = inject(UserProgressService);
-  private themeService = inject(ThemeService);
+  private auth = inject(AuthService);
+  private signsApi = inject(SignsApiService);
 
-  statCards: { label: string; value: string | number }[] = [];
-  weakSigns: { sign: string; accuracy: number }[] = [];
+  stats: { label: string; value: string | number; note: string }[] = [];
   signs: SignProgressDetail[] = [];
   reviewQueue: ReviewDueSign[] = [];
-
-  private get dark(): boolean { return this.themeService.isDark(); }
-
-  statCardStyle(i: number): string {
-    const rgb = CARD_RGB[i] ?? CARD_RGB[0];
-    if (this.dark) {
-      return `background: rgba(${rgb},0.14); border-color: rgba(${rgb},0.3);`;
-    }
-    const lc = LIGHT_CARDS[i] ?? LIGHT_CARDS[0];
-    return `background: ${lc.bg}; border-color: ${lc.border}; box-shadow: 0 1px 3px ${lc.shadow};`;
-  }
-
-  statLabelColor(i: number): string {
-    return this.dark ? (DARK_LABEL[i] ?? DARK_LABEL[0]) : (LIGHT_CARDS[i] ?? LIGHT_CARDS[0]).label;
-  }
-
-  statValueColor(i: number): string {
-    return this.dark ? (DARK_VALUE[i] ?? DARK_VALUE[0]) : (LIGHT_CARDS[i] ?? LIGHT_CARDS[0]).value;
-  }
-
-  actionCardStyle(): string {
-    if (this.dark) {
-      return 'background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.28);';
-    }
-    return 'background: #E5F1FF; border-color: #B8DBFF; box-shadow: 0 1px 3px rgba(0,122,255,0.15);';
-  }
-
-  actionIconStyle(): string {
-    return this.dark
-      ? 'background: rgba(10,132,255,0.18); border: 1px solid rgba(10,132,255,0.3);'
-      : 'background: rgba(0,122,255,0.12); border: 1px solid rgba(0,122,255,0.25);';
-  }
-
-  actionTitleColor(): string {
-    return this.dark ? '#4da3ff' : '#0055b8';
-  }
-
-  get panelStyle(): string {
-    if (this.dark) {
-      return 'background: #1c1c1e; border-color: #38383a;';
-    }
-    return 'background: #ffffff; border-color: #d1d1d6; box-shadow: 0 1px 3px rgba(0,0,0,0.06);';
-  }
-
-  get progressTrackStyle(): string {
-    return this.dark ? 'background: rgba(10,132,255,0.18);' : 'background: rgba(0,122,255,0.14);';
-  }
-
-  get emptyIconStyle(): string {
-    return this.dark
-      ? 'background: rgba(10,132,255,0.14); border: 1px solid rgba(10,132,255,0.25);'
-      : 'background: rgba(0,122,255,0.1); border: 1px solid rgba(0,122,255,0.25);';
-  }
-
   loading = true;
-  hasPracticed = false;
+  firstName = '';
+  private practiceSet: Sign[] = [];
+  /** Practice-set words; lists only show these (others can't be coached). */
+  private practiceWords = new Set<string>();
+
+  get shownSigns(): SignProgressDetail[] { return this.practiceWords.size ? this.signs.filter(s => this.practiceWords.has(s.sign)) : this.signs; }
+  get shownReview(): ReviewDueSign[] { return this.practiceWords.size ? this.reviewQueue.filter(r => this.practiceWords.has(r.sign)) : this.reviewQueue; }
+  private latest: UserStats | null = null;
+  nextSign: Sign | null = null;
+  nextReason = '';
+
+  get greeting(): string {
+    const h = new Date().getHours();
+    return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  }
+
+  get subline(): string {
+    const st = this.latest;
+    if (!st || st.totalSessions === 0) return 'Pick a sign, learn how it moves, then try it on camera.';
+    if (st.streak >= 2) return `You've practiced ${st.streak} days in a row. Keep it going.`;
+    if (st.streak === 1) return 'You practiced today. A few minutes tomorrow keeps it going.';
+    return 'Welcome back. A few minutes of practice is enough.';
+  }
+
+  fiveSlots(recent: boolean[]): (boolean | null)[] {
+    const r = (recent ?? []).slice(-5);
+    return [...Array(5 - r.length).fill(null), ...r];
+  }
+
+  dotsLabel(s: SignProgressDetail): string {
+    const r = s.recent ?? [];
+    return `${r.filter(Boolean).length} of the last ${r.length} tries right`;
+  }
+
+  /** How far from "learned" (3 of the last 5 right). */
+  toLearn(s: SignProgressDetail): string {
+    const right = (s.recent ?? []).filter(Boolean).length;
+    const need = Math.max(0, 3 - right);
+    return need === 1 ? '1 more right to learn' : `${need} more right to learn`;
+  }
 
   ngOnInit(): void {
-    this.progressService.stats$.subscribe(stats => {
-      this.statCards = [
-        { label: 'Sessions',      value: stats.totalSessions  },
-        { label: 'Signs Learned', value: stats.signsLearned   },
-        { label: 'Accuracy',      value: `${stats.accuracy}%` },
-        { label: 'Streak',        value: stats.streak         },
-      ];
-      this.weakSigns = stats.weakSigns;
-      this.signs = stats.signs;
-      this.hasPracticed = stats.totalSessions > 0;
-    });
+    this.auth.user$.subscribe(u => { this.firstName = (u?.name || '').split(' ')[0]; });
 
-    this.progressService.refresh().subscribe({
-      complete: () => (this.loading = false),
-      error: () => (this.loading = false),
+    this.progressService.stats$.subscribe(st => {
+      this.latest = st;
+      this.signs = st.signs;
+      this.buildStats();
+      this.pickNext();
     });
+    this.progressService.refresh().subscribe({ complete: () => (this.loading = false), error: () => (this.loading = false) });
+    this.progressService.getReviewQueue().subscribe({ next: due => (this.reviewQueue = due), error: () => (this.reviewQueue = []) });
 
-    this.progressService.getReviewQueue().subscribe({
-      next: due => (this.reviewQueue = due),
-      error: () => (this.reviewQueue = []),
+    this.signsApi.getSignsWithReference().subscribe(set => {
+      this.practiceWords = set;
+      this.signsApi.getSigns().subscribe(all => {
+        this.practiceSet = all.filter(s => set.has(s.word));
+        this.buildStats();
+        this.pickNext();
+      });
     });
+  }
+
+  private buildStats(): void {
+    const st = this.latest;
+    if (!st) return;
+    const total = this.practiceSet.length;
+    this.stats = [
+      { label: 'Day streak', value: st.streak, note: st.streak ? 'days in a row' : 'practice today to start one' },
+      { label: 'Signs learned', value: st.signsLearned, note: total ? `of ${total} in the practice set` : '3 of the last 5 tries right' },
+      { label: 'Accuracy', value: `${st.accuracy}%`, note: 'across all tries' },
+      { label: 'Sessions', value: st.totalSessions, note: 'practice sessions' },
+    ];
+  }
+
+  /** Suggest the next sign: one in progress that isn't learned yet, else the
+   * first practice-set sign never tried. */
+  private pickNext(): void {
+    if (!this.practiceSet.length) return;
+    const bySign = new Map(this.signs.map(s => [s.sign, s]));
+    const inProgress = this.practiceSet.find(s => bySign.has(s.word) && !bySign.get(s.word)!.completed);
+    if (inProgress) { this.nextSign = inProgress; this.nextReason = 'Keep going with'; return; }
+    const fresh = this.practiceSet.find(s => !bySign.has(s.word));
+    if (fresh) { this.nextSign = fresh; this.nextReason = 'Try a new sign'; return; }
+    this.nextSign = null;
   }
 }

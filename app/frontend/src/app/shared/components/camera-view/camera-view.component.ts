@@ -25,6 +25,7 @@ import { CameraService } from '../../../core/services/camera.service';
       <video
         #videoEl
         autoplay
+        [muted]="true"
         playsinline
         class="w-full h-full object-cover transition-transform duration-300"
         [style.transform]="'scale(' + zoomLevel + ')' + (mirrorView ? ' scaleX(-1)' : '')"

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from config import settings
 from models.schemas import SignInfo, VideoResponse
+from services import example_videos
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +165,10 @@ class SignsService:
         if not entries:
             return None
 
-        entry = _pick_cleanest_instance(entries)
+        # Prefer the example chosen to agree with the grading reference
+        # (scripts/pick_example_videos.py); fall back to the shortest clip.
+        chosen = example_videos.get(key)
+        entry = next((e for e in entries if chosen and e["video_id"] == chosen["video_id"]), None) or _pick_cleanest_instance(entries)
         video_id = entry["video_id"]
         video_url = f"/static/videos/{video_id}.mp4"
 

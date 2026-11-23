@@ -1,15 +1,14 @@
 import json
 import logging
-import re
 import uuid
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from auth.dependencies import get_current_user_ws
 from db.session import SessionLocal
+from services import coach_writer
 from services.attempts_service import record_attempt
 from services.coaching_session import CoachingSession
-from services.gemini_live_service import gemini_manager
 from services.keypoint_service import keypoint_service
 from services.model_service import model_service
 from services.signs_service import signs_service
@@ -68,15 +67,15 @@ async def coach_from_frames(websocket: WebSocket) -> None:
     await websocket.accept()
     session_id = str(uuid.uuid4())
     coaching = CoachingSession(session_id=session_id, user_id=user.id)
-    gemini_session = None
     keypoint_buffer: list[list[float]] = []
     face_buffer: list[dict | None] = []
+    # Chat context: the last coaching message shown, and recent turns.
+    last_feedback: str | None = None
+    chat_history: list[dict] = []
 
     logger.info("Coach-frames WebSocket connected: %s (user %s)", session_id, user.id)
 
     try:
-        gemini_session = await gemini_manager.create_session(session_id)
-
         await websocket.send_json({
             "type": "session_start",
             "session_id": session_id,
@@ -127,6 +126,34 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                     "face_bbox": _face_bbox(kp),
                     "hand_bbox": _hand_bbox(kp),
                 })
+
+            elif msg_type == "reset_buffer":
+                # Sent when a graded recording starts, so the scored attempt
+                # covers exactly the recorded clip -- not the prep screen or
+                # countdown frames that otherwise accumulate here.
+                keypoint_buffer = []
+                face_buffer = []
+
+            elif msg_type == "check_group":
+                # Several manual CP checks on ONE window of frames (the learner-
+                # facing prep groups, e.g. "hand shape & palm"), so a group
+                # doesn't need one hold per CP. Facial stays on check_step.
+                target_sign = data.get("target_sign", coaching.target_sign)
+                steps = [st for st in data.get("steps", []) if st in ("handshape", "location", "orientation", "hand_count")]
+                if len(keypoint_buffer) < 5:
+                    await websocket.send_json({"type": "group_result", "steps": steps, "results": {}, "message": "Need more frames"})
+                    continue
+                score = model_service.score_against_target(keypoint_buffer, target_sign)
+                params = score.get("parameters") or {}
+                results = {}
+                for st in steps:
+                    if st == "hand_count":
+                        results[st] = {"applicable": True, "match": score["hand_count_match"]}
+                    else:
+                        results[st] = {"applicable": True, **params.get(st, {"target": None, "yours": None, "match": None})}
+                await websocket.send_json({"type": "group_result", "steps": steps, "results": results})
+                keypoint_buffer = []
+                face_buffer = []
 
             elif msg_type == "check_step":
                 target_sign = data.get("target_sign", coaching.target_sign)
@@ -216,6 +243,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 # comes with an actual X to look at, not just the word.
                 looks_like = score.get("looks_like")
                 looks_like_skeleton = model_service.get_reference_skeleton(looks_like) if looks_like else None
+                charts = model_service.get_attempt_charts(keypoint_buffer, face_buffer, target_sign)
                 keypoint_buffer = []
                 face_buffer = []
 
@@ -229,43 +257,31 @@ async def coach_from_frames(websocket: WebSocket) -> None:
 
                 prediction_label = score["coarse_prediction"] or "unknown"
                 prediction_confidence = score["coarse_confidence"] or 0.0
-                is_correct = score["overall_verdict"] == "good"
-                coaching.record_attempt(prediction_label, is_correct)
+                # No reference recording for this sign -> nothing was compared.
+                # Don't count it as a failed attempt in the learner's progress.
+                graded = score["embedding_similarity"] is not None
+                is_correct = graded and score["overall_verdict"] == "good"
+                sign_progress, newly_completed = None, False
+                if graded:
+                    coaching.record_attempt(prediction_label, is_correct)
+                    with SessionLocal() as attempt_db:
+                        _, sign_progress, newly_completed = record_attempt(
+                            attempt_db,
+                            user_id=coaching.user_id,
+                            gloss=target_sign,
+                            correct=is_correct,
+                            confidence=prediction_confidence,
+                            session_id=session_id,
+                        )
 
-                with SessionLocal() as attempt_db:
-                    _, sign_progress, newly_completed = record_attempt(
-                        attempt_db,
-                        user_id=coaching.user_id,
-                        gloss=target_sign,
-                        correct=is_correct,
-                        confidence=prediction_confidence,
-                        session_id=session_id,
-                    )
-
-                try:
-                    response_text = await gemini_session.send_context(
-                        target_sign=target_sign,
-                        predicted_sign=prediction_label,
-                        confidence=prediction_confidence,
-                        is_correct=is_correct,
-                        attempt_number=coaching.attempts,
-                    )
-                except Exception:
-                    logger.warning("Gemini unavailable, using fallback feedback")
-                    response_text = ""
-
-                feedback_data = _parse_gemini_response(response_text)
-                if not feedback_data.get("feedback"):
-                    # Fallback feedback built directly from score_attempt()'s
-                    # verdict/notes (hand-count mismatch, embedding similarity
-                    # tier) instead of a generic message -- keeps the signal
-                    # from the teach/correct engine even without Gemini.
-                    if is_correct:
-                        feedback_data["feedback"] = f"Good job with '{target_sign}'!"
-                    elif score["overall_verdict"] == "needs_work":
-                        feedback_data["feedback"] = f"Close, but not quite '{target_sign}' yet — keep practicing."
-                    else:
-                        feedback_data["feedback"] = f"That didn't look like '{target_sign}' — try again."
+                # Coaching message from the validated CP results: Claude when
+                # ANTHROPIC_API_KEY is set, plain-language templates otherwise.
+                sign_info = signs_service.signs_by_word.get(target_sign.lower())
+                feedback_text, feedback_source = await coach_writer.write_feedback(
+                    target_sign, sign_info.description if sign_info else "", score,
+                )
+                feedback_data = {"feedback": feedback_text, "tips": []}
+                last_feedback = feedback_text
                 if not feedback_data.get("tips"):
                     feedback_data["tips"] = score["notes"]
 
@@ -280,6 +296,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                     "parameters": score["parameters"],
                     "attempt_skeleton_raw": attempt_skeletons["raw"],
                     "attempt_skeleton_canonical": attempt_skeletons["canonical"],
+                    "attempt_mirrored": attempt_skeletons["mirrored"],
                     "reference_skeleton": reference_skeleton,
                     "divergent_snapshots": divergent_snapshots,
                     # Raw frame index per mismatched param, into
@@ -291,9 +308,12 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                     "looks_like": looks_like,
                     "looks_like_skeleton": looks_like_skeleton,
                     "feedback": feedback_data.get("feedback", ""),
+                    "feedback_source": feedback_source,
                     "tips": feedback_data.get("tips", []),
                     "attempt_number": coaching.attempts,
                     "session_accuracy": coaching.accuracy,
+                    "graded": graded,
+                    "charts": charts,
                     "sign_completed": newly_completed,
                     "sign_progress": {
                         "total_attempts": sign_progress.total_attempts,
@@ -302,7 +322,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                             (sign_progress.correct_attempts / sign_progress.total_attempts) * 100
                         ) if sign_progress.total_attempts else 0,
                         "completed": sign_progress.completed,
-                    },
+                    } if sign_progress else None,
                 })
 
             elif msg_type == "chat":
@@ -310,17 +330,13 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 if not user_text.strip():
                     continue
 
-                try:
-                    reply = await gemini_session.send_chat(
-                        user_text=user_text,
-                        target_sign=coaching.target_sign,
-                        attempts=coaching.attempts,
-                        accuracy=coaching.accuracy,
-                    )
-                except Exception:
-                    reply = ""
-                if not reply:
-                    reply = f"I'm having trouble connecting right now. For '{coaching.target_sign}', focus on clear hand shapes and movement."
+                sign_info = signs_service.signs_by_word.get((coaching.target_sign or "").lower())
+                reply, _source = await coach_writer.answer_chat(
+                    user_text, coaching.target_sign, sign_info.description if sign_info else "",
+                    last_feedback, chat_history,
+                )
+                chat_history += [{"role": "user", "content": user_text}, {"role": "assistant", "content": reply}]
+                chat_history = chat_history[-12:]
 
                 await websocket.send_json({
                     "type": "chat_reply",
@@ -358,16 +374,4 @@ async def coach_from_frames(websocket: WebSocket) -> None:
     except Exception:
         logger.exception("Coach-frames WebSocket error: %s", session_id)
         await websocket.close(code=1011)
-    finally:
-        await gemini_manager.close_session(session_id)
 
-
-def _parse_gemini_response(response_text: str) -> dict:
-    text = response_text.strip()
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if match:
-        text = match.group()
-    try:
-        return json.loads(text)
-    except (json.JSONDecodeError, TypeError):
-        return {"feedback": response_text.strip(), "tips": []}

@@ -48,8 +48,22 @@ def build_word_to_glosses(rz: RemoteZip, our_words: list[str]) -> dict[str, list
     return mapping
 
 
+def _arg(name: str) -> str | None:
+    for i, a in enumerate(sys.argv):
+        if a == name and i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+        if a.startswith(name + "="):
+            return a.split("=", 1)[1]
+    return None
+
+
 def main():
-    our_words = [s["word"] for s in json.load(open(SIGNS_JSON))["signs"]]
+    # --words a,b,c : fetch these words instead of the app vocabulary
+    # --dry-run     : only report what the archive has (clips, signers,
+    #                 numbered variants); downloads nothing
+    words_arg = _arg("--words")
+    dry_run = "--dry-run" in sys.argv
+    our_words = [w.strip().lower() for w in words_arg.split(",")] if words_arg else [s["word"] for s in json.load(open(SIGNS_JSON))["signs"]]
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -78,12 +92,29 @@ def main():
                     )
 
     manifest = [r for rows in rows_by_gloss.values() for r in rows]
+
+    if dry_run:
+        for word in our_words:
+            for gloss in word_to_glosses.get(word, []):
+                rows = rows_by_gloss.get(gloss, [])
+                people = {r["participant_id"] for r in rows}
+                print(f"{word:10s} {gloss:12s} clips={len(rows):3d} signers={len(people):3d}")
+            if not word_to_glosses.get(word):
+                print(f"{word:10s} -- not in ASL Citizen")
+        return 0
+
+    # Merge with what's already downloaded instead of overwriting the
+    # manifest (a --words run must not drop the existing vocabulary's rows).
+    manifest_path = OUTPUT_DIR / "manifest.json"
+    if manifest_path.exists():
+        existing = json.load(open(manifest_path))
+        have = {r["video_file"] for r in existing}
+        manifest = existing + [r for r in manifest if r["video_file"] not in have]
     max_videos = os.environ.get("MOUNA_ASLC_MAX")
     if max_videos is not None:
         manifest = manifest[: int(max_videos)]
     logger.info(f"Total videos to download: {len(manifest)}")
 
-    manifest_path = OUTPUT_DIR / "manifest.json"
     failed_path = OUTPUT_DIR / "failed.json"
     done, failed = 0, []
     nested = VIDEOS_DIR / "ASL_Citizen"

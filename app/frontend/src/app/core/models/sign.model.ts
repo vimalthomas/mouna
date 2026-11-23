@@ -24,6 +24,9 @@ export interface ParameterResult {
   yours: string | null;
   match: boolean | null;
   why?: string | null;
+  /** Plain wording of target/yours buckets; null where not trustworthy (location). */
+  target_plain?: string | null;
+  yours_plain?: string | null;
 }
 
 export interface FaceContours {
@@ -43,12 +46,28 @@ export interface SkeletonFrame {
   left_orientation: [number, number] | null;
   right_orientation: [number, number] | null;
   face?: FaceContours | null;
+  /** 0..1 position of this frame within the source buffer/clip. */
+  t?: number;
+  /** Inverse of the body-relative normalization in the source image's
+   * normalized coords: image_xy = xy * scale + origin. */
+  origin?: [number, number];
+  scale?: number;
+  /** Hand-local 3D (wrist-centered, wrist->middle-knuckle scaled). */
+  left_hand_3d?: [number, number, number][] | null;
+  right_hand_3d?: [number, number, number][] | null;
 }
 
 export interface ReferenceBuckets {
   handshape: string;
   location: string;
   orientation: string;
+  /** Imperative instructions per parameter; null where not trustworthy (location). */
+  howto?: Partial<Record<'handshape' | 'location' | 'orientation', string | null>>;
+  plain?: Partial<Record<'handshape' | 'location' | 'orientation', string | null>>;
+  /** When the hands are up in the example video shown (seconds). */
+  hands_up_seconds?: { start: number; end: number } | null;
+  /** Each hand's path through the example video, normalized image coords. */
+  hand_paths?: HandPath[];
   hand_bbox: BBox | null;
 }
 
@@ -61,6 +80,11 @@ export interface StepResult {
   target?: string | null;
   yours?: string | null;
   match?: boolean | null;
+  why?: string | null;
+  target_plain?: string | null;
+  yours_plain?: string | null;
+  /** Approved signers split on this part, so it isn't graded for this sign. */
+  uncertain?: boolean;
   // facial step
   nms_type?: string;
   present?: boolean;
@@ -87,12 +111,6 @@ export interface Prediction {
   confidence: number;
 }
 
-export interface GeminiValidation {
-  valid: boolean;
-  suggestion: string;
-  explanation: string;
-}
-
 export interface PredictionResult {
   type: string;
   prediction: string;
@@ -100,7 +118,6 @@ export interface PredictionResult {
   top3: Prediction[];
   uncertain: boolean;
   inference_time_ms: number | null;
-  gemini_validation?: GeminiValidation;
 }
 
 export type KeypointFrame = number[];
@@ -122,6 +139,11 @@ export interface CoachingMessage {
   hand_count_match?: boolean | null;
   parameters?: Record<string, ParameterResult> | null;
   feedback?: string;
+  /** "claude" when Claude wrote the message, "template" otherwise. */
+  feedback_source?: 'claude' | 'template';
+  charts?: AttemptCharts | null;
+  /** False when the sign has no reference recording, so nothing was compared. */
+  graded?: boolean;
   tips?: string[];
   attempt_number?: number;
   session_accuracy?: number;
@@ -139,6 +161,8 @@ export interface CoachingMessage {
   hand_bbox?: BBox | null;
   attempt_skeleton_raw?: SkeletonFrame[] | null;
   attempt_skeleton_canonical?: SkeletonFrame[] | null;
+  /** True when scoring mirrored the attempt (left-dominant signer). */
+  attempt_mirrored?: boolean;
   reference_skeleton?: SkeletonFrame[] | null;
   divergent_snapshots?: Record<string, SkeletonFrame> | null;
   divergent_frames?: Record<string, number> | null;
@@ -165,6 +189,8 @@ export interface SignProgressDetail {
   accuracy: number;
   completed: boolean;
   completedAt: string | null;
+  /** Last up-to-5 results, oldest first (learned = 3+ correct). */
+  recent: boolean[];
 }
 
 export interface SignProgressDetailResponse {
@@ -174,6 +200,7 @@ export interface SignProgressDetailResponse {
   accuracy: number;
   completed: boolean;
   completed_at: string | null;
+  recent?: boolean[];
 }
 
 export interface UserStats {
@@ -192,4 +219,33 @@ export interface UserStatsResponse {
   streak: number;
   weak_signs: WeakSign[];
   signs: SignProgressDetailResponse[];
+}
+
+export interface AttemptCharts {
+  fingers: string[];
+  finger_openness: { you: number[]; target: number[] };
+  travel: { you: number[]; target: number[] };
+  brow: { you: number[] | null; target: number[] | null; threshold: number } | null;
+}
+
+export interface HandPath {
+  /** Screen side ('screen_left'/'screen_right'), or 'only' for one hand. */
+  hand: string;
+  /** Made in one spot (tiny travel): drawn as a "stays here" ring, no arrow. */
+  still?: boolean;
+  t: number[];
+  x: number[];
+  y: number[];
+}
+
+export interface SignCatalogEntry {
+  in_asl_lex: boolean;
+  in_cdi: boolean;
+  /** ASL-CDI semantic category, or "Other signs". */
+  category: string;
+  /** ASL-LEX 2.0 frequency rating by deaf signers (1-7). */
+  frequency: number | null;
+  /** On ASL-CDI 2.0 and ASL-LEX frequency >= 5.0. */
+  essential: boolean;
+  in_model_vocab: boolean;
 }

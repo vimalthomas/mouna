@@ -2,8 +2,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
   en: {
     'nav.dashboard': 'Dashboard',
     'nav.dictionary': 'Dictionary',
-    'nav.coach': 'AI Coach',
-    'nav.subtitle': 'Sign Language AI',
+    'nav.coach': 'Practice',
+    'nav.subtitle': 'ASL practice',
     'nav.version': 'v1.0.0',
     'coach.title': 'AI Coach',
     'coach.subtitle': 'Watch the reference video, press Record, then perform the sign',
@@ -26,8 +26,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
   es: {
     'nav.dashboard': 'Panel',
     'nav.dictionary': 'Diccionario',
-    'nav.coach': 'Entrenador IA',
-    'nav.subtitle': 'IA de Lenguaje de Señas',
+    'nav.coach': 'Práctica',
+    'nav.subtitle': 'Práctica de ASL',
     'nav.version': 'v1.0.0',
     'coach.title': 'Entrenador IA',
     'coach.subtitle': 'Ve el video de referencia, presiona Grabar, luego realiza la seña',
@@ -50,8 +50,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
   fr: {
     'nav.dashboard': 'Tableau de bord',
     'nav.dictionary': 'Dictionnaire',
-    'nav.coach': 'Coach IA',
-    'nav.subtitle': 'IA en Langue des Signes',
+    'nav.coach': 'Pratique',
+    'nav.subtitle': "Pratique de l'ASL",
     'nav.version': 'v1.0.0',
     'coach.title': 'Coach IA',
     'coach.subtitle': 'Regardez la vidéo de référence, appuyez sur Enregistrer, puis effectuez le signe',
@@ -74,8 +74,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
   ta: {
     'nav.dashboard': 'டாஷ்போர்டு',
     'nav.dictionary': 'அகராதி',
-    'nav.coach': 'AI பயிற்சியாளர்',
-    'nav.subtitle': 'சைகை மொழி AI',
+    'nav.coach': 'பயிற்சி',
+    'nav.subtitle': 'ASL பயிற்சி',
     'nav.version': 'v1.0.0',
     'coach.title': 'AI பயிற்சியாளர்',
     'coach.subtitle': 'குறிப்பு வீடியோவைப் பாருங்கள், பதிவு அழுத்துங்கள், பிறகு சைகை செய்யுங்கள்',

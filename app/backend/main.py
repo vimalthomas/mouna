@@ -10,7 +10,6 @@ from config import settings
 from db.session import SessionLocal
 from db.signs_repo import sync_signs
 from routers import auth, coach_frames, debug, health, signs, users
-from services.gemini_live_service import gemini_manager
 from services.keypoint_service import keypoint_service
 from services.model_service import model_service
 from services.signs_service import signs_service
@@ -31,7 +30,6 @@ async def lifespan(app: FastAPI):
 
     yield
     logger.info("Shutting down Mouna backend...")
-    await gemini_manager.close_all()
 
 
 app = FastAPI(

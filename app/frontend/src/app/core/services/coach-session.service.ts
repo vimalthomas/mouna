@@ -6,7 +6,7 @@ import { CoachingMessage, PrepStep, StepResult } from '../models/sign.model';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
-export class GeminiCoachService {
+export class CoachSessionService {
   private wsService = inject(WebSocketService);
   private authService = inject(AuthService);
   private coachingSubject = new Subject<CoachingMessage>();
@@ -51,8 +51,30 @@ export class GeminiCoachService {
     this.connection?.send({ type: 'frame', frame: base64Frame });
   }
 
+  /** Clears the backend's frame buffer so the next prediction covers only
+   * frames sent from now on (i.e. exactly the recorded attempt). */
+  resetBuffer(): void {
+    this.connection?.send({ type: 'reset_buffer' });
+  }
+
   requestPrediction(targetSign: string): void {
     this.connection?.send({ type: 'predict', target_sign: targetSign });
+  }
+
+  /** Several manual CP checks answered from ONE window of frames (a prep
+   * group like "hand shape & palm"). Resolves with step -> result, or null. */
+  checkGroup(targetSign: string, steps: PrepStep[]): Promise<Record<string, StepResult> | null> {
+    return new Promise(resolve => {
+      this.coaching$
+        .pipe(
+          filter((msg: any) => msg.type === 'group_result' || msg.type === 'error'),
+          take(1),
+          timeout(8000),
+          catchError(() => of(null)),
+        )
+        .subscribe((msg: any) => resolve(msg && msg.type === 'group_result' ? msg.results : null));
+      this.connection?.send({ type: 'check_group', target_sign: targetSign, steps });
+    });
   }
 
   /** One discrete prep-step check (handshape/location/orientation/hand_count/facial).

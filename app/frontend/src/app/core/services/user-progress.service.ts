@@ -37,6 +37,7 @@ export class UserProgressService {
           accuracy: s.accuracy,
           completed: s.completed,
           completedAt: s.completed_at,
+          recent: s.recent ?? [],
         })),
       })),
       tap(stats => this.statsSubject.next(stats))

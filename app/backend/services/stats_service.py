@@ -4,6 +4,7 @@ from sqlalchemy import Integer, cast, func
 from sqlalchemy.orm import Session
 
 from db.models import Attempt, Sign, SignProgress
+from services.attempts_service import LEARNED_MIN_CORRECT, LEARNED_WINDOW, is_learned
 
 MIN_ATTEMPTS_FOR_WEAK_SIGN = 3
 WEAK_SIGN_ACCURACY_THRESHOLD = 0.70
@@ -27,12 +28,10 @@ def get_user_stats(db: Session, user_id: int) -> dict:
         .scalar()
         or 0
     )
-    signs_learned = (
-        db.query(func.count(SignProgress.id))
-        .filter(SignProgress.user_id == user_id, SignProgress.completed.is_(True))
-        .scalar()
-        or 0
-    )
+    # Derived from recent attempts (see attempts_service.is_learned), so it
+    # can't go stale and older rows recorded under the previous rule count.
+    sign_ids = [sid for (sid,) in db.query(SignProgress.sign_id).filter(SignProgress.user_id == user_id).all()]
+    signs_learned = sum(1 for sid in sign_ids if is_learned(db, user_id, sid))
 
     total_attempts, correct_attempts = (
         db.query(func.count(Attempt.id), func.coalesce(func.sum(cast(Attempt.correct, Integer)), 0))
@@ -56,22 +55,27 @@ def get_user_stats(db: Session, user_id: int) -> dict:
 
 
 def _compute_streak(db: Session, user_id: int) -> int:
-    rows = (
-        db.query(func.distinct(func.date(Attempt.created_at)))
-        .filter(Attempt.user_id == user_id)
-        .all()
-    )
-    practiced_days = {row[0] for row in rows}
-    if not practiced_days:
+    """Consecutive days (server-local calendar) with at least one attempt,
+    ending today -- or yesterday, so the streak survives until you practice
+    today. Dates are derived in Python: SQLite's date() returns TEXT, which
+    never compared equal to datetime.date and made the streak always 0."""
+    stamps = [ts for (ts,) in db.query(Attempt.created_at).filter(Attempt.user_id == user_id).all() if ts]
+    if not stamps:
         return 0
+    local_tz = datetime.now().astimezone().tzinfo
 
-    today = datetime.now(timezone.utc).date()
-    streak = 0
-    cursor = today
+    def local_day(ts: datetime):
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)  # stored as UTC
+        return ts.astimezone(local_tz).date()
+
+    practiced_days = {local_day(ts) for ts in stamps}
+    cursor = datetime.now(local_tz).date()
     if cursor not in practiced_days:
         cursor -= timedelta(days=1)
         if cursor not in practiced_days:
             return 0
+    streak = 0
     while cursor in practiced_days:
         streak += 1
         cursor -= timedelta(days=1)
@@ -157,12 +161,21 @@ def _get_all_sign_progress(db: Session, user_id: int) -> list[dict]:
             if progress.total_attempts
             else 0
         )
+        recent = [
+            bool(c) for (c,) in db.query(Attempt.correct)
+            .filter(Attempt.user_id == user_id, Attempt.sign_id == progress.sign_id)
+            .order_by(Attempt.created_at.desc(), Attempt.id.desc())
+            .limit(LEARNED_WINDOW)
+            .all()
+        ][::-1]  # oldest -> newest, for display
         signs.append({
             "sign": gloss,
             "total_attempts": progress.total_attempts,
             "correct_attempts": progress.correct_attempts,
             "accuracy": accuracy,
-            "completed": progress.completed,
+            # Same rule as signs_learned (see attempts_service.is_learned).
+            "completed": sum(recent) >= LEARNED_MIN_CORRECT,
             "completed_at": progress.completed_at.isoformat() if progress.completed_at else None,
+            "recent": recent,
         })
     return signs

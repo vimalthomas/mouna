@@ -1,0 +1,866 @@
+{
+  "accident": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.12,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "africa": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 3.67,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "all": {
+    "category": "Quantifiers",
+    "essential": true,
+    "frequency": 5.3,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "apple": {
+    "category": "Food and Drink",
+    "essential": true,
+    "frequency": 5.72,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "ask": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 5.24,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": false
+  },
+  "basketball": {
+    "category": "Games and Routines",
+    "essential": true,
+    "frequency": 5.04,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "bed": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.28,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "before": {
+    "category": "Signs About Time",
+    "essential": false,
+    "frequency": 4.67,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "bird": {
+    "category": "Animals",
+    "essential": true,
+    "frequency": 5.16,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "birthday": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.18,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "black": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 5.92,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "blue": {
+    "category": "Descriptive Signs",
+    "essential": false,
+    "frequency": 4.63,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "book": {
+    "category": "Toys",
+    "essential": true,
+    "frequency": 6.68,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "bowling": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.07,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "brown": {
+    "category": "Descriptive Signs",
+    "essential": false,
+    "frequency": 4.92,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "but": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.65,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "can": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 6.0,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "candy": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.65,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "chair": {
+    "category": "Furniture and Rooms",
+    "essential": true,
+    "frequency": 5.71,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "change": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.37,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "cheat": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.04,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "city": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.08,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "clothes": {
+    "category": "Clothing",
+    "essential": true,
+    "frequency": 5.37,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "color": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.53,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "computer": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 3.7,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "cook": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 6.08,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "cool": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.04,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "corn": {
+    "category": "Food and Drink",
+    "essential": false,
+    "frequency": 4.18,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "cousin": {
+    "category": "People",
+    "essential": false,
+    "frequency": 4.13,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "cow": {
+    "category": "Animals",
+    "essential": false,
+    "frequency": 3.68,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "dance": {
+    "category": "Action Signs",
+    "essential": false,
+    "frequency": 3.96,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "dark": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 5.6,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "deaf": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 6.77,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "decide": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.96,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "doctor": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.0,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "dog": {
+    "category": "Animals",
+    "essential": true,
+    "frequency": 6.26,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "drink": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 6.35,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "dry": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 5.59,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": false
+  },
+  "eat": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 6.84,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "enjoy": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.69,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "family": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.97,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "fine": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.18,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "finish": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 5.8,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "fish": {
+    "category": "Animals",
+    "essential": false,
+    "frequency": 4.56,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "forget": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": null,
+    "in_asl_lex": false,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "full": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 5.85,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "give": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 5.67,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "go": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 6.03,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "graduate": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.24,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "hat": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.52,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "hearing": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 5.86,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "help": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 6.15,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "hot": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 6.3,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "how": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.82,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "jacket": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.33,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "kiss": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.85,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "language": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.39,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "last": {
+    "category": "Quantifiers",
+    "essential": false,
+    "frequency": 4.88,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "later": {
+    "category": "Signs About Time",
+    "essential": true,
+    "frequency": 5.33,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "letter": {
+    "category": "Small Household Items",
+    "essential": false,
+    "frequency": 4.57,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "like": {
+    "category": "Mental State Terms",
+    "essential": true,
+    "frequency": 6.22,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "man": {
+    "category": "People",
+    "essential": true,
+    "frequency": 5.75,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "many": {
+    "category": "Quantifiers",
+    "essential": true,
+    "frequency": 5.42,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "medicine": {
+    "category": "Small Household Items",
+    "essential": false,
+    "frequency": 4.9,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "meet": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.42,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "mother": {
+    "category": "People",
+    "essential": true,
+    "frequency": 6.6,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "need": {
+    "category": "Mental State Terms",
+    "essential": true,
+    "frequency": 5.4,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "no": {
+    "category": "Games and Routines",
+    "essential": true,
+    "frequency": 6.43,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "not": {
+    "category": "Quantifiers",
+    "essential": true,
+    "frequency": 5.6,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": false
+  },
+  "now": {
+    "category": "Signs About Time",
+    "essential": true,
+    "frequency": 5.8,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "orange": {
+    "category": "Descriptive Signs",
+    "essential": false,
+    "frequency": 4.96,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "paint": {
+    "category": "Action Signs",
+    "essential": false,
+    "frequency": 4.07,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "paper": {
+    "category": "Small Household Items",
+    "essential": true,
+    "frequency": 6.48,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "pink": {
+    "category": "Descriptive Signs",
+    "essential": false,
+    "frequency": 4.47,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "pizza": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.19,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "play": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 5.97,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "pull": {
+    "category": "Action Signs",
+    "essential": false,
+    "frequency": 3.78,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "purple": {
+    "category": "Descriptive Signs",
+    "essential": false,
+    "frequency": 4.92,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "right": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.0,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "same": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 5.84,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "school": {
+    "category": "Outside Things and Places to Go",
+    "essential": true,
+    "frequency": 6.4,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "secretary": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.24,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "shirt": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.92,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "short": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": null,
+    "in_asl_lex": false,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "sit": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 5.62,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": false
+  },
+  "small": {
+    "category": "Descriptive Signs",
+    "essential": true,
+    "frequency": 5.0,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": false
+  },
+  "son": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 4.88,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "study": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.44,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "table": {
+    "category": "Furniture and Rooms",
+    "essential": true,
+    "frequency": 6.0,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "tall": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.0,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "tell": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 5.93,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "thanksgiving": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 2.48,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "thin": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 3.33,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "thursday": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 5.04,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "time": {
+    "category": "Signs About Time",
+    "essential": true,
+    "frequency": 6.38,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "walk": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 6.11,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "want": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.77,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "what": {
+    "category": "Question Signs",
+    "essential": true,
+    "frequency": 6.41,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "when": {
+    "category": "Question Signs",
+    "essential": true,
+    "frequency": 5.6,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": false
+  },
+  "where": {
+    "category": "Question Signs",
+    "essential": true,
+    "frequency": 6.24,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": false
+  },
+  "white": {
+    "category": "Descriptive Signs",
+    "essential": false,
+    "frequency": 4.67,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "who": {
+    "category": "Question Signs",
+    "essential": true,
+    "frequency": 6.23,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "why": {
+    "category": "Question Signs",
+    "essential": true,
+    "frequency": 6.27,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": false
+  },
+  "woman": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.11,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "work": {
+    "category": "Action Signs",
+    "essential": true,
+    "frequency": 6.74,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "wrong": {
+    "category": "Other signs",
+    "essential": false,
+    "frequency": 6.08,
+    "in_asl_lex": true,
+    "in_cdi": false,
+    "in_model_vocab": true
+  },
+  "year": {
+    "category": "Signs About Time",
+    "essential": true,
+    "frequency": 5.44,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  },
+  "yes": {
+    "category": "Games and Routines",
+    "essential": true,
+    "frequency": 6.88,
+    "in_asl_lex": true,
+    "in_cdi": true,
+    "in_model_vocab": true
+  }
+}

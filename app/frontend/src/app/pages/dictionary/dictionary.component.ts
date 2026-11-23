@@ -1,146 +1,83 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { SignsApiService } from '../../core/services/signs-api.service';
-import { Sign } from '../../core/models/sign.model';
+import { Sign, SignCatalogEntry } from '../../core/models/sign.model';
 import { SignCardComponent } from '../../shared/components/sign-card/sign-card.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-dictionary',
   standalone: true,
-  imports: [FormsModule, SignCardComponent],
+  imports: [FormsModule, SignCardComponent, RouterLink],
   template: `
-    <div class="max-w-6xl mx-auto">
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-white">Sign Dictionary</h2>
-        <p class="text-sm text-slate-400 mt-1">Browse {{ allSigns.length }} ASL signs — click a card to watch the video</p>
-      </div>
-
-      <!-- Search -->
-      <div class="mb-5">
-        <div class="relative">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          </svg>
-          <input
-            type="text"
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="filterSigns()"
-            class="w-full bg-slate-800/80 border border-slate-700/50 rounded-xl pl-11 pr-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/25 transition-all text-sm"
-          />
+    <div class="max-w-6xl mx-auto pt-2">
+      <header class="flex items-end justify-between gap-6 flex-wrap mb-6">
+        <div>
+          <h1 class="font-display text-4xl text-ink">Dictionary</h1>
+          <p class="text-ink-muted mt-2 max-w-2xl">Grouped by the categories of the ASL-CDI, a standard inventory of the signs people learn first. <span class="text-teal font-medium">Essential</span> signs are on that inventory and used often by deaf signers (ASL-LEX).</p>
         </div>
-      </div>
+        <div class="relative w-full sm:w-72">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.2-5.2m0 0A7.5 7.5 0 1 0 5.2 5.2a7.5 7.5 0 0 0 10.6 10.6Z" />
+          </svg>
+          <input type="search" [(ngModel)]="searchTerm" (ngModelChange)="filterSigns()" placeholder="Search signs" aria-label="Search signs"
+            class="w-full h-10 bg-surface border border-border/70 rounded-xl pl-10 pr-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-accent/60 transition-colors" />
+        </div>
+      </header>
 
-      <!-- Category Tabs -->
-      <div class="flex flex-wrap gap-2 mb-6">
-        <button
-          (click)="selectCategory('all')"
-          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
-          [class]="selectedCategory === 'all'
-            ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
-            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'"
-        >
-          All ({{ allSigns.length }})
-        </button>
-        @for (cat of categories; track cat) {
-          <button
-            (click)="selectCategory(cat)"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all duration-200"
-            [class]="selectedCategory === cat
-              ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'"
-          >
-            {{ cat }}
-          </button>
+      <!-- Categories -->
+      <nav class="flex flex-wrap gap-1 mb-6 -mx-1" aria-label="Categories">
+        @for (cat of ['essential'].concat(categories, ['all']); track cat) {
+          <button (click)="selectCategory(cat)"
+            class="shrink-0 h-8 px-3 rounded-lg text-sm transition-colors"
+            [class]="selectedCategory === cat ? 'bg-ink text-background' : 'text-ink-muted hover:text-ink hover:bg-surface-sunk'"
+          >{{ cat === 'all' ? 'All' : cat === 'essential' ? 'Essential' : cat }} <span class="opacity-60">{{ countFor(cat) }}</span></button>
         }
-      </div>
+      </nav>
 
-      <!-- Signs Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         @for (sign of filteredSigns; track sign.word) {
-          <app-sign-card [sign]="sign" [hasVideo]="videoSet.has(sign.word.toLowerCase().replace('_', ' '))" (cardClicked)="openVideo($event)" />
+          <app-sign-card [sign]="sign" [hasVideo]="comingSoon(sign) ? false : videoSet.has(sign.word.toLowerCase().replace('_', ' '))" [practiceReady]="practiceSet.has(sign.word)" [essential]="!!catalog[sign.word]?.essential" [comingSoon]="comingSoon(sign)" (cardClicked)="openVideo($event)" />
         }
       </div>
 
       @if (filteredSigns.length === 0) {
-        <div class="text-center py-16">
-          <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          </svg>
-          <p class="text-base text-slate-400">No signs found</p>
-          <p class="text-sm text-slate-500 mt-1">Try a different search term or category</p>
+        <div class="text-center py-20">
+          <p class="text-ink">No signs match "{{ searchTerm }}".</p>
+          <p class="text-sm text-ink-muted mt-1">Try another word or category.</p>
         </div>
       }
 
-      <!-- Video Modal -->
+      <!-- Video -->
       @if (selectedSign) {
-        <div
-          class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          (click)="closeVideo()"
-        >
-          <div
-            class="bg-slate-800 rounded-2xl border border-slate-700/50 shadow-2xl max-w-lg w-full overflow-hidden"
-            (click)="$event.stopPropagation()"
-          >
-            <!-- Header -->
-            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4" (click)="closeVideo()">
+          <div class="bg-surface rounded-2xl border border-border/70 shadow-2xl max-w-xl w-full overflow-hidden" (click)="$event.stopPropagation()" role="dialog" [attr.aria-label]="selectedSign.word">
+            <div class="flex items-start justify-between px-6 pt-5 pb-4">
               <div>
-                <h3 class="text-lg font-semibold text-white capitalize">{{ selectedSign.word }}</h3>
-                <p class="text-xs text-slate-400 mt-0.5">{{ selectedSign.category }}</p>
+                <h3 class="font-display text-3xl text-ink capitalize">{{ selectedSign.word.replace('_', ' ') }}</h3>
+                <p class="text-sm text-ink-muted mt-1">{{ selectedSign.description }}</p>
               </div>
-              <button
-                (click)="closeVideo()"
-                class="text-slate-400 hover:text-white transition-colors p-1"
-              >
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button (click)="closeVideo()" aria-label="Close" class="text-ink-faint hover:text-ink transition-colors p-1 -mr-1">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             </div>
-
-            <!-- Video -->
-            @if (videoUrl) {
-              <div class="bg-black">
-                <video
-                  [src]="videoUrl"
-                  autoplay
-                  loop
-                  controls
-                  playsinline
-                  class="w-full"
-                  style="max-height: 400px;"
-                ></video>
-              </div>
-            } @else if (videoLoading) {
-              <div class="flex items-center justify-center py-16 bg-slate-900">
-                <div class="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            } @else {
-              <div class="flex items-center justify-center py-16 bg-slate-900">
-                <div class="text-center">
-                  <svg class="w-10 h-10 text-slate-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-                  </svg>
-                  <p class="text-sm text-slate-500">No video available</p>
-                </div>
-              </div>
-            }
-
-            <!-- Description -->
-            <div class="px-5 py-4">
-              <p class="text-sm text-slate-300 leading-relaxed">{{ selectedSign.description }}</p>
-              <div class="flex items-center gap-2 mt-3">
-                <span
-                  class="text-xs px-2 py-0.5 rounded-full font-medium"
-                  [style.background]="selectedSign.difficulty === 'beginner' ? 'rgba(52,211,153,0.15)' : 'rgba(251,191,36,0.15)'"
-                  [style.color]="selectedSign.difficulty === 'beginner' ? '#34d399' : '#fbbf24'"
-                >
-                  {{ selectedSign.difficulty }}
-                </span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 font-medium">
-                  {{ selectedSign.category }}
-                </span>
-              </div>
+            <div class="bg-black aspect-video flex items-center justify-center">
+              @if (videoUrl) {
+                <video [src]="videoUrl" autoplay loop controls [muted]="true" playsinline class="w-full h-full object-contain"></video>
+              } @else if (videoLoading) {
+                <div class="w-7 h-7 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              } @else {
+                <p class="text-sm text-white/60">No video for this sign yet.</p>
+              }
+            </div>
+            <div class="flex items-center justify-between px-6 py-4">
+              <span class="text-xs text-ink-faint">{{ selectedSign.category }}@if (catalog[selectedSign.word]?.frequency) { · used often: {{ catalog[selectedSign.word]!.frequency }} / 7 }</span>
+              @if (practiceSet.has(selectedSign.word)) {
+                <a [routerLink]="['/coach']" [queryParams]="{ sign: selectedSign.word }" class="h-9 px-4 inline-flex items-center rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors">Practice this sign</a>
+              } @else {
+                <span class="text-xs text-ink-faint">Not in the coached set yet</span>
+              }
             </div>
           </div>
         </div>
@@ -155,22 +92,52 @@ export class DictionaryComponent implements OnInit {
   filteredSigns: Sign[] = [];
   categories: string[] = [];
   searchTerm = '';
-  selectedCategory = 'all';
+  selectedCategory = 'essential';
 
   selectedSign: Sign | null = null;
   videoUrl: string | null = null;
   videoLoading = false;
   videoSet = new Set<string>();
+  practiceSet = new Set<string>();
+
+  /** Per-sign ASL-CDI category / frequency / essential (sign_catalog.json). */
+  catalog: Record<string, SignCatalogEntry> = {};
+  private rawSigns: Sign[] = [];
 
   ngOnInit(): void {
-    this.signsApi.getSigns().subscribe(signs => {
-      this.allSigns = signs;
-      this.filteredSigns = signs;
-      this.categories = [...new Set(signs.map(s => s.category))].sort();
-    });
-    this.signsApi.getSignsWithVideo().subscribe(set => {
-      this.videoSet = set;
-    });
+    this.signsApi.getSigns().subscribe(signs => { this.rawSigns = signs; this.rebuild(); });
+    this.signsApi.getSignCatalog().subscribe({ next: c => { this.catalog = c; this.rebuild(); }, error: () => this.rebuild() });
+    this.signsApi.getSignsWithVideo().subscribe(set => { this.videoSet = set; });
+    this.signsApi.getSignsWithReference().subscribe({ next: set => (this.practiceSet = set), error: () => {} });
+  }
+
+  /** Essential signs outside the 100-sign vocabulary (clips being added). */
+  comingSoon(sign: Sign): boolean { return !this.rawSigns.some(s => s.word === sign.word); }
+
+  /** Re-label every sign with its ASL-CDI category, add the essential signs
+   * that aren't in the vocabulary yet, and order: essential first, then by
+   * how often deaf signers use the sign. */
+  private rebuild(): void {
+    const cat = this.catalog;
+    const known = new Set(this.rawSigns.map(s => s.word));
+    const extras: Sign[] = Object.entries(cat)
+      .filter(([w, c]) => !known.has(w) && c.essential)
+      .map(([w, c]) => ({ word: w, category: c.category, difficulty: '', description: 'Clips are being added for this sign.', manual_checks: [], nms_required: false, nms_type: null, nms_notes: null }));
+    const all = [...this.rawSigns.map(s => ({ ...s, category: cat[s.word]?.category ?? 'Other signs' })), ...extras];
+    all.sort((a, b) => Number(!!cat[b.word]?.essential) - Number(!!cat[a.word]?.essential)
+      || (cat[b.word]?.frequency ?? 0) - (cat[a.word]?.frequency ?? 0) || a.word.localeCompare(b.word));
+    this.allSigns = all;
+    const counts = new Map<string, number>();
+    for (const s of all) counts.set(s.category, (counts.get(s.category) ?? 0) + 1);
+    this.categories = [...counts.keys()].filter(c => c !== 'Other signs').sort((a, b) => counts.get(b)! - counts.get(a)! || a.localeCompare(b));
+    if (counts.has('Other signs')) this.categories.push('Other signs');
+    this.filterSigns();
+  }
+
+  countFor(cat: string): number {
+    if (cat === 'all') return this.allSigns.length;
+    if (cat === 'essential') return this.allSigns.filter(s => this.catalog[s.word]?.essential).length;
+    return this.allSigns.filter(s => s.category === cat).length;
   }
 
   selectCategory(category: string): void {
@@ -180,14 +147,11 @@ export class DictionaryComponent implements OnInit {
 
   filterSigns(): void {
     let signs = this.allSigns;
-    if (this.selectedCategory !== 'all') {
-      signs = signs.filter(s => s.category === this.selectedCategory);
-    }
+    if (this.selectedCategory === 'essential') signs = signs.filter(s => this.catalog[s.word]?.essential);
+    else if (this.selectedCategory !== 'all') signs = signs.filter(s => s.category === this.selectedCategory);
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
-      signs = signs.filter(
-        s => s.word.toLowerCase().includes(term) || s.description.toLowerCase().includes(term)
-      );
+      signs = signs.filter(s => s.word.toLowerCase().includes(term) || s.description.toLowerCase().includes(term));
     }
     this.filteredSigns = signs;
   }

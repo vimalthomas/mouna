@@ -37,6 +37,7 @@ sys.path.insert(0, "src")
 from mouna.data.handedness import canonicalize_handedness  # noqa: E402
 from mouna.data.openpose_convert import convert_video as op_convert_video  # noqa: E402
 from mouna.data.part_normalize import normalize_per_part  # noqa: E402
+from mouna.coach.parameters import extract_dominant_hand_signal, majority_targets  # noqa: E402
 from mouna.models.transformer import PoseTransformer  # noqa: E402
 
 MODEL_PATH = Path("data/best_model_v4canon.pth")
@@ -139,6 +140,9 @@ def main():
             "representative_sequence": normed_seqs[best],
             "representative_sequence_raw_canon": raw_canon_seqs[best],
             "n_references": len(embeddings),
+            # CP targets by majority vote over every approved clip, not the
+            # single representative one (see parameters.majority_targets).
+            "target_buckets": majority_targets([extract_dominant_hand_signal(c) for c in raw_canon_seqs]),
         }
         print(f"  {word}: {len(embeddings)} clips")
 

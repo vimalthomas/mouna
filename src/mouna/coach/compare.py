@@ -203,11 +203,11 @@ def score_attempt(
         attempt_signal = extract_dominant_hand_signal(canon)
         reference_signal = extract_dominant_hand_signal(reference_raw_canon)
         if attempt_signal is not None and reference_signal is not None:
-            parameters = compare_discrete(attempt_signal, reference_signal)
+            parameters = compare_discrete(attempt_signal, reference_signal, references[target_word].get("target_buckets"))
             # Only for params that actually mismatched -- a "where it went
             # wrong" snapshot for something that matched isn't useful.
             for param, result in parameters.items():
-                if not result["match"]:
+                if result["match"] is False:
                     frame_idx = find_divergent_frame(attempt_signal, reference_signal, param)
                     if frame_idx is not None:
                         divergent_frames[param] = frame_idx
@@ -219,7 +219,11 @@ def score_attempt(
             # bucket triple matches a DIFFERENT known word, surface it so
             # the learner can see exactly which other sign they drifted
             # toward -- not just that this one didn't match.
-            if reference_bucket_index:
+            # Only when the attempt actually MISSED the target on at least
+            # one parameter: if it matched all three, every other word in
+            # that bucket ties with the target (e.g. who/apple/orange/how
+            # share one triple), so naming one of them as "closer" is false.
+            if reference_bucket_index and any(r["match"] is False for r in parameters.values()):
                 attempt_triple = (
                     parameters["handshape"]["yours"],
                     parameters["location"]["yours"],
@@ -281,7 +285,7 @@ def score_attempt(
 
     if parameters:
         for name, result in parameters.items():
-            if not result["match"] and result.get("why"):
+            if result["match"] is False and result.get("why"):
                 notes.append(result["why"])
 
     if looks_like:

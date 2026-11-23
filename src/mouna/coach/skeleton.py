@@ -137,6 +137,7 @@ def extract_skeleton_sequence(
         sample_idx = valid_idx[np.linspace(0, len(valid_idx) - 1, min(n_frames, len(valid_idx))).astype(int)]
 
     frames = []
+    denom = max(T - 1, 1)
     for i in sample_idx:
         frames.append({
             "pose": {name: pose_norm[i, idx].tolist() for name, idx in POSE_RENDER_INDICES.items()},
@@ -145,6 +146,19 @@ def extract_skeleton_sequence(
             "left_orientation": lh_orient[i].tolist() if left_present[i] else None,
             "right_orientation": rh_orient[i].tolist() if right_present[i] else None,
             "face": _face_contours_at(face_frames, i, mid_shoulder, scale, mirror_face),
+            # Position of this frame within the whole buffer, 0..1 -- lets
+            # the frontend sync a frame to the recorded attempt video.
+            "t": float(i) / denom,
+            # Inverse of the body-relative normalization, in the source
+            # image's normalized [0,1] coords: image_xy = xy * scale + origin.
+            # Used to draw skeletons back onto the signer's own video.
+            "origin": mid_shoulder[i, :2].tolist(),
+            "scale": scale,
+            # Hand-local 3D (wrist-centered, wrist->middle-MCP scaled). Hand
+            # z is self-consistent within one hand model, unlike hand-vs-pose
+            # z (see module docstring), so it's safe for a hands-only 3D view.
+            "left_hand_3d": lh_shape[i].tolist() if left_present[i] else None,
+            "right_hand_3d": rh_shape[i].tolist() if right_present[i] else None,
         })
     return frames
 

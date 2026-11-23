@@ -30,6 +30,7 @@
               }
             ],
             "styles": [
+              "@fontsource-variable/newsreader/index.css",
               "src/styles.css"
             ]
           },
@@ -97,6 +98,7 @@
               }
             ],
             "styles": [
+              "@fontsource-variable/newsreader/index.css",
               "src/styles.css"
             ]
           }

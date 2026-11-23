@@ -37,13 +37,16 @@ from mouna.models.transformer import PoseTransformer  # noqa: E402
 from mouna.data.handedness import canonicalize_handedness, detect_dominant_hand  # noqa: E402
 from mouna.data.part_normalize import normalize_per_part  # noqa: E402
 from mouna.coach.compare import score_attempt  # noqa: E402
-from mouna.coach.facial import check_nms, from_live_frames  # noqa: E402
+from mouna.coach.facial import BROW_FURROW_NAMES, BROW_FURROW_THRESHOLD, check_nms, from_live_frames  # noqa: E402
 from mouna.coach.skeleton import extract_skeleton_sequence  # noqa: E402
 from mouna.coach.parameters import (  # noqa: E402
     classify_handshape_bucket,
     classify_location_bucket,
     classify_orientation_bucket,
+    chart_series,
     extract_dominant_hand_signal,
+    howto_bucket,
+    plain_bucket,
 )
 
 DEFAULT_CHECKPOINT = _PROJECT_ROOT / "data" / "best_model_v4canon.pth"
@@ -215,10 +218,25 @@ class ModelService:
         signal = extract_dominant_hand_signal(raw_canon)
         if signal is None:
             return None
-        return {
+        buckets = {
             "handshape": classify_handshape_bucket(signal),
             "location": classify_location_bucket(signal),
             "orientation": classify_orientation_bucket(signal),
+        }
+        # Majority vote over all approved clips wins over the single clip
+        # (see parameters.majority_targets); parts where signers split get no
+        # instruction, so prep says "copy the picture" instead of a guess.
+        targets = ref.get("target_buckets") or {}
+        for k, t in targets.items():
+            buckets[k] = t["value"]
+        uncertain = [k for k, t in targets.items() if not t.get("settled", True)]
+        return {
+            **buckets,
+            "uncertain": uncertain,
+            "agreement": {k: {"share": t["agreement"], "n": t["n"]} for k, t in targets.items()},
+            # Plain instructions for the prep checklist -- no raw codes in the UI.
+            "howto": {k: (None if k in uncertain else howto_bucket(k, v)) for k, v in buckets.items()},
+            "plain": {k: (None if k in uncertain else plain_bucket(k, v)) for k, v in buckets.items()},
             "hand_bbox": self._reference_hand_bbox(raw_canon),
         }
 
@@ -294,6 +312,7 @@ class ModelService:
         return {
             "raw": extract_skeleton_sequence(raw, face_frames=face_frames, mirror_face=False),
             "canonical": extract_skeleton_sequence(canon, face_frames=face_frames, mirror_face=will_mirror),
+            "mirrored": bool(will_mirror),
         }
 
     def get_attempt_snapshots(
@@ -316,6 +335,35 @@ class ModelService:
             if frame:
                 snapshots[param] = frame[0]
         return snapshots
+
+    def get_attempt_charts(self, keypoints: list[list[float]], face_frames: list | None, target_word: str) -> dict | None:
+        """You-vs-target series for the results charts: per-finger openness,
+        hand travel over the sign, and (signs with a facial marker) the
+        brow-furrow score over time. Same canonical signals as scoring."""
+        ref = self.references.get(target_word)
+        if ref is None or ref.get("representative_sequence_raw_canon") is None:
+            return None
+        raw = np.array(keypoints, dtype=np.float32)
+        att_signal = extract_dominant_hand_signal(canonicalize_handedness(raw, target="right"))
+        ref_signal = extract_dominant_hand_signal(ref["representative_sequence_raw_canon"])
+        if att_signal is None or ref_signal is None:
+            return None
+        you, target = chart_series(att_signal), chart_series(ref_signal)
+        charts = {
+            "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"],
+            "finger_openness": {"you": you["finger_openness"], "target": target["finger_openness"]},
+            "travel": {"you": you["travel"], "target": target["travel"]},
+            "brow": None,
+        }
+        ref_face = ref.get("representative_face_signal")
+        live_face = from_live_frames(face_frames or [])
+        if ref_face and live_face and ref_face.get("blendshape_matrix") is not None:
+            charts["brow"] = {
+                "you": _brow_series(live_face),
+                "target": _brow_series(ref_face),
+                "threshold": BROW_FURROW_THRESHOLD,
+            }
+        return charts
 
     def check_facial_step(self, face_frames: list, target_word: str, nms_type: str) -> dict:
         """One discrete prep-step check: does the live attempt show the
@@ -341,3 +389,17 @@ class ModelService:
 
 
 model_service = ModelService()
+
+
+def _brow_series(face_signal: dict, n_points: int = 40) -> list[float] | None:
+    """Per-frame brow-furrow score (mean of browDownLeft/Right), resampled."""
+    names = list(face_signal.get("blendshape_names") or [])
+    idxs = [names.index(n) for n in BROW_FURROW_NAMES if n in names]
+    m = np.asarray(face_signal.get("blendshape_matrix"))
+    if not idxs or m.ndim != 2 or len(m) == 0:
+        return None
+    series = m[:, idxs].mean(axis=1)
+    if len(series) == 1:
+        return [round(float(series[0]), 3)] * n_points
+    grid = np.linspace(0, 1, n_points)
+    return [round(float(v), 3) for v in np.interp(grid, np.linspace(0, 1, len(series)), series)]

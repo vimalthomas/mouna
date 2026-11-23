@@ -156,3 +156,78 @@ def location_vector(seq, width: int, height: int) -> np.ndarray | None:
     close = lambda p, q: float(np.min(np.linalg.norm(p - q, axis=1)) / sw)  # noqa: E731
     v = np.r_[rel(centre), rel(tip), rel(wrist), close(tip, nose), close(tip, mouth), close(centre, chest)]
     return v if np.all(np.isfinite(v)) else None
+
+
+# ---------------------------------------------------------------------------
+# Movement as a time-aligned path (dynamic time warping against fluent signers).
+
+PATH_STEPS = 32
+TURN_WEIGHT = 0.3   # finger direction vs position (shoulder widths); tried once, not tuned
+
+
+def movement_path(seq, width: int, height: int, steps: int = PATH_STEPS) -> np.ndarray | None:
+    """The dominant hand centre's path over the signing phase, relative to the
+    nose, in shoulder widths, with its mean position removed (where the hand is
+    belongs to location), plus the finger direction (wrist -> middle knuckle,
+    3D unit vector x TURN_WEIGHT) so twists and turns of the hand count too;
+    resampled to `steps` points: (steps, 5)."""
+    a3 = np.asarray(seq, dtype=np.float64).reshape(len(seq), 75, 3)
+    a = a3[:, :, :2] * np.array([width, height])
+    h = a[:, R]
+    present = np.any(h != 0, axis=(1, 2))
+    body = np.all(a[:, [0, 11, 12]] != 0, axis=(1, 2))
+    core = signing_phase(present) & body
+    if core.sum() < 4:
+        return None
+    h3 = a3[core][:, R] * np.array([width, height, width])
+    a, h = a[core], h[core]
+    sw = float(np.median(np.linalg.norm(a[:, 11] - a[:, 12], axis=1)))
+    if sw <= 1e-6:
+        return None
+    p = (h[:, [0, 5, 9, 13, 17]].mean(1) - a[:, 0]) / sw
+    p = p - p.mean(0)
+    turn = TURN_WEIGHT * _unit(h3[:, 9] - h3[:, 0])
+    t = np.linspace(0, 1, len(p))
+    u = np.linspace(0, 1, steps)
+    out = np.stack([np.interp(u, t, p[:, 0]), np.interp(u, t, p[:, 1])]
+                   + [np.interp(u, t, turn[:, k]) for k in range(3)], axis=1)
+    return out if np.all(np.isfinite(out)) else None
+
+
+def dtw_batch(X: np.ndarray, Y: np.ndarray, band: float = 0.25) -> np.ndarray:
+    """DTW distance for each pair (X[b], Y[b]), both (B, T, d); Sakoe-Chiba band
+    as a share of T; normalised by 2T so it reads as a mean per-step distance."""
+    B, T, _ = X.shape
+    C = np.linalg.norm(X[:, :, None, :] - Y[:, None, :, :], axis=-1)
+    w = max(1, int(round(band * T)))
+    ii, jj = np.indices((T, T))
+    C[:, np.abs(ii - jj) > w] = np.inf
+    D = np.full((B, T + 1, T + 1), np.inf)
+    D[:, 0, 0] = 0.0
+    for i in range(1, T + 1):
+        for j in range(max(1, i - w), min(T, i + w) + 1):
+            D[:, i, j] = C[:, i - 1, j - 1] + np.minimum(np.minimum(D[:, i - 1, j - 1], D[:, i - 1, j]), D[:, i, j - 1])
+    return D[:, T, T] / (2 * T)
+
+
+class PathCloud:
+    """Fluent signers' movement paths for one sign, compared by DTW."""
+
+    def __init__(self, paths: list[np.ndarray], k: int = 3):
+        self.P = np.stack(paths)
+        n = len(paths)
+        self.k = min(k, n - 1)
+        i, j = np.triu_indices(n, 1)
+        d = np.zeros((n, n))
+        d[i, j] = d[j, i] = dtw_batch(self.P[i], self.P[j])
+        np.fill_diagonal(d, np.inf)
+        self.null = np.sort(np.sort(d, axis=1)[:, : self.k].mean(1))
+
+    def distances(self, paths: np.ndarray) -> np.ndarray:
+        """Mean DTW distance of each path (M, T, 2) to its k nearest fluent signers."""
+        M, n = len(paths), len(self.P)
+        d = dtw_batch(np.repeat(paths, n, axis=0), np.tile(self.P, (M, 1, 1))).reshape(M, n)
+        return np.sort(d, axis=1)[:, : self.k].mean(1)
+
+    def ratio(self, paths: np.ndarray) -> np.ndarray:
+        return self.distances(paths) / max(float(np.median(self.null)), 1e-9)

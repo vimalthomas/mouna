@@ -16,7 +16,7 @@ B = ROOT / "data/references/judgement_benchmark"
 split = json.loads((ROOT / "data/references/cp_tolerances.json").read_text())
 TUNE, TEST = set(split["tune_signs"]), set(split["test_signs"])
 out = {}
-for param in ("handshape", "location", "palm"):
+for param in ("handshape", "location", "movement", "palm"):
     f = B / f"vector_{param}_rows.csv.gz"
     if not f.exists():
         continue

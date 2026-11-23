@@ -45,5 +45,28 @@
       "n_test_differs": 1713
     }
   },
+  "movement": {
+    "ratio": {
+      "test_false_alarm": 0.054,
+      "test_catches": 0.48,
+      "reliable": false,
+      "n_test_correct": 92,
+      "n_test_differs": 1347
+    },
+    "old": {
+      "test_false_alarm": 0.196,
+      "test_catches": 0.39,
+      "reliable": false,
+      "n_test_correct": 92,
+      "n_test_differs": 1347
+    },
+    "combined_ratio": {
+      "test_false_alarm": 0.076,
+      "test_catches": 0.543,
+      "reliable": true,
+      "n_test_correct": 92,
+      "n_test_differs": 1347
+    }
+  },
   "palm": {}
 }

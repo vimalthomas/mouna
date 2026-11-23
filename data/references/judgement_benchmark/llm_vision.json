@@ -1,0 +1,95 @@
+{
+  "judged": 74,
+  "handshape": {
+    "unsure_rate": 0.0,
+    "llm_false_alarm_on_correct": {
+      "rate": 0.533,
+      "n": 15
+    },
+    "ours_false_alarm_on_correct": {
+      "rate": 0.357,
+      "n": 14
+    },
+    "llm_catches": {
+      "rate": 0.965,
+      "n": 57
+    },
+    "ours_catches": {
+      "rate": 0.692,
+      "n": 39
+    },
+    "llm_false_alarm_other_signs": {
+      "rate": 0.0,
+      "n": 2
+    },
+    "ours_false_alarm_other_signs": {
+      "rate": 0.5,
+      "n": 2
+    }
+  },
+  "location": {
+    "unsure_rate": 0.0,
+    "llm_false_alarm_on_correct": {
+      "rate": 0.267,
+      "n": 15
+    },
+    "ours_false_alarm_on_correct": {
+      "rate": 0.067,
+      "n": 15
+    },
+    "llm_catches": {
+      "rate": 0.935,
+      "n": 46
+    },
+    "ours_catches": {
+      "rate": 0.111,
+      "n": 45
+    },
+    "llm_false_alarm_other_signs": {
+      "rate": 0.846,
+      "n": 13
+    },
+    "ours_false_alarm_other_signs": {
+      "rate": 0.077,
+      "n": 13
+    }
+  },
+  "hands": {
+    "unsure_rate": 0.014,
+    "llm_false_alarm_on_correct": {
+      "rate": 0.133,
+      "n": 15
+    },
+    "ours_false_alarm_on_correct": {
+      "rate": 0.467,
+      "n": 15
+    },
+    "llm_catches": {
+      "rate": 0.917,
+      "n": 36
+    },
+    "ours_catches": {
+      "rate": 0.722,
+      "n": 36
+    },
+    "llm_false_alarm_other_signs": {
+      "rate": 0.364,
+      "n": 22
+    },
+    "ours_false_alarm_other_signs": {
+      "rate": 0.261,
+      "n": 23
+    }
+  },
+  "orientation": {
+    "unsure_rate": 0.0,
+    "llm_false_alarm_on_correct": {
+      "rate": 0.4,
+      "n": 15
+    },
+    "ours_false_alarm_on_correct": {
+      "rate": 0.385,
+      "n": 13
+    }
+  }
+}

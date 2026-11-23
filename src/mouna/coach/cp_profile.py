@@ -253,9 +253,41 @@ def explain_confusion(att: dict, prof_target: dict, prof_other: dict, sign: str,
         if do < dt * 0.6:
             part = "movement" if k in ("dir_x", "dir_y", "strokes", "travel") else "location" if k.startswith("loc") else "handshape"
             out.append({"part": part, "feature": k, "strength": round(sep * (dt - do), 3),
-                        "say": f"Your hand {yours_words} like {O}; {S} {_contrast_words(k, rt, ro)}."})
+                        "say": _confusion_sentence(k, x, rt, ro, S, O)})
     out.sort(key=lambda f: -f["strength"])
     return out[:max_points]
+
+
+def _confusion_sentence(k: str, x: float, rt: dict, ro: dict, S: str, O: str) -> str:
+    """'Your <part> was <how yours differs>, like OTHER; in TARGET <what to do>.'"""
+    more = x > rt["p50"]
+    if k.startswith("finger_") or k == "thumb_out":
+        name = "thumb" if k == "thumb_out" else FINGER_WORDS[k.split("_", 1)[1]]
+        if k == "thumb_out":
+            return (f"Your thumb stuck out more, like {O}; in {S} keep it closer to the hand." if more
+                    else f"Your thumb was tucked in, like {O}; in {S} let it stick out more.")
+        return (f"Your {name} was straighter, like {O}; in {S} keep it more bent." if more
+                else f"Your {name} was more bent, like {O}; in {S} keep it straighter.")
+    if k == "dir_x":
+        return (f"Your hand moved more side to side, like {O}; in {S} it moves less sideways." if more
+                else f"Your hand moved less side to side, like {O}; in {S} it slides more sideways.")
+    if k == "dir_y":
+        return (f"Your hand moved more up and down, like {O}; in {S} it moves less up and down." if more
+                else f"Your hand moved less up and down, like {O}; in {S} it moves more up and down.")
+    if k == "strokes":
+        return (f"You repeated the movement more, like {O}; in {S} do it fewer times." if more
+                else f"You did the movement fewer times, like {O}; in {S} repeat it.")
+    if k == "travel":
+        return (f"Your movement was bigger, like {O}; in {S} keep it smaller." if more
+                else f"Your movement was smaller, like {O}; in {S} make it bigger.")
+    if k == "loc_y":   # image y grows downward
+        return (f"Your hand was lower, like {O}; in {S} sign it higher." if more
+                else f"Your hand was higher, like {O}; in {S} sign it lower.")
+    if k == "loc_x":
+        side = abs(x) > abs(rt["p50"])
+        return (f"Your hand was further to the side, like {O}; in {S} keep it closer to the middle." if side
+                else f"Your hand was closer to the middle, like {O}; in {S} move it further out.")
+    return f"That part looked like {O}."
 
 
 def _contrast_words(k: str, rt: dict, ro: dict) -> str:

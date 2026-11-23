@@ -1,0 +1,71 @@
+{
+ "max_false_alarm": 0.1,
+ "min_auc": 0.75,
+ "tune_signs": [
+  "apple",
+  "basketball",
+  "bird",
+  "birthday",
+  "book",
+  "deaf",
+  "drink",
+  "finish",
+  "hearing",
+  "man",
+  "many",
+  "mother",
+  "need",
+  "paper",
+  "tell",
+  "time",
+  "walk",
+  "who",
+  "year"
+ ],
+ "parameters": {
+  "handshape": {
+   "cutoff": 6.0,
+   "fluent_cutoff": 2.756,
+   "test_false_alarm": 0.019,
+   "test_correct_fluent": 0.931,
+   "n_correct": 160,
+   "test_auc": 0.801,
+   "test_catches": 0.278,
+   "n_differs": 3273,
+   "reliable": true
+  },
+  "location": {
+   "cutoff": 3.0,
+   "fluent_cutoff": 1.738,
+   "test_false_alarm": 0.062,
+   "test_correct_fluent": 0.875,
+   "n_correct": 160,
+   "test_auc": 0.733,
+   "test_catches": 0.215,
+   "n_differs": 2822,
+   "reliable": false
+  },
+  "orientation": {
+   "cutoff": 8.0,
+   "fluent_cutoff": 2.709,
+   "test_false_alarm": 0.025,
+   "test_correct_fluent": 0.938,
+   "n_correct": 160,
+   "reliable": false
+  },
+  "movement": {
+   "cutoff": 6.0,
+   "fluent_cutoff": 2.657,
+   "test_false_alarm": 0.037,
+   "test_correct_fluent": 0.869,
+   "n_correct": 160,
+   "test_auc": 0.63,
+   "test_catches": 0.122,
+   "n_differs": 3158,
+   "reliable": false
+  },
+  "nonmanual": {
+   "measured": false
+  }
+ }
+}

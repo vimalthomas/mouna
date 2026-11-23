@@ -1,0 +1,18 @@
+{
+  "param": "location",
+  "correct": 163,
+  "differs": 3176,
+  "minimal_pairs": 26,
+  "auc_all": {
+    "vector": 0.812,
+    "old": 0.762,
+    "combined": 0.819
+  },
+  "auc_minimal_pairs": {
+    "vector": 0.721,
+    "old": 0.765,
+    "combined": 0.769
+  },
+  "correct_typical": 0.798,
+  "own_weight": 0.5
+}

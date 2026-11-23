@@ -76,12 +76,14 @@ def main() -> None:
             continue
         hd = val(a, "Handshape.2.0") != val(b, "Handshape.2.0") if val(a, "Handshape.2.0") and val(b, "Handshape.2.0") else None
         others_same = all(val(a, c) == val(b, c) for c in ("MinorLocation.2.0", "Movement.2.0", "SignType.2.0") if val(a, c) and val(b, c))
-        out.append({"same": bool(r.same), "hs_differs": hd, "minimal": bool(hd and others_same),
+        out.append({"target": r.target, "same": bool(r.same), "hs_differs": hd, "minimal": bool(hd and others_same),
                     "vector": clouds[r.target].unusualness(v),
+                    "ratio": clouds[r.target].distance(v) / max(float(np.median(clouds[r.target].null)), 1e-9),
                     "old": score_parameters(f, prof[r.target], cal={})["handshape"]["deviation"]})
     d = pd.DataFrame(out)
     # both methods together: average of each one's rank (they measure different things)
     d["combined"] = (d.vector.rank(pct=True) + d.old.rank(pct=True)) / 2
+    d["combined_ratio"] = (d.ratio.rank(pct=True) + d.old.rank(pct=True)) / 2
 
     def auc(mask_diff, col):
         pos, neg = d.loc[mask_diff, col].dropna(), d.loc[d.same, col].dropna()
@@ -89,11 +91,17 @@ def main() -> None:
             return None
         y = np.r_[np.zeros(len(neg)), np.ones(len(pos))]
         return round(float(roc_auc_score(y, np.r_[neg, pos])), 3)
+    def catches_at_10(mask, col):
+        cut = d.loc[d.same, col].dropna().quantile(0.9)
+        x = d.loc[mask, col].dropna()
+        return round(float((x > cut).mean()), 3) if len(x) else None
     res = {"correct": int(d.same.sum()), "handshape_differs": int(d.hs_differs.eq(True).sum()), "minimal_pairs": int(d.minimal.sum()),
-           "auc_all": {"vector": auc(d.hs_differs.eq(True), "vector"), "old": auc(d.hs_differs.eq(True), "old"), "combined": auc(d.hs_differs.eq(True), "combined")},
-           "auc_minimal_pairs": {"vector": auc(d.minimal, "vector"), "old": auc(d.minimal, "old"), "combined": auc(d.minimal, "combined")},
+           "auc_all": {c: auc(d.hs_differs.eq(True), c) for c in ("vector", "ratio", "old", "combined", "combined_ratio")},
+           "auc_minimal_pairs": {c: auc(d.minimal, c) for c in ("vector", "ratio", "old", "combined", "combined_ratio")},
+           "catches_at_10pct_false_alarm": {c: catches_at_10(d.hs_differs.eq(True), c) for c in ("vector", "ratio", "old", "combined", "combined_ratio")},
            "correct_typical": round(float((d.loc[d.same, "vector"] <= 0.9).mean()), 3)}
     res["settings"] = {"depth": USE_DEPTH, "own_weight": OWN}
+    d.rename(columns={"hs_differs": "differs"}).to_csv(ROOT / "data/references/judgement_benchmark/vector_handshape_rows.csv.gz", index=False)
     (ROOT / f"data/references/judgement_benchmark/vector_handshape{'' if USE_DEPTH and not OWN else '_d%d_w%s' % (USE_DEPTH, OWN)}.json").write_text(json.dumps(res, indent=2))
     print(json.dumps(res, indent=2))
 

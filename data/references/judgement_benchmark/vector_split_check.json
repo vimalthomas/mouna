@@ -1,0 +1,49 @@
+{
+  "handshape": {
+    "ratio": {
+      "test_false_alarm": 0.141,
+      "test_catches": 0.626,
+      "reliable": false,
+      "n_test_correct": 92,
+      "n_test_differs": 2021
+    },
+    "old": {
+      "test_false_alarm": 0.13,
+      "test_catches": 0.673,
+      "reliable": false,
+      "n_test_correct": 92,
+      "n_test_differs": 2021
+    },
+    "combined_ratio": {
+      "test_false_alarm": 0.163,
+      "test_catches": 0.736,
+      "reliable": false,
+      "n_test_correct": 92,
+      "n_test_differs": 2021
+    }
+  },
+  "location": {
+    "ratio": {
+      "test_false_alarm": 0.033,
+      "test_catches": 0.407,
+      "reliable": false,
+      "n_test_correct": 92,
+      "n_test_differs": 1713
+    },
+    "old": {
+      "test_false_alarm": 0.065,
+      "test_catches": 0.342,
+      "reliable": false,
+      "n_test_correct": 92,
+      "n_test_differs": 1713
+    },
+    "combined_ratio": {
+      "test_false_alarm": 0.043,
+      "test_catches": 0.437,
+      "reliable": false,
+      "n_test_correct": 92,
+      "n_test_differs": 1713
+    }
+  },
+  "palm": {}
+}

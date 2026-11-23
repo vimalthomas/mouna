@@ -1,0 +1,29 @@
+{
+  "param": "location",
+  "correct": 163,
+  "differs": 3176,
+  "minimal_pairs": 26,
+  "auc_all": {
+    "vector": 0.809,
+    "ratio": 0.846,
+    "old": 0.762,
+    "combined": 0.817,
+    "combined_ratio": 0.83
+  },
+  "auc_minimal_pairs": {
+    "vector": 0.719,
+    "ratio": 0.723,
+    "old": 0.765,
+    "combined": 0.771,
+    "combined_ratio": 0.77
+  },
+  "catches_at_10pct_false_alarm": {
+    "vector": 0.0,
+    "ratio": 0.472,
+    "old": 0.401,
+    "combined": 0.416,
+    "combined_ratio": 0.476
+  },
+  "correct_typical": 0.798,
+  "own_weight": 0.0
+}

@@ -106,3 +106,53 @@ class Cloud:
             if dev > 0:
                 out.append({"dim": n, "yours": round(float(v[i]), 1), "fluent": [round(float(lo), 1), round(float(hi), 1)], "outside": round(float(dev), 2)})
         return sorted(out, key=lambda e: -e["outside"])[:top]
+
+
+# ---------------------------------------------------------------------------
+# Palm orientation and location as vectors (same cloud scoring as handshape).
+
+PALM_NAMES = ["palm faces sideways", "palm faces up/down", "palm faces you/away",
+              "fingers point sideways", "fingers point up/down", "fingers point you/away"]
+LOC_NAMES = ["hand side to side", "hand height", "fingertip side to side", "fingertip height",
+             "wrist side to side", "wrist height", "fingertip closest to nose", "fingertip closest to mouth",
+             "hand closest to chest"]
+
+
+def _unit(v: np.ndarray) -> np.ndarray:
+    return v / np.maximum(np.linalg.norm(v, axis=-1, keepdims=True), 1e-9)
+
+
+def palm_vector(seq, width: int, height: int) -> np.ndarray | None:
+    """Palm normal and finger direction (unit vectors, 3D, true proportions), median over the signing phase."""
+    a = np.asarray(seq, dtype=np.float32).reshape(len(seq), 75, 3)
+    h = a[:, R].astype(np.float64)
+    present = np.any(h[:, :, :2] != 0, axis=(1, 2))
+    core = signing_phase(present)
+    if core.sum() < 3:
+        return None
+    h = h[core] * np.array([width, height, width])
+    normal = _unit(np.cross(h[:, 5] - h[:, 0], h[:, 17] - h[:, 0]))
+    point = _unit(h[:, 9] - h[:, 0])
+    v = np.r_[_unit(np.median(normal, axis=0)), _unit(np.median(point, axis=0))]
+    return v if np.all(np.isfinite(v)) else None
+
+
+def location_vector(seq, width: int, height: int) -> np.ndarray | None:
+    """Where the dominant hand is, relative to the face and body, in shoulder widths (true proportions)."""
+    a = np.asarray(seq, dtype=np.float64).reshape(len(seq), 75, 3)[:, :, :2] * np.array([width, height])
+    h = a[:, R]
+    present = np.any(h != 0, axis=(1, 2))
+    body = np.all(a[:, [0, 9, 10, 11, 12]] != 0, axis=(1, 2))
+    core = signing_phase(present) & body
+    if core.sum() < 3:
+        return None
+    a, h = a[core], h[core]
+    sw = float(np.median(np.linalg.norm(a[:, 11] - a[:, 12], axis=1)))
+    if sw <= 1e-6:
+        return None
+    nose, mouth, chest = a[:, 0], a[:, [9, 10]].mean(1), a[:, [11, 12]].mean(1)
+    centre, tip, wrist = h[:, [0, 5, 9, 13, 17]].mean(1), h[:, 8], h[:, 0]
+    rel = lambda p: np.median((p - nose) / sw, axis=0)  # noqa: E731
+    close = lambda p, q: float(np.min(np.linalg.norm(p - q, axis=1)) / sw)  # noqa: E731
+    v = np.r_[rel(centre), rel(tip), rel(wrist), close(tip, nose), close(tip, mouth), close(centre, chest)]
+    return v if np.all(np.isfinite(v)) else None

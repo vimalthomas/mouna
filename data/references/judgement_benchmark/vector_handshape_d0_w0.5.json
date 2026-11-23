@@ -4,11 +4,13 @@
   "minimal_pairs": 100,
   "auc_all": {
     "vector": 0.789,
-    "old": 0.804
+    "old": 0.804,
+    "combined": 0.84
   },
   "auc_minimal_pairs": {
     "vector": 0.771,
-    "old": 0.747
+    "old": 0.747,
+    "combined": 0.804
   },
   "correct_typical": 0.724,
   "settings": {

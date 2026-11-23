@@ -1,0 +1,358 @@
+{
+  "accident": {
+    "n_hands": 2,
+    "similarity": 0.977,
+    "targets": {
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "africa": {
+    "n_hands": 1,
+    "similarity": 0.903,
+    "targets": {
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  },
+  "all": {
+    "n_hands": 2,
+    "similarity": 0.956,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "apple": {
+    "n_hands": 1,
+    "similarity": 0.931,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region"
+    }
+  },
+  "basketball": {
+    "n_hands": 2,
+    "similarity": 0.937,
+    "targets": {
+      "location": "chest_region"
+    }
+  },
+  "bed": {
+    "n_hands": 1,
+    "similarity": 0.945,
+    "targets": {
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "bird": {
+    "n_hands": 1,
+    "similarity": 0.964,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  },
+  "birthday": {
+    "n_hands": 1,
+    "similarity": 0.887,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "black": {
+    "n_hands": 1,
+    "similarity": 0.904,
+    "targets": {
+      "handshape": "closed",
+      "location": "face_region"
+    }
+  },
+  "book": {
+    "n_hands": 2,
+    "similarity": 0.923,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "can": {
+    "n_hands": 2,
+    "similarity": 0.942,
+    "targets": {
+      "handshape": "closed"
+    }
+  },
+  "chair": {
+    "n_hands": 2,
+    "similarity": 0.968,
+    "targets": {
+      "handshape": "half",
+      "location": "chest_region",
+      "orientation": "+y"
+    }
+  },
+  "clothes": {
+    "n_hands": 2,
+    "similarity": 0.95,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "color": {
+    "n_hands": 1,
+    "similarity": 0.934,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "cook": {
+    "n_hands": 1,
+    "similarity": 0.941,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region"
+    }
+  },
+  "dark": {
+    "n_hands": 2,
+    "similarity": 0.948,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "deaf": {
+    "n_hands": 1,
+    "similarity": 0.894,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region"
+    }
+  },
+  "drink": {
+    "n_hands": 1,
+    "similarity": 0.86,
+    "targets": {
+      "handshape": "half",
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "eat": {
+    "n_hands": 1,
+    "similarity": 0.931,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "finish": {
+    "n_hands": 2,
+    "similarity": 0.952,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "go": {
+    "n_hands": 2,
+    "similarity": 0.964,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  },
+  "hearing": {
+    "n_hands": 1,
+    "similarity": 0.982,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "help": {
+    "n_hands": 2,
+    "similarity": 0.865,
+    "targets": {
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "hot": {
+    "n_hands": 1,
+    "similarity": 0.92,
+    "targets": {
+      "handshape": "half",
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "later": {
+    "n_hands": 1,
+    "similarity": 0.911,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  },
+  "man": {
+    "n_hands": 1,
+    "similarity": 0.945,
+    "targets": {
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "many": {
+    "n_hands": 2,
+    "similarity": 0.908,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "mother": {
+    "n_hands": 1,
+    "similarity": 0.86,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "need": {
+    "n_hands": 1,
+    "similarity": 0.87,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region"
+    }
+  },
+  "no": {
+    "n_hands": 1,
+    "similarity": 0.932,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  },
+  "now": {
+    "n_hands": 2,
+    "similarity": 0.983,
+    "targets": {}
+  },
+  "orange": {
+    "n_hands": 1,
+    "similarity": 0.966,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "paper": {
+    "n_hands": 2,
+    "similarity": 0.915,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  },
+  "same": {
+    "n_hands": 1,
+    "similarity": 0.874,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  },
+  "school": {
+    "n_hands": 1,
+    "similarity": 0.858,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region",
+      "orientation": "+y"
+    }
+  },
+  "tell": {
+    "n_hands": 1,
+    "similarity": 0.947,
+    "targets": {
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "time": {
+    "n_hands": 2,
+    "similarity": 0.892,
+    "targets": {
+      "location": "chest_region"
+    }
+  },
+  "walk": {
+    "n_hands": 2,
+    "similarity": 0.937,
+    "targets": {
+      "handshape": "open",
+      "location": "chest_region"
+    }
+  },
+  "who": {
+    "n_hands": 1,
+    "similarity": 0.934,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "+x"
+    }
+  },
+  "work": {
+    "n_hands": 2,
+    "similarity": 0.981,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  },
+  "year": {
+    "n_hands": 2,
+    "similarity": 0.975,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "+z"
+    }
+  },
+  "yes": {
+    "n_hands": 1,
+    "similarity": 0.914,
+    "targets": {
+      "handshape": "closed",
+      "location": "chest_region",
+      "orientation": "-z"
+    }
+  }
+}

@@ -121,7 +121,11 @@ def _hand_tracks(arr: np.ndarray) -> list[list[tuple[int, np.ndarray]]]:
                 continue
             d = [np.linalg.norm(pt - t[-1][1]) for t in tracks]
             i = int(np.argmin(d))
-            if d[i] > 0.15 and len(tracks) < 2:
+            # A lone detection far from the only track starts a second hand
+            # only for a very large jump: fast one-handed signs (MAN: forehead
+            # -> chest in ~1s) moved >0.15 between frames and got split into
+            # two short tracks, too short to draw.
+            if len(tracks) < 2 and d[i] > (0.15 if len(found) == 2 else 0.35):
                 tracks.append([(f, pt)])
             else:
                 tracks[i].append((f, pt))
@@ -175,6 +179,27 @@ def hand_paths(kps: list, times: list, n_points: int = 40) -> list[dict]:
     return out
 
 
+def count_hands(kps: list) -> int:
+    """1 or 2: how many hands the signer uses in this video. Counts frames
+    where BOTH hand slots are detected, before any path merging (signs like
+    bed press the hands together, which the path tracker merges as one).
+    Two hands if both are seen in at least 30% of the frames with a hand."""
+    arr = np.asarray(kps, dtype=np.float32).reshape(len(kps), 75, 3)
+    l = np.any(arr[:, 33:54] != 0, axis=(1, 2))
+    r = np.any(arr[:, 54:75] != 0, axis=(1, 2))
+    any_hand = (l | r).sum()
+    return 2 if any_hand and (l & r).sum() / any_hand >= 0.3 else 1
+
+
+def both_hands_share(kps: list) -> float:
+    """Share of frames with a hand where BOTH hands are detected."""
+    arr = np.asarray(kps, dtype=np.float32).reshape(len(kps), 75, 3)
+    l = np.any(arr[:, 33:54] != 0, axis=(1, 2))
+    r = np.any(arr[:, 54:75] != 0, axis=(1, 2))
+    any_hand = (l | r).sum()
+    return round(float((l & r).sum() / any_hand), 3) if any_hand else 0.0
+
+
 def rank(score: dict) -> tuple:
     params = score.get("parameters") or {}
     # A part signers split on ("uncertain", match None) can't contradict the
@@ -202,7 +227,9 @@ def paths_only() -> None:
         kps, times = keypoints_for(entry)
         c["hand_bbox"], c["hands_up_seconds"] = hand_info(kps, times)
         c["hand_paths"] = hand_paths(kps, times)
-        print(f"{word:12s} {len(c['hand_paths'])} hand path(s)", flush=True)
+        c["n_hands"] = count_hands(kps)
+        c["both_hands_share"] = both_hands_share(kps)
+        print(f"{word:12s} {len(c['hand_paths'])} hand path(s), {c['n_hands']} hand(s)", flush=True)
     OUTPUT.write_text(json.dumps(data, indent=2))
     print(f"Saved -> {OUTPUT}")
 
@@ -248,6 +275,8 @@ def main():
             "hand_bbox": bbox,
             "hands_up_seconds": hands_up,
             "hand_paths": hand_paths(kps, times),
+            "n_hands": count_hands(kps),
+            "both_hands_share": both_hands_share(kps),
             "candidates_checked": len(entries),
         }
         print(f"{word:12s} {entry['video_id']:>6s} verdict={score['overall_verdict']:10s} sim={score['embedding_similarity']:.2f} "

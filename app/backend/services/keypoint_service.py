@@ -10,6 +10,17 @@ from config import settings
 
 logger = logging.getLogger(__name__)
 
+# Two detected hands whose 21 points are on average closer than this
+# (normalized image units) are one hand detected twice.
+DUPLICATE_HAND_DIST = 0.015
+
+
+def is_duplicate_hand(a: np.ndarray, b: np.ndarray) -> bool:
+    """True when two detected hands (21x2 image points each) are the same
+    hand reported twice. Real pressed-together hands are mirror images and
+    measured >= 0.029 apart on bed/cook/school (n=401 frames)."""
+    return float(np.mean(np.linalg.norm(a - b, axis=1))) < DUPLICATE_HAND_DIST
+
 # /app/mediapipe_models is the Docker-container layout (image root is /app);
 # settings.mediapipe_model_dir overrides this for local dev, where / is
 # read-only and there's no such directory.
@@ -112,9 +123,21 @@ class KeypointService:
         right_hand = [0.0] * 63
 
         if hand_result.hand_landmarks and hand_result.handedness:
-            for hand_lm, handedness in zip(
-                hand_result.hand_landmarks, hand_result.handedness
-            ):
+            detections = list(zip(hand_result.hand_landmarks, hand_result.handedness))
+            # One real hand is sometimes reported twice (once per label) at
+            # nearly the same spot: in the 3D view that showed as two hands
+            # inside each other, and it can fake a "two hands" count. Keep
+            # the more confident one when the two palms almost coincide.
+            if len(detections) == 2:
+                # Same hand twice = all 21 points nearly identical. Two real
+                # hands pressed together (bed, cook) are mirror images --
+                # thumbs on opposite sides -- so they stay well above this.
+                (a_lm, _), (b_lm, _) = detections
+                a = np.array([[p.x, p.y] for p in a_lm])
+                b = np.array([[p.x, p.y] for p in b_lm])
+                if is_duplicate_hand(a, b):
+                    detections = [max(detections, key=lambda d: d[1][0].score)]
+            for hand_lm, handedness in detections:
                 label = handedness[0].category_name
                 coords = []
                 for lm in hand_lm:

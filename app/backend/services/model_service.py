@@ -285,10 +285,16 @@ class ModelService:
         ref = self.references.get(target_word)
         if ref is None:
             return None
-        raw_canon = ref.get("representative_sequence_raw_canon")
+        # Display (3D view) prefers the best-tracked approved clip; grading
+        # keeps the most typical one (scripts/choose_display_clips.py).
+        raw_canon = ref.get("display_sequence_raw_canon")
+        if raw_canon is None:
+            raw_canon = ref.get("representative_sequence_raw_canon")
         if raw_canon is None:
             return None
         face_signal = ref.get("representative_face_signal") or {}
+        if ref.get("display_sequence_raw_canon") is not None:
+            face_signal = {}  # face frames belong to the representative clip, not this one
         face_frames = face_signal.get("landmarks_xy_sequence")
         return extract_skeleton_sequence(raw_canon, face_frames=face_frames, mirror_face=False)
 

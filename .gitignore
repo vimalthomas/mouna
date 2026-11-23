@@ -153,3 +153,4 @@ wandb/
 .cache/
 *.cache
 .ruff_cache/
+data/references/backups/

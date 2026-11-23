@@ -1,0 +1,95 @@
+{
+  "same": {
+    "silhouette": 0.581,
+    "differs_in": [
+      "hands"
+    ],
+    "clusters": [
+      {
+        "size": 4,
+        "video_ids": [
+          "msasl2_same_train_70_921",
+          "msasl2_same_train_70_922",
+          "285027381058337-SAME.mp4",
+          "02439415548797319-SAME.mp4"
+        ],
+        "representative_video_id": "msasl2_same_train_70_922",
+        "n_hands": 1,
+        "targets": {
+          "handshape": "closed",
+          "orientation": "-z"
+        }
+      },
+      {
+        "size": 7,
+        "video_ids": [
+          "7965200255372531-SAME 2.mp4",
+          "5784540598927743-SAME 2.mp4",
+          "8607608244043903-SAME 2.mp4",
+          "6457559546393306-SAME 2.mp4",
+          "46307633640967283-SAME 2.mp4",
+          "7874979779434099-seedSAME 2.mp4",
+          "5044773538381033-SAME 2.mp4"
+        ],
+        "representative_video_id": "5784540598927743-SAME 2.mp4",
+        "n_hands": 2,
+        "targets": {
+          "handshape": "closed"
+        }
+      }
+    ]
+  },
+  "short": {
+    "silhouette": 0.436,
+    "differs_in": [
+      "hands"
+    ],
+    "clusters": [
+      {
+        "size": 9,
+        "video_ids": [
+          "51206",
+          "51223",
+          "51224",
+          "51226",
+          "msasl2_short_train_498_745",
+          "msasl2_short_train_498_746",
+          "msasl2_short_train_498_1396",
+          "msasl2_short_train_498_1397",
+          "msasl2_short_train_498_1759"
+        ],
+        "representative_video_id": "51224",
+        "n_hands": 1,
+        "targets": {
+          "handshape": "half"
+        }
+      },
+      {
+        "size": 4,
+        "video_ids": [
+          "51225",
+          "51220",
+          "msasl2_short_train_498_495",
+          "msasl2_short_train_498_859"
+        ],
+        "representative_video_id": "msasl2_short_train_498_495",
+        "n_hands": 2,
+        "targets": {}
+      },
+      {
+        "size": 4,
+        "video_ids": [
+          "51221",
+          "51227",
+          "msasl2_short_train_498_1288",
+          "msasl2_short_train_498_2476"
+        ],
+        "representative_video_id": "msasl2_short_train_498_1288",
+        "n_hands": 1,
+        "targets": {
+          "orientation": "-z"
+        }
+      }
+    ]
+  }
+}

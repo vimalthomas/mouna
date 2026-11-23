@@ -280,9 +280,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 11,
     "n_hands": 2,
-    "both_hands_share": 0.812
+    "both_hands_share": 0.812,
+    "candidates_checked": 11
   },
   "africa": {
     "video_id": "01388",
@@ -435,9 +435,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 7
   },
   "all": {
     "video_id": "01987",
@@ -720,9 +720,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 6,
     "n_hands": 2,
-    "both_hands_share": 0.5
+    "both_hands_share": 0.5,
+    "candidates_checked": 6
   },
   "apple": {
     "video_id": "02999",
@@ -875,9 +875,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 7
   },
   "basketball": {
     "video_id": "05231",
@@ -1160,9 +1160,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.9
+    "both_hands_share": 0.9,
+    "candidates_checked": 8
   },
   "bed": {
     "video_id": "05637",
@@ -1315,9 +1315,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 9,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 9
   },
   "before": {
     "video_id": "05733",
@@ -1600,9 +1600,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 12,
     "n_hands": 2,
-    "both_hands_share": 0.913
+    "both_hands_share": 0.913,
+    "candidates_checked": 12
   },
   "bird": {
     "video_id": "06331",
@@ -1755,9 +1755,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 7
   },
   "birthday": {
     "video_id": "06359",
@@ -1910,9 +1910,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 4,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 4
   },
   "black": {
     "video_id": "06476",
@@ -2065,9 +2065,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 7
   },
   "book": {
     "video_id": "07069",
@@ -2220,9 +2220,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 4,
     "n_hands": 2,
-    "both_hands_share": 0.5
+    "both_hands_share": 0.5,
+    "candidates_checked": 4
   },
   "can": {
     "video_id": "08938",
@@ -2505,9 +2505,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 6,
     "n_hands": 2,
-    "both_hands_share": 0.846
+    "both_hands_share": 0.846,
+    "candidates_checked": 6
   },
   "chair": {
     "video_id": "09851",
@@ -2790,9 +2790,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 5,
     "n_hands": 2,
-    "both_hands_share": 0.882
+    "both_hands_share": 0.882,
+    "candidates_checked": 5
   },
   "clothes": {
     "video_id": "11309",
@@ -3075,9 +3075,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 4,
     "n_hands": 2,
-    "both_hands_share": 0.9
+    "both_hands_share": 0.9,
+    "candidates_checked": 4
   },
   "color": {
     "video_id": "11770",
@@ -3230,9 +3230,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 6,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 6
   },
   "cook": {
     "video_id": "13158",
@@ -3385,9 +3385,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 6,
     "n_hands": 1,
-    "both_hands_share": 0.062
+    "both_hands_share": 0.062,
+    "candidates_checked": 6
   },
   "dark": {
     "video_id": "14675",
@@ -3670,9 +3670,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.733
+    "both_hands_share": 0.733,
+    "candidates_checked": 8
   },
   "deaf": {
     "video_id": "14893",
@@ -3825,9 +3825,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 9,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 9
   },
   "decide": {
     "video_id": "15032",
@@ -3980,9 +3980,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 6,
     "n_hands": 1,
-    "both_hands_share": 0.154
+    "both_hands_share": 0.154,
+    "candidates_checked": 6
   },
   "dog": {
     "video_id": "17083",
@@ -4135,9 +4135,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 8
   },
   "drink": {
     "video_id": "17713",
@@ -4290,9 +4290,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 10,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 10
   },
   "eat": {
     "video_id": "18323",
@@ -4445,9 +4445,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 4,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 4
   },
   "finish": {
     "video_id": "21941",
@@ -4730,9 +4730,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.867
+    "both_hands_share": 0.867,
+    "candidates_checked": 8
   },
   "full": {
     "video_id": "23771",
@@ -4885,9 +4885,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 8
   },
   "give": {
     "video_id": "24641",
@@ -5170,9 +5170,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.923
+    "both_hands_share": 0.923,
+    "candidates_checked": 8
   },
   "go": {
     "video_id": "24943",
@@ -5455,9 +5455,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 12,
     "n_hands": 2,
-    "both_hands_share": 0.917
+    "both_hands_share": 0.917,
+    "candidates_checked": 12
   },
   "hearing": {
     "video_id": "26971",
@@ -5610,9 +5610,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 7
   },
   "help": {
     "video_id": "27209",
@@ -5765,9 +5765,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 10,
     "n_hands": 2,
-    "both_hands_share": 0.75
+    "both_hands_share": 0.75,
+    "candidates_checked": 10
   },
   "hot": {
     "video_id": "28116",
@@ -5920,9 +5920,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 8
   },
   "how": {
     "video_id": "69370",
@@ -6205,9 +6205,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.909
+    "both_hands_share": 0.909,
+    "candidates_checked": 8
   },
   "later": {
     "video_id": "32321",
@@ -6360,9 +6360,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 8
   },
   "like": {
     "video_id": "33269",
@@ -6515,9 +6515,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 8
   },
   "man": {
     "video_id": "34737",
@@ -6670,9 +6670,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 7
   },
   "many": {
     "video_id": "34826",
@@ -6955,9 +6955,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.9
+    "both_hands_share": 0.9,
+    "candidates_checked": 8
   },
   "mother": {
     "video_id": "36930",
@@ -7110,9 +7110,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 8
   },
   "need": {
     "video_id": "37881",
@@ -7265,9 +7265,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 5,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 5
   },
   "no": {
     "video_id": "38534",
@@ -7420,9 +7420,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 9,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 9
   },
   "now": {
     "video_id": "38995",
@@ -7705,9 +7705,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.941
+    "both_hands_share": 0.941,
+    "candidates_checked": 8
   },
   "orange": {
     "video_id": "40118",
@@ -7860,9 +7860,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 6,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 6
   },
   "paper": {
     "video_id": "41025",
@@ -8145,9 +8145,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 2,
-    "both_hands_share": 0.6
+    "both_hands_share": 0.6,
+    "candidates_checked": 7
   },
   "play": {
     "video_id": "43174",
@@ -8430,9 +8430,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 1.0
+    "both_hands_share": 1.0,
+    "candidates_checked": 8
   },
   "same": {
     "video_id": "49178",
@@ -8585,9 +8585,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 8
   },
   "school": {
     "video_id": "49597",
@@ -8870,9 +8870,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 7
   },
   "short": {
     "video_id": "51226",
@@ -9025,9 +9025,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 10,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 10
   },
   "table": {
     "video_id": "56563",
@@ -9310,9 +9310,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 4,
     "n_hands": 2,
-    "both_hands_share": 1.0
+    "both_hands_share": 1.0,
+    "candidates_checked": 4
   },
   "tell": {
     "video_id": "57277",
@@ -9465,9 +9465,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 9,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 9
   },
   "time": {
     "video_id": "58499",
@@ -9750,9 +9750,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 5,
     "n_hands": 2,
-    "both_hands_share": 0.65
+    "both_hands_share": 0.65,
+    "candidates_checked": 5
   },
   "walk": {
     "video_id": "62164",
@@ -10035,9 +10035,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.714
+    "both_hands_share": 0.714,
+    "candidates_checked": 8
   },
   "want": {
     "video_id": "62250",
@@ -10320,9 +10320,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 2,
-    "both_hands_share": 0.889
+    "both_hands_share": 0.889,
+    "candidates_checked": 7
   },
   "what": {
     "video_id": "62968",
@@ -10605,9 +10605,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.4
+    "both_hands_share": 0.4,
+    "candidates_checked": 8
   },
   "who": {
     "video_id": "63227",
@@ -10760,9 +10760,9 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 10,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 10
   },
   "work": {
     "video_id": "63789",
@@ -11045,9 +11045,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 8,
     "n_hands": 2,
-    "both_hands_share": 0.333
+    "both_hands_share": 0.333,
+    "candidates_checked": 8
   },
   "year": {
     "video_id": "64213",
@@ -11330,9 +11330,9 @@
         "hand": "screen_right"
       }
     ],
-    "candidates_checked": 7,
     "n_hands": 2,
-    "both_hands_share": 0.708
+    "both_hands_share": 0.708,
+    "candidates_checked": 7
   },
   "yes": {
     "video_id": "64287",
@@ -11485,8 +11485,8 @@
         "hand": "only"
       }
     ],
-    "candidates_checked": 9,
     "n_hands": 1,
-    "both_hands_share": 0.0
+    "both_hands_share": 0.0,
+    "candidates_checked": 9
   }
 }

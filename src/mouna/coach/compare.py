@@ -317,6 +317,10 @@ def score_attempt(
         "embedding_similarity": embedding_similarity,
         "check_reliability": reliability,
         "cp_findings": cp_findings(canon, target_word, reliability),
+        # why it looked like another sign: only when it wasn't judged good and the recognizer
+        # confidently saw a different sign (both gates keep correct signers from hearing it)
+        "confusion": confusion_cause(canon, target_word, coarse_prediction, coarse_confidence)
+        if verdict != "good" else None,
         "hand_count_match": hand_count_match,
         "parameters": parameters,
         "divergent_frames": divergent_frames,
@@ -349,3 +353,18 @@ def cp_findings(canon: np.ndarray, target_word: str, reliability: dict) -> list[
         fam = _FAMILY.get(f["part"], "movement_profile")
         out.append({**f, "reliable": bool(reliability.get(fam, {}).get("reliable", False))})
     return out
+
+
+def confusion_cause(canon: np.ndarray, target_word: str, other: str | None, confidence: float | None) -> dict | None:
+    """The learner's CP that made the attempt look like the recognizer's guess
+    (mouna.coach.cp_profile.explain_confusion), e.g. PAPER signed like SCHOOL:
+    'Your hand moved mostly up and down like SCHOOL; PAPER slides more side to side.'"""
+    if not other or other == target_word or (confidence or 0) < 0.4:
+        return None
+    cp_findings(canon, target_word, {})          # loads the profiles
+    pt, po = (_PROFILES or {}).get(target_word), (_PROFILES or {}).get(other)
+    feats = cp_profile.features(canon) if pt and po else None
+    if not feats:
+        return None
+    ex = cp_profile.explain_confusion(feats, pt, po, target_word, other)
+    return {"looks_like": other, **ex[0]} if ex else None

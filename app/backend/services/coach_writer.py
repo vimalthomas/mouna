@@ -53,7 +53,10 @@ def _facts(target: str, description: str, score: dict) -> dict:
     # what the learner's own hand did vs the fluent-signer range (cp_findings):
     # specific ("your middle finger is bent"), and it replaces the coarse
     # bucket line for the same part
-    findings = score.get("cp_findings") or []
+    findings = list(score.get("cp_findings") or [])
+    conf = score.get("confusion")
+    if conf:   # measured cause of looking like another sign: a fix, and it leads
+        findings.insert(0, {"part": conf["part"], "feature": conf["feature"], "say": conf["say"], "reliable": True})
     measured = {f["part"] for f in findings}
     for f in findings:
         (fixes if f.get("reliable") else hints).append({"part": f["part"], "fix": f["say"]})
@@ -68,7 +71,8 @@ def _facts(target: str, description: str, score: dict) -> dict:
         elif p.get("why"):
             # an unreliable check's mismatch is only a hint, never a "fix this"
             (fixes if reliable(key) else hints).append({"part": key, "fix": p["why"]})
-    fixes.sort(key=lambda f: PRIORITY.index(f["part"]))
+    lead = fixes[:1] if conf else []
+    fixes = lead + sorted(fixes[len(lead):], key=lambda f: PRIORITY.index(f["part"]))
     hints.sort(key=lambda f: PRIORITY.index(f["part"]))
     return {
         "sign": target,

@@ -57,6 +57,17 @@ def features(seq) -> dict | None:
     ok_sh = np.all(sh != 0, axis=(1, 2))
     if present.sum() < 3 or ok_sh.sum() < 3:
         return None
+    # movement is measured in the signing phase only: the middle of the time a
+    # hand is up, without the raise from rest and the drop back down (those
+    # dominated the "main direction" and hid the sign's own motion)
+    up = np.where(present)[0]
+    lo, hi = up[0], up[-1]
+    trim = int(round((hi - lo) * 0.2))
+    core = present.copy()
+    core[: lo + trim] = False
+    core[hi - trim + 1:] = False
+    if core.sum() < 3:
+        core = present
     sw = float(np.median(np.linalg.norm(sh[ok_sh, 0] - sh[ok_sh, 1], axis=1))) or 1.0
     h = r[present]                                          # (n, 21, 3)
     size = np.linalg.norm(h[:, 9, :2] - h[:, 0, :2], axis=1)
@@ -74,7 +85,7 @@ def features(seq) -> dict | None:
     centre = h[:, [0, 5, 9, 13, 17], :2].mean(1)
     rel = (centre - nose) / sw
     f["loc_x"], f["loc_y"] = (float(v) for v in np.median(rel, axis=0))
-    wrist = (h[:, 0, :2] - nose.mean(0)) / sw
+    wrist = (r[core][:, 0, :2] - a[core, 0, :2].mean(0)) / sw
     f["travel"] = float(np.linalg.norm(np.diff(wrist, axis=0), axis=1).sum())
     f["strokes"] = float(_strokes(wrist))
     l = a[:, L]
@@ -85,6 +96,29 @@ def features(seq) -> dict | None:
         f["gap"] = float(np.nanmin(gap / np.nanmedian(size)))
     else:
         f["gap"] = None
+    # main axis of the dominant hand's motion: |x| sideways, |y| up-down, |z| toward the viewer
+    w3 = r[core][:, 0, :2]
+    if len(w3) >= 4:
+        c = w3 - w3.mean(0)
+        ax = np.linalg.svd(c, full_matrices=False)[2][0]
+        f["dir_x"], f["dir_y"] = (float(abs(v)) for v in ax)
+    # two hands: does the moving hand slide ALONG the other palm (PAPER) or move ONTO it (SCHOOL)?
+    # share of the motion that lies in the other hand's palm plane (1 = slides, 0 = straight onto it)
+    both_core = both & core
+    if both_core.sum() >= 4:
+        both = both_core
+        lb = a[both][:, L]
+        nb = np.cross(lb[:, 5] - lb[:, 0], lb[:, 17] - lb[:, 0])
+        nb = nb / np.maximum(np.linalg.norm(nb, axis=1, keepdims=True), 1e-9)
+        n_med = np.median(nb, axis=0)
+        n_med = n_med / max(np.linalg.norm(n_med), 1e-9)
+        steps = np.diff(a[both][:, R, :3].mean(1), axis=0)
+        normal = np.abs(steps @ n_med)
+        along = np.linalg.norm(steps - np.outer(steps @ n_med, n_med), axis=1)
+        tot = (normal + along).sum()
+        f["along_palm"] = float(along.sum() / tot) if tot > 1e-9 else None
+    else:
+        f["along_palm"] = None
     return f
 
 
@@ -161,8 +195,82 @@ def compare(att: dict, prof: dict, sign: str, tol: dict | None = None) -> list[d
             out.append({"part": "movement", "feature": "strokes", "say": f"In {S} the movement repeats; you did it once."})
         elif st["p90"] <= 1 and att["strokes"] >= 3:
             out.append({"part": "movement", "feature": "strokes", "say": f"In {S} the movement happens once; you repeated it."})
+    if prof.get("two_handed_share", 0) >= 0.6 and att.get("along_palm") is not None:
+        o = _outside(att["along_palm"], prof.get("along_palm"), rel=t["travel"], abs_=0.08)
+        if o < 0:
+            out.append({"part": "movement", "feature": "along_palm",
+                        "say": f"Your hand moved onto the other palm; in {S} it slides along the palm."})
+        elif o > 0:
+            out.append({"part": "movement", "feature": "along_palm",
+                        "say": f"Your hand slid along the other palm; in {S} it moves onto the palm."})
+    dirs = {"dir_y": "up and down", "dir_x": "side to side", "dir_z": "toward and away from you"}
+    for k, words in dirs.items():
+        r_ = prof.get(k)
+        if r_ and att.get(k) is not None and r_["p10"] >= 0.6 and att[k] < r_["p10"] - t["travel"] * (r_["p90"] - r_["p10"]) - 0.15:
+            out.append({"part": "movement", "feature": k, "say": f"In {S} the hand mainly moves {words}; yours moved in a different direction."})
     o = _outside(att.get("travel"), prof.get("travel"), rel=t["travel"], abs_=0.1)
     if o:
         out.append({"part": "movement", "feature": "travel",
                     "say": f"Your hand moved {'much less' if o < 0 else 'much more'} than fluent signers' in {S}; make the movement {'bigger' if o < 0 else 'smaller'}."})
     return out
+
+
+# ---- why did it look like another sign? -------------------------------------
+
+FEATURE_WORDS = {
+    "dir_x": ("moved mostly side to side", "slides side to side"),
+    "dir_y": ("moved mostly up and down", "moves up and down"),
+    "strokes": ("repeated the movement", "repeats the movement"),
+    "travel": ("made a movement of that size", "has a movement of that size"),
+    "loc_y": ("was at that height", "is signed at that height"),
+    "loc_x": ("was that far to the side", "is signed that far to the side"),
+    "thumb_out": ("held the thumb that way", "holds the thumb that way"),
+}
+FEATURE_WORDS.update({f"finger_{n}": (f"held the {w} that way", f"holds the {w} that way") for n, w in FINGER_WORDS.items()})
+
+
+def _spread(r: dict) -> float:
+    return max((r["p90"] - r["p10"]) / 2, 0.05)
+
+
+# min_gap 2.0: chosen on half the signs; on the other half it names a cause in ~72% of
+# look-alike attempts and the named part truly differs (ASL-LEX) ~93% of the time.
+def explain_confusion(att: dict, prof_target: dict, prof_other: dict, sign: str, other: str,
+                      min_gap: float = 2.0, max_points: int = 1) -> list[dict]:
+    """The learner's measurements that sit closer to the OTHER sign's typical
+    value than to the target's -- i.e. the CP that made it look like `other`.
+    Only features where the two signs' fluent signers clearly differ count
+    (medians at least `min_gap` typical spreads apart)."""
+    S, O, out = sign.upper(), other.upper(), []
+    for k, (yours_words, theirs_words) in FEATURE_WORDS.items():
+        rt, ro, x = prof_target.get(k), prof_other.get(k), att.get(k)
+        if not rt or not ro or x is None:
+            continue
+        sep = abs(rt["p50"] - ro["p50"]) / ((_spread(rt) + _spread(ro)) / 2)
+        if sep < min_gap:
+            continue
+        dt, do = abs(x - rt["p50"]) / _spread(rt), abs(x - ro["p50"]) / _spread(ro)
+        if do < dt * 0.6:
+            part = "movement" if k in ("dir_x", "dir_y", "strokes", "travel") else "location" if k.startswith("loc") else "handshape"
+            out.append({"part": part, "feature": k, "strength": round(sep * (dt - do), 3),
+                        "say": f"Your hand {yours_words} like {O}; {S} {_contrast_words(k, rt, ro)}."})
+    out.sort(key=lambda f: -f["strength"])
+    return out[:max_points]
+
+
+def _contrast_words(k: str, rt: dict, ro: dict) -> str:
+    if k == "dir_x":
+        return "slides more side to side" if rt["p50"] > ro["p50"] else "moves less side to side"
+    if k == "dir_y":
+        return "moves more up and down" if rt["p50"] > ro["p50"] else "moves less up and down, more along"
+    if k == "strokes":
+        return "repeats it more" if rt["p50"] > ro["p50"] else "does it fewer times"
+    if k == "travel":
+        return "has a bigger movement" if rt["p50"] > ro["p50"] else "has a smaller movement"
+    if k == "loc_y":
+        return "is signed lower" if rt["p50"] > ro["p50"] else "is signed higher"
+    if k == "loc_x":
+        return "is signed further out" if rt["p50"] > ro["p50"] else "is signed more toward the middle"
+    if k.startswith("finger_") or k == "thumb_out":
+        return "keeps it straighter" if rt["p50"] > ro["p50"] else "keeps it more bent"
+    return "is different"

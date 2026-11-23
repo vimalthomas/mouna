@@ -34,7 +34,7 @@ GRID = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0]
 FAMILIES = {
     "fingers": {"keys": ("finger", "thumb"), "part": lambda fs: any(f["part"] == "handshape" for f in fs), "lex": ("Handshape.2.0",)},
     "location": {"keys": ("location",), "part": lambda fs: any(f["part"] == "location" for f in fs), "lex": ("MinorLocation.2.0",)},
-    "movement": {"keys": ("travel",), "part": lambda fs: any(f["feature"] in ("strokes", "travel") for f in fs),
+    "movement": {"keys": ("travel",), "part": lambda fs: any(f["feature"] in ("strokes", "travel", "along_palm", "dir_x", "dir_y", "dir_z") for f in fs),
                  "lex": ("Movement.2.0", "RepeatedMovement.2.0")},
 }
 

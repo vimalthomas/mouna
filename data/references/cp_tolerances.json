@@ -3,7 +3,7 @@
   "finger": 1.5,
   "thumb": 1.5,
   "location": 1.0,
-  "travel": 1.0
+  "travel": 3.0
  },
  "max_false_alarm": 0.1,
  "tune_signs": [
@@ -163,57 +163,57 @@
    }
   },
   "movement": {
-   "margin": 1.0,
+   "margin": 3.0,
    "tune_grid": [
     {
      "margin": 0.25,
-     "false_alarm": 0.227,
-     "catches": 0.24
+     "false_alarm": 0.327,
+     "catches": 0.375
     },
     {
      "margin": 0.5,
-     "false_alarm": 0.18,
-     "catches": 0.176
+     "false_alarm": 0.253,
+     "catches": 0.315
     },
     {
      "margin": 0.75,
-     "false_alarm": 0.12,
-     "catches": 0.138
+     "false_alarm": 0.213,
+     "catches": 0.269
     },
     {
      "margin": 1.0,
-     "false_alarm": 0.1,
-     "catches": 0.113
+     "false_alarm": 0.173,
+     "catches": 0.234
     },
     {
      "margin": 1.5,
-     "false_alarm": 0.093,
-     "catches": 0.091
+     "false_alarm": 0.14,
+     "catches": 0.191
     },
     {
      "margin": 2.0,
-     "false_alarm": 0.073,
-     "catches": 0.08
+     "false_alarm": 0.12,
+     "catches": 0.171
     },
     {
      "margin": 3.0,
-     "false_alarm": 0.04,
-     "catches": 0.064
+     "false_alarm": 0.087,
+     "catches": 0.146
     },
     {
      "margin": 4.0,
-     "false_alarm": 0.02,
-     "catches": 0.05
+     "false_alarm": 0.073,
+     "catches": 0.135
     },
     {
      "margin": 6.0,
-     "false_alarm": 0.02,
-     "catches": 0.04
+     "false_alarm": 0.06,
+     "catches": 0.111
     }
    ],
    "test": {
-    "false_alarm_on_correct": 0.113,
-    "catches_when_different": 0.168,
+    "false_alarm_on_correct": 0.056,
+    "catches_when_different": 0.156,
     "n_correct": 160,
     "n_different": 2883
    }

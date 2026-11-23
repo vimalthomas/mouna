@@ -165,7 +165,7 @@ const CHECK_HOLD_MS = 1200;
             </div>
             <div>
               @if (referenceSkeleton?.length) {
-                <app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="0.6" />
+                <app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="playbackRate" [loopSeconds]="signSeconds" />
               }
             </div>
           </div>
@@ -255,7 +255,7 @@ const CHECK_HOLD_MS = 1200;
                 <h2 class="font-display text-2xl text-ink mb-3">{{ st.label }}</h2>
 
                 @if (st.hand3d && referenceSkeleton?.length) {
-                  <div class="mb-2"><app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="0.6" /></div>
+                  <div class="mb-2"><app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="playbackRate" [loopSeconds]="signSeconds" /></div>
                 }
                 @if (referenceVideoUrl && st.clip) {
                   <div class="mb-3"><app-sign-frame [src]="referenceVideoUrl" [paths]="handPaths" phase="live" label="The motion" /></div>
@@ -776,6 +776,15 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   /** Each hand's path through the example video (for the direction marks). */
   get handPaths(): HandPath[] { return this.referenceBuckets?.hand_paths ?? []; }
+
+  /** How long the signing itself lasts in the example video (seconds), so
+   * the 3D hand loops at the clip's pace instead of a fixed, slower cycle. */
+  get signSeconds(): number {
+    const up = this.referenceBuckets?.hands_up_seconds;
+    if (up && up.end > up.start) return up.end - up.start;
+    const ts = this.handPaths.flatMap(p => [p.t[0], p.t[p.t.length - 1]]);
+    return ts.length ? Math.max(...ts) - Math.min(...ts) : 2;
+  }
 
   /** Every hand is made in one spot (e.g. who, no, color): describe the
    * place and the small movement instead of a path. */

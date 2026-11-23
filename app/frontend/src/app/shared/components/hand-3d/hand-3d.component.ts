@@ -67,6 +67,9 @@ export class Hand3dComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() referenceFrames: SkeletonFrame[] | null = null;
   @Input() parameters: Record<string, ParameterResult> | null = null;
   @Input() speedMultiplier = 1;
+  /** Seconds per loop at 1x. Set to the example video's signing time so the
+   * 3D hand moves at the same pace as the clip beside it. */
+  @Input() loopSeconds = LOOP_SECONDS;
   /** Prep mode: only the target hand, centered (no attempt yet). */
   @Input() targetOnly = false;
 
@@ -127,7 +130,7 @@ export class Hand3dComponent implements AfterViewInit, OnChanges, OnDestroy {
       const loop = (ts: number) => {
         const dt = this.lastTs ? (ts - this.lastTs) / 1000 : 0;
         this.lastTs = ts;
-        this.progress = (this.progress + (dt * this.speedMultiplier) / LOOP_SECONDS) % 1;
+        this.progress = (this.progress + (dt * this.speedMultiplier) / Math.max(this.loopSeconds, 0.5)) % 1;
         this.tick();
         this.raf = requestAnimationFrame(loop);
       };

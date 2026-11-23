@@ -5,9 +5,10 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CameraViewComponent } from '../../shared/components/camera-view/camera-view.component';
 import { SkeletonCompareComponent } from '../../shared/components/skeleton-compare/skeleton-compare.component';
-import { AttemptOverlayComponent } from '../../shared/components/attempt-overlay/attempt-overlay.component';
 import { Hand3dComponent } from '../../shared/components/hand-3d/hand-3d.component';
 import { SignSkinComponent } from '../../shared/components/sign-skin/sign-skin.component';
+import { VideoBonesComponent } from '../../shared/components/video-bones/video-bones.component';
+import { LookPickerComponent } from '../../shared/components/look-picker/look-picker.component';
 import { AttemptChartsComponent } from '../../shared/components/attempt-charts/attempt-charts.component';
 import { SignFrameComponent } from '../../shared/components/sign-frame/sign-frame.component';
 import { CoachSessionService } from '../../core/services/coach-session.service';
@@ -58,7 +59,7 @@ const CHECK_HOLD_MS = 1200;
 @Component({
   selector: 'app-coach',
   standalone: true,
-  imports: [CameraViewComponent, SkeletonCompareComponent, AttemptOverlayComponent, Hand3dComponent, SignSkinComponent, AttemptChartsComponent, SignFrameComponent, FormsModule],
+  imports: [CameraViewComponent, SkeletonCompareComponent, Hand3dComponent, SignSkinComponent, VideoBonesComponent, LookPickerComponent, AttemptChartsComponent, SignFrameComponent, FormsModule],
   template: `
     <div class="max-w-7xl mx-auto" [style.paddingRight]="showChat ? '380px' : '0'">
 
@@ -165,18 +166,20 @@ const CHECK_HOLD_MS = 1200;
               </div>
             </div>
             <div>
-              <!-- v3: hands and face as separate 3D close-ups, following the video; older 3D hand if a sign has no skin yet -->
-              @if (skinAvailable !== false) {
-                <div class="flex flex-col gap-3">
+              <!-- v3: hands and face as separate 3D close-ups, following the video.
+                   Only a sign with no skin data falls back to the older 3D hand (hands panel only). -->
+              <div class="flex flex-col gap-3">
+                @if (skinAvailable !== false) {
                   <app-sign-skin [word]="targetSignWord" show="hands" label="Hands, close up" aspect="16/10"
                     [videoHost]="previewVideosEl?.nativeElement ?? null" (available)="skinAvailable = $event" />
-                  <app-sign-skin [word]="targetSignWord" show="face" label="Face, close up" aspect="16/10"
-                    emptyText="No face in this example." [videoHost]="previewVideosEl?.nativeElement ?? null" />
-                </div>
-                <p class="mt-2 text-[11px] text-ink-muted">Both follow the video and its speed. Drag to turn, scroll to zoom.</p>
-              } @else if (referenceSkeleton?.length) {
-                <app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="playbackRate" [loopSeconds]="signSeconds" />
-              }
+                } @else if (referenceSkeleton?.length) {
+                  <app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="playbackRate" [loopSeconds]="signSeconds" />
+                }
+                <app-sign-skin [word]="targetSignWord" show="face" label="Face, close up" aspect="16/10"
+                  emptyText="No face in this example." [videoHost]="previewVideosEl?.nativeElement ?? null" />
+              </div>
+              <p class="mt-2 text-[11px] text-ink-muted">Both follow the video and its speed. Drag to turn, scroll to zoom.</p>
+              <div class="mt-3"><app-look-picker /></div>
             </div>
           </div>
 
@@ -379,13 +382,6 @@ const CHECK_HOLD_MS = 1200;
               >{{ verdictLabel }}</span>
             </div>
 
-            @if (lastResult?.charts) {
-              <div class="mb-4">
-                <h2 class="font-display text-2xl text-ink mb-3">Your attempt in numbers</h2>
-                <app-attempt-charts [charts]="lastResult?.charts ?? null" />
-              </div>
-            }
-
             @if (lastResult?.looks_like) {
               <div class="rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 mb-4">
                 <p class="text-sm text-ink"><strong class="capitalize">Heads up:</strong> your handshape, location, and palm direction actually matched <strong class="capitalize">"{{ lastResult?.looks_like }}"</strong> more closely than "{{ targetSignWord }}". Here's that sign next to yours:</p>
@@ -406,149 +402,84 @@ const CHECK_HOLD_MS = 1200;
               </div>
             }
 
+            <!-- tabs: Video / Hands / Face / Motion / Metrics -->
             <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-              <div class="flex items-center gap-1 rounded-full bg-surface-sunk border border-border/50 p-1">
+              <div class="flex items-center gap-1 rounded-full bg-surface-sunk border border-border/50 p-1" role="tablist">
                 @for (t of feedbackTabs; track t.id) {
-                  <button
-                    (click)="feedbackTab = t.id"
-                    class="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
-                    [class]="feedbackTab === t.id ? 'bg-accent text-white' : 'text-ink-muted'"
-                  >{{ t.label }}</button>
+                  <button role="tab" [attr.aria-selected]="feedbackTab === t.id" (click)="feedbackTab = t.id"
+                    class="text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors"
+                    [class]="feedbackTab === t.id ? 'bg-accent text-white' : 'text-ink-muted hover:text-ink'">{{ t.label }}</button>
                 }
               </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-ink-faint mr-1">Playback</span>
-                @for (r of skeletonRates; track r.value) {
-                  <button
-                    (click)="skeletonSpeed = r.value"
-                    class="text-xs font-semibold px-3 py-1 rounded-full border"
-                    [class]="skeletonSpeed === r.value ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'"
-                  >{{ r.label }}</button>
-                }
-              </div>
+              @if (feedbackTab !== 'metrics') {
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-ink-faint mr-1">Speed</span>
+                  @for (r of skeletonRates; track r.value) {
+                    <button (click)="skeletonSpeed = r.value" class="text-xs font-semibold px-3 py-1 rounded-full border"
+                      [class]="skeletonSpeed === r.value ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'">{{ r.label }}</button>
+                  }
+                </div>
+              }
             </div>
 
-            @if (feedbackTab === 'video') {
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <app-attempt-overlay
-                  [videoUrl]="recordedAttemptUrl"
-                  [attemptFrames]="lastResult?.attempt_skeleton_raw ?? null"
-                  [referenceFrames]="lastResult?.reference_skeleton ?? null"
-                  [parameters]="lastResult?.parameters ?? null"
-                  [mirrored]="lastResult?.attempt_mirrored ?? false"
-                  [speedMultiplier]="skeletonSpeed"
-                  [fallbackDurationSec]="recordingSeconds"
-                  label="You + target ghost"
-                />
-                <div class="relative self-start rounded-xl overflow-hidden bg-black border border-border/50" style="aspect-ratio: 16/10;">
-                  @if (referenceVideoUrl) {
-                    <video [src]="referenceVideoUrl" [loop]="!hasTrimWindow" autoplay [muted]="true" playsinline class="w-full h-full object-cover" (loadedmetadata)="onVideoLoaded($event)" (timeupdate)="enforceTrim($event)"></video>
-                  }
-                  <div class="absolute top-2 left-2 text-[11px] font-medium text-white/90 bg-black/45 px-2 py-0.5 rounded-md">Target</div>
-                </div>
-              </div>
-              <p class="text-xs text-ink-muted -mt-2 mb-4">Your own video, with the target sign drawn over you as a white ghost and your hands traced on top — green where they matched, amber where they didn't. The target video is on the right for reference.</p>
-            } @else if (feedbackTab === 'motion') {
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <app-skeleton-compare
-                  [frames]="lastResult?.attempt_skeleton_raw ?? null"
-                  [parameters]="lastResult?.parameters ?? null"
-                  [speedMultiplier]="skeletonSpeed"
-                  color="#3f5fc4"
-                  label="Your motion"
-                />
-                <app-skeleton-compare
-                  [frames]="lastResult?.reference_skeleton ?? null"
-                  [speedMultiplier]="skeletonSpeed"
-                  color="#8a93a3"
-                  label="Target"
-                />
-              </div>
-            } @else if (feedbackTab === 'hands' && lastResult?.attempt_skin) {
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <app-sign-skin [data]="lastResult?.attempt_skin ?? null" show="hands" label="Your hands" [speed]="skeletonSpeed"
-                  emptyText="Your hands weren't seen clearly in this recording." />
-                <app-sign-skin [word]="targetSignWord" show="hands" label="Target hands" [speed]="skeletonSpeed" />
-              </div>
-              <p class="text-xs text-ink-muted -mt-2 mb-4">Your hands are shown like a mirror, as you saw yourself while recording. Drag either view to turn it.</p>
-            } @else if (feedbackTab === 'hands') {
-              <div class="mb-4">
-                <app-hand-3d
-                  [attemptFrames]="lastResult?.attempt_skeleton_canonical ?? null"
-                  [referenceFrames]="lastResult?.reference_skeleton ?? null"
-                  [parameters]="lastResult?.parameters ?? null"
-                  [speedMultiplier]="skeletonSpeed"
-                />
-              </div>
-            } @else if (lastResult?.attempt_skin) {
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <app-sign-skin [data]="lastResult?.attempt_skin ?? null" show="face" label="Your face" [speed]="skeletonSpeed"
-                  emptyText="Your face wasn't seen clearly in this recording." />
-                <app-sign-skin [word]="targetSignWord" show="face" label="Target face" [speed]="skeletonSpeed" />
-              </div>
-              <p class="text-xs text-ink-muted -mt-2 mb-4">Watch the brows, eyes and mouth: in ASL they are part of the sign. Your face is shown like a mirror.</p>
-            } @else {
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <app-skeleton-compare
-                  mode="face"
-                  [frames]="lastResult?.attempt_skeleton_raw ?? null"
-                  [parameters]="lastResult?.parameters ?? null"
-                  [speedMultiplier]="skeletonSpeed"
-                  color="#3f5fc4"
-                  label="Your face, zoomed in"
-                />
-                <app-skeleton-compare
-                  mode="face"
-                  [frames]="lastResult?.reference_skeleton ?? null"
-                  [speedMultiplier]="skeletonSpeed"
-                  color="#8a93a3"
-                  label="Target face, zoomed in"
-                />
-              </div>
-              @if (!hasFaceData) {
-                <p class="text-xs text-ink-muted -mt-2 mb-4">No facial reference data for "{{ targetSignWord }}" yet — only what/who/how/no currently have it.</p>
-              }
+            @if (feedbackTab === 'hands' || feedbackTab === 'face' || feedbackTab === 'motion') {
+              <div class="mb-3"><app-look-picker /></div>
             }
-
-            @if (replayWindows.length > 0) {
-              <div class="mb-4">
-                <div class="flex items-center justify-between mb-2">
-                  <p class="text-sm text-ink">Replay where the difference was</p>
-                  <div class="flex items-center gap-2">
-                    @for (r of skeletonRates; track r.value) {
-                      <button
-                        (click)="skeletonSpeed = r.value"
-                        class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border"
-                        [class]="skeletonSpeed === r.value ? 'bg-accent text-white border-accent' : 'bg-surface-sunk text-ink-muted border-border/50'"
-                      >{{ r.label }}</button>
-                    }
-                  </div>
+            @switch (feedbackTab) {
+              @case ('video') {
+                <div class="flex items-center gap-4 mb-2 text-xs text-ink-muted">
+                  <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" [(ngModel)]="showMyBones"> My bones</label>
+                  <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" [(ngModel)]="showTargetBones"> Target bones</label>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                  @for (w of replayWindows; track w.param) {
-                    <div>
-                      <app-skeleton-compare [frames]="w.frames" [animate]="true" [speedMultiplier]="skeletonSpeed" color="#ab7a14" [label]="w.param" />
-                      <p class="text-xs text-ink-muted mt-1">Your {{ w.param }} diverged most from the target here — looping that moment.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                  <app-video-bones [src]="recordedAttemptUrl" [skin]="lastResult?.attempt_skin ?? null" [mirror]="true"
+                    [showBones]="showMyBones" [speed]="skeletonSpeed" label="You" emptyText="Your recording isn't available" />
+                  <app-video-bones [src]="referenceVideoUrl" [word]="targetSignWord" [showBones]="showTargetBones" [speed]="skeletonSpeed" label="Target" />
+                </div>
+                <p class="text-xs text-ink-muted mb-4">Your video is mirrored, as you saw yourself while recording.</p>
+              }
+              @case ('hands') {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                  <app-sign-skin [data]="lastResult?.attempt_skin ?? null" show="hands" label="Your hands" [speed]="skeletonSpeed"
+                    emptyText="Your hands weren't seen clearly in this recording." />
+                  <app-sign-skin [word]="targetSignWord" show="hands" label="Target hands" [speed]="skeletonSpeed" />
+                </div>
+              }
+              @case ('face') {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                  <app-sign-skin [data]="lastResult?.attempt_skin ?? null" show="face" label="Your face" [speed]="skeletonSpeed"
+                    emptyText="Your face wasn't seen clearly in this recording." />
+                  <app-sign-skin [word]="targetSignWord" show="face" label="Target face" [speed]="skeletonSpeed" />
+                </div>
+              }
+              @case ('motion') {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                  <app-sign-skin [data]="lastResult?.attempt_skin ?? null" show="all" label="You" [speed]="skeletonSpeed"
+                    emptyText="Nothing was seen clearly in this recording." />
+                  <app-sign-skin [word]="targetSignWord" show="all" label="Target" [speed]="skeletonSpeed" />
+                </div>
+                <p class="text-xs text-ink-muted mb-4">Face and hands together, so you can see where the hands are relative to the face.</p>
+              }
+              @case ('metrics') {
+                @if (lastResult?.charts) {
+                  <div class="mb-4"><app-attempt-charts [charts]="lastResult?.charts ?? null" /></div>
+                }
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                  @for (p of parameterCards; track p.name) {
+                    <div class="rounded-xl border px-4 py-3" [class]="p.match === true ? 'border-emerald-500/30' : p.match === false ? 'border-amber-500/30' : 'border-border/50 border-dashed opacity-70'">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm font-semibold text-ink">{{ p.name }}</span>
+                        <span class="text-[11px] font-medium px-2 py-0.5 rounded-md"
+                          [class]="p.match === true ? 'bg-emerald-500/15 text-emerald-500' : p.match === false ? 'bg-amber-500/15 text-amber-500' : 'bg-surface text-ink-faint border border-dashed border-border'"
+                        >{{ p.match === true ? 'match' : p.match === false ? 'mismatch' : 'not graded' }}</span>
+                      </div>
+                      @if (p.why) { <p class="text-sm text-ink mt-1.5">{{ p.why }}</p> }
+                      @if (p.detail) { <p class="text-[11px] text-ink-faint mt-1">{{ p.detail }}</p> }
                     </div>
                   }
                 </div>
-              </div>
-            }
-
-            <div class="flex flex-col gap-2">
-              @for (p of parameterCards; track p.name) {
-                <div class="rounded-xl border px-4 py-3" [class]="p.match === true ? 'border-emerald-500/30' : p.match === false ? 'border-amber-500/30' : 'border-border/50 border-dashed opacity-70'">
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm font-semibold text-ink">{{ p.name }}</span>
-                    <span class="text-[11px] font-medium px-2 py-0.5 rounded-md"
-                      [class]="p.match === true ? 'bg-emerald-500/15 text-emerald-500' : p.match === false ? 'bg-amber-500/15 text-amber-500' : 'bg-surface text-ink-faint border border-dashed border-border'"
-                    >{{ p.match === true ? 'match' : p.match === false ? 'mismatch' : 'n/a' }}</span>
-                  </div>
-                  @if (p.why) { <p class="text-sm text-ink mt-1.5">{{ p.why }}</p> }
-                  @if (p.detail) { <p class="text-[11px] text-ink-faint mt-1">{{ p.detail }}</p> }
-                </div>
               }
-            </div>
+            }
 
             <div class="flex gap-3 mt-5">
               <button (click)="retryRecording()" class="px-6 h-11 bg-accent hover:bg-accent/90 text-white rounded-xl font-medium text-sm">↺ Try again</button>
@@ -671,16 +602,20 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
   /** Feedback screen used to show all 4 skeleton panels (body x2, hands x2)
    * stacked at once -- split into tabs per explicit request so only one
    * comparison is on screen at a time. */
-  readonly feedbackTabs: { id: 'video' | 'motion' | 'hands' | 'face'; label: string }[] = [
-    { id: 'video', label: 'On your video' },
-    { id: 'motion', label: 'Motion vs. Target' },
-    { id: 'hands', label: 'Hands in 3D' },
-    { id: 'face', label: 'Face vs. Target' },
+  readonly feedbackTabs: { id: 'video' | 'hands' | 'face' | 'motion' | 'metrics'; label: string }[] = [
+    { id: 'video', label: 'Video' },
+    { id: 'hands', label: 'Hands' },
+    { id: 'face', label: 'Face' },
+    { id: 'motion', label: 'Motion' },
+    { id: 'metrics', label: 'Metrics' },
   ];
+  /** Video tab: draw each person's tracked skeleton on their own video. */
+  showMyBones = true;
+  showTargetBones = false;
   /** Leads with the real-video comparison, not the skeleton -- an actual
    * human next to an actual human is the primary view now; the skeleton
    * tabs are the diagnostic/secondary ones, not the other way around. */
-  feedbackTab: 'video' | 'motion' | 'hands' | 'face' = 'video';
+  feedbackTab: 'video' | 'hands' | 'face' | 'motion' | 'metrics' = 'video';
 
   /** Only what/who/how/no have a regenerated reference face mesh so far
    * (see scripts/auto_screen_references.py) -- used to show a plain-

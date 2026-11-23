@@ -99,6 +99,8 @@ export class DictionaryComponent implements OnInit {
   videoLoading = false;
   videoSet = new Set<string>();
   practiceSet = new Set<string>();
+  /** Only the practice signs are listed for now; the rest stay hidden until they're ready. */
+  private practiceLoaded = false;
 
   /** Per-sign ASL-CDI category / frequency / essential (sign_catalog.json). */
   catalog: Record<string, SignCatalogEntry> = {};
@@ -108,7 +110,7 @@ export class DictionaryComponent implements OnInit {
     this.signsApi.getSigns().subscribe(signs => { this.rawSigns = signs; this.rebuild(); });
     this.signsApi.getSignCatalog().subscribe({ next: c => { this.catalog = c; this.rebuild(); }, error: () => this.rebuild() });
     this.signsApi.getSignsWithVideo().subscribe(set => { this.videoSet = set; });
-    this.signsApi.getSignsWithReference().subscribe({ next: set => (this.practiceSet = set), error: () => {} });
+    this.signsApi.getSignsWithReference().subscribe({ next: set => { this.practiceSet = set; this.practiceLoaded = true; this.rebuild(); }, error: () => {} });
   }
 
   /** Essential signs outside the 100-sign vocabulary (clips being added). */
@@ -123,7 +125,9 @@ export class DictionaryComponent implements OnInit {
     const extras: Sign[] = Object.entries(cat)
       .filter(([w, c]) => !known.has(w) && c.essential)
       .map(([w, c]) => ({ word: w, category: c.category, difficulty: '', description: 'Clips are being added for this sign.', manual_checks: [], nms_required: false, nms_type: null, nms_notes: null }));
-    const all = [...this.rawSigns.map(s => ({ ...s, category: cat[s.word]?.category ?? 'Other signs' })), ...extras];
+    let all = [...this.rawSigns.map(s => ({ ...s, category: cat[s.word]?.category ?? 'Other signs' })), ...extras];
+    // practice signs only (hidden until the list arrives, so nothing else flashes up)
+    all = this.practiceLoaded ? all.filter(s => this.practiceSet.has(s.word)) : [];
     all.sort((a, b) => Number(!!cat[b.word]?.essential) - Number(!!cat[a.word]?.essential)
       || (cat[b.word]?.frequency ?? 0) - (cat[a.word]?.frequency ?? 0) || a.word.localeCompare(b.word));
     this.allSigns = all;

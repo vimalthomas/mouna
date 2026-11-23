@@ -165,9 +165,15 @@ const CHECK_HOLD_MS = 1200;
               </div>
             </div>
             <div>
-              <!-- v3: face and hands as a 3D skin, following the video; older 3D hand if a sign has no skin yet -->
+              <!-- v3: hands and face as separate 3D close-ups, following the video; older 3D hand if a sign has no skin yet -->
               @if (skinAvailable !== false) {
-                <app-sign-skin [word]="targetSignWord" [videoHost]="previewVideosEl?.nativeElement ?? null" (available)="skinAvailable = $event" />
+                <div class="flex flex-col gap-3">
+                  <app-sign-skin [word]="targetSignWord" show="hands" label="Hands, close up" aspect="16/10"
+                    [videoHost]="previewVideosEl?.nativeElement ?? null" (available)="skinAvailable = $event" />
+                  <app-sign-skin [word]="targetSignWord" show="face" label="Face, close up" aspect="16/10"
+                    emptyText="No face in this example." [videoHost]="previewVideosEl?.nativeElement ?? null" />
+                </div>
+                <p class="mt-2 text-[11px] text-ink-muted">Both follow the video and its speed. Drag to turn, scroll to zoom.</p>
               } @else if (referenceSkeleton?.length) {
                 <app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="playbackRate" [loopSeconds]="signSeconds" />
               }
@@ -458,6 +464,13 @@ const CHECK_HOLD_MS = 1200;
                   label="Target"
                 />
               </div>
+            } @else if (feedbackTab === 'hands' && lastResult?.attempt_skin) {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <app-sign-skin [data]="lastResult?.attempt_skin ?? null" show="hands" label="Your hands" [speed]="skeletonSpeed"
+                  emptyText="Your hands weren't seen clearly in this recording." />
+                <app-sign-skin [word]="targetSignWord" show="hands" label="Target hands" [speed]="skeletonSpeed" />
+              </div>
+              <p class="text-xs text-ink-muted -mt-2 mb-4">Your hands are shown like a mirror, as you saw yourself while recording. Drag either view to turn it.</p>
             } @else if (feedbackTab === 'hands') {
               <div class="mb-4">
                 <app-hand-3d
@@ -467,6 +480,13 @@ const CHECK_HOLD_MS = 1200;
                   [speedMultiplier]="skeletonSpeed"
                 />
               </div>
+            } @else if (lastResult?.attempt_skin) {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <app-sign-skin [data]="lastResult?.attempt_skin ?? null" show="face" label="Your face" [speed]="skeletonSpeed"
+                  emptyText="Your face wasn't seen clearly in this recording." />
+                <app-sign-skin [word]="targetSignWord" show="face" label="Target face" [speed]="skeletonSpeed" />
+              </div>
+              <p class="text-xs text-ink-muted -mt-2 mb-4">Watch the brows, eyes and mouth: in ASL they are part of the sign. Your face is shown like a mirror.</p>
             } @else {
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                 <app-skeleton-compare

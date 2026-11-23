@@ -158,3 +158,31 @@ def test_result_is_decided_locally_before_any_ai():
     msg = coach_writer.local_feedback("who", "", score)
     assert "Turn your palm." in msg and "Palm direction" in msg
     assert asyncio.run(coach_writer.ai_feedback("who", "", score)) is None
+
+
+# ---- v3: the learner's own attempt as 3D skin -------------------------------
+
+def test_attempt_skin_from_a_real_recording():
+    import pickle
+    from pathlib import Path
+    from mouna.skin.attempt import attempt_skin
+    refs = pickle.load(open(Path(__file__).resolve().parents[1] / "data/references/sign_references.pkl", "rb"))
+    raw = refs["go"]["representative_sequence_raw_canon"]          # stands in for a live attempt
+    face = [{"landmarks_xyz": [[0.5 + 0.01 * (k % 7), 0.3 + 0.001 * k, -0.02] for k in range(478)]}] * len(raw)
+    s = attempt_skin(raw.tolist(), face)
+    assert s["n_frames"] == len(raw) == len(s["frames"]) and s["mirrored"]
+    with_hand = [f for f in s["frames"] if any(h is not None for h in f["h"])]
+    assert with_hand and all(len(h) == 21 for f in with_hand for h in f["h"] if h is not None)
+    assert all(f["f"] is not None and len(f["f"]) == 478 for f in s["frames"])
+    # mirrored like the camera preview: a point at x=0.2 of the frame is drawn at 0.8
+    f0 = next(f for f in s["frames"] if f["h"][0] is not None)
+    raw_xs = [raw[i].reshape(75, 3)[33:75, 0] for i in range(len(raw))]
+    assert all(0 <= x <= 640 for h in f0["h"] if h for x, _, _ in h)
+    assert raw_xs  # sanity
+
+
+def test_attempt_skin_handles_an_empty_attempt():
+    from mouna.skin.attempt import attempt_skin
+    assert attempt_skin([], None) is None
+    s = attempt_skin([[0.0] * 225] * 5, None)
+    assert all(f["h"] == [None, None] and f["f"] is None for f in s["frames"])

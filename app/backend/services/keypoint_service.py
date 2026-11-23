@@ -192,11 +192,14 @@ class KeypointService:
                 m = np.array(result.facial_transformation_matrixes[0])
                 yaw_deg = float(np.degrees(np.arctan2(-m[2, 0], np.sqrt(m[2, 1] ** 2 + m[2, 2] ** 2))))
 
-            landmarks_xy = None
+            landmarks_xy = landmarks_xyz = None
             if result.face_landmarks:
                 landmarks_xy = [[lm.x, lm.y] for lm in result.face_landmarks[0]]
+                # with depth, for the 3D face skin on the results screen (v3)
+                landmarks_xyz = [[lm.x, lm.y, lm.z] for lm in result.face_landmarks[0]]
 
-            return {"blendshapes": blendshapes, "head_yaw_deg": yaw_deg, "landmarks_xy": landmarks_xy}
+            return {"blendshapes": blendshapes, "head_yaw_deg": yaw_deg, "landmarks_xy": landmarks_xy,
+                    "landmarks_xyz": landmarks_xyz}
         except Exception:
             logger.exception("Face extraction error")
             return None

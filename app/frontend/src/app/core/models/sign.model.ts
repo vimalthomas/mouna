@@ -39,6 +39,17 @@ export interface FaceContours {
   lips_inner: [number, number][];
 }
 
+/** v3 3D skin: per frame of a clip, both hands (video pixels + depth), each
+ * hand's 3D shape, upper-body pose and the face mesh. From GET
+ * /signs/{word}/skin (example videos) or CoachingMessage.attempt_skin. */
+export interface SkinFrame {
+  h: ([number, number, number][] | null)[];
+  w: ([number, number, number][] | null)[];
+  p: [number, number, number][] | null;
+  f: [number, number, number][] | null;
+}
+export interface SkinData { width: number; height: number; fps: number; n_frames: number; frames: SkinFrame[]; mirrored?: boolean; }
+
 export interface SkeletonFrame {
   pose: Record<string, [number, number]>;
   left_hand: [number, number][] | null;
@@ -141,6 +152,8 @@ export interface CoachingMessage {
   feedback?: string;
   /** Which AI wrote the message ("claude" / "gemini"), or "template" without a key. */
   feedback_source?: 'claude' | 'gemini' | 'template';
+  /** v3: the learner's own hands and face as 3D skin (mirrored like the camera preview). */
+  attempt_skin?: SkinData | null;
   charts?: AttemptCharts | null;
   /** False when the sign has no reference recording, so nothing was compared. */
   graded?: boolean;

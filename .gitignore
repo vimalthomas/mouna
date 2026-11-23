@@ -158,3 +158,4 @@ app/backend/*.db
 data/skin_models/
 data/references/skin_raw/
 app/frontend/public/__skin_check.html
+app/frontend/public/__fetch_check.html

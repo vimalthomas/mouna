@@ -12,6 +12,7 @@ from services.attempts_service import record_attempt
 from services.coaching_session import CoachingSession
 from services.keypoint_service import keypoint_service
 from services.model_service import model_service
+from mouna.skin.attempt import attempt_skin  # noqa: E402 -- src/ is on the path after model_service
 from services.signs_service import signs_service
 
 logger = logging.getLogger(__name__)
@@ -248,6 +249,12 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 # alongside keypoint_buffer (see the "frame" handler above) --
                 # it just wasn't used here before the face-mesh skeleton.
                 attempt_skeletons = model_service.get_attempt_skeletons(keypoint_buffer, face_buffer)
+                # v3: the learner's own hands and face as 3D skin for the results screen
+                try:
+                    attempt_skin_data = attempt_skin(keypoint_buffer, face_buffer)
+                except Exception:  # noqa: BLE001 -- the skin is a bonus; never block the result
+                    logger.exception("attempt skin failed")
+                    attempt_skin_data = None
                 reference_skeleton = model_service.get_reference_skeleton(target_sign)
                 divergent_frames = score.get("divergent_frames") or {}
                 divergent_snapshots = model_service.get_attempt_snapshots(keypoint_buffer, divergent_frames, face_buffer)
@@ -312,6 +319,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                     "attempt_skeleton_raw": attempt_skeletons["raw"],
                     "attempt_skeleton_canonical": attempt_skeletons["canonical"],
                     "attempt_mirrored": attempt_skeletons["mirrored"],
+                    "attempt_skin": attempt_skin_data,
                     "reference_skeleton": reference_skeleton,
                     "divergent_snapshots": divergent_snapshots,
                     # Raw frame index per mismatched param, into

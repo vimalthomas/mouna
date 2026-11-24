@@ -4,5 +4,7 @@
   "installCommand": "npm install",
   "buildCommand": "npx ng build --configuration production",
   "outputDirectory": "dist/frontend/browser",
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
+  "git": { "deploymentEnabled": { "**": false, "main": true } },
+  "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]"
 }

@@ -14,7 +14,7 @@ import { ScoreCardComponent } from '../../shared/components/score-card/score-car
 import { SignFrameComponent } from '../../shared/components/sign-frame/sign-frame.component';
 import { CoachSessionService } from '../../core/services/coach-session.service';
 import { SignsApiService } from '../../core/services/signs-api.service';
-import { BBox, CoachingMessage, PrepStep, ReferenceBuckets, Sign, SkeletonFrame, StepResult, HandPath } from '../../core/models/sign.model';
+import { BBox, CoachingMessage, PrepStep, ReferenceBuckets, Sign, SkeletonFrame, StepResult, HandPath, HandCountCheck } from '../../core/models/sign.model';
 import { environment } from '../../../environments/environment';
 
 type Screen = 'intro' | 'preview' | 'ready' | 'record';
@@ -462,7 +462,7 @@ const CHECK_HOLD_MS = 1200;
                 <p class="text-xs text-ink-muted mb-4">Face and hands together, so you can see where the hands are relative to the face.</p>
               }
               @case ('metrics') {
-                <app-score-card [scores]="lastResult?.parameter_scores" />
+                <app-score-card [scores]="lastResult?.parameter_scores" [handCountLocal]="lastResult?.hand_count_match ?? null" [handCountCheck]="lastResult?.hand_count_check ?? null" />
                 @if (lastResult?.parameter_scores) {
                   <h4 class="text-xs font-semibold uppercase tracking-wider text-ink-faint mb-2">More checks</h4>
                 }
@@ -692,12 +692,16 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
         hint: !!p && p.match === false && p.reliable === false,
       };
     });
+    // The LLM hand-count check (measurements + key frames) beat our own check on the
+    // benchmark, so its answer replaces the local one once it arrives.
+    const llm = this.lastResult?.hand_count_check;
+    const llmVerdict = llm?.status === 'done' && (llm.verdict === 'same' || llm.verdict === 'different') ? llm.verdict : null;
     cards.push({
       name: 'Hand count',
-      match: this.lastResult?.hand_count_match ?? null,
-      why: '',
-      detail: '',
-      hint: this.lastResult?.hand_count_match === false && this.lastResult?.check_reliability?.['hand_count']?.reliable === false,
+      match: llmVerdict ? llmVerdict === 'same' : (this.lastResult?.hand_count_match ?? null),
+      why: llmVerdict === 'different' ? (llm?.note || '') : '',
+      detail: llmVerdict ? 'checked by AI against fluent signers' : '',
+      hint: !llmVerdict && this.lastResult?.hand_count_match === false && this.lastResult?.check_reliability?.['hand_count']?.reliable === false,
     });
     return cards;
   }
@@ -1301,6 +1305,14 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.lastResult = { ...this.lastResult, feedback: msg.feedback, feedback_source: msg.feedback_source };
       const i = this.chatMessages.map(m => m.coachingData?.attempt_number).lastIndexOf(msg.attempt_number);
       if (i >= 0) this.chatMessages[i] = { ...this.chatMessages[i], text: msg.feedback || this.chatMessages[i].text, coachingData: this.lastResult };
+    } else if (msg.type === 'hand_count_check') {
+      // The LLM's hand-count judgement for an attempt already shown; ignore it
+      // if a newer attempt has been recorded since.
+      if (!this.lastResult || msg.attempt_number !== this.lastResult.attempt_number) return;
+      const { type: _t, attempt_number: _n, ...check } = msg as unknown as HandCountCheck & { type: string; attempt_number: number };
+      this.lastResult = { ...this.lastResult, hand_count_check: check };
+      const i = this.chatMessages.map(m => m.coachingData?.attempt_number).lastIndexOf(msg.attempt_number);
+      if (i >= 0) this.chatMessages[i] = { ...this.chatMessages[i], coachingData: this.lastResult };
     } else if (msg.type === 'retry') {
       this.recordState = 'ready';
       this.pushChat({ role: 'system', text: msg.message || 'Please try the sign again.' });

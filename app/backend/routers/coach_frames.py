@@ -7,7 +7,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from auth.dependencies import get_current_user_ws
 from db.session import SessionLocal
-from services import coach_writer
+from services import coach_writer, hand_count_judge
 from services.attempts_service import record_attempt
 from services.coaching_session import CoachingSession
 from services.keypoint_service import keypoint_service
@@ -71,6 +71,19 @@ async def _send_ai_wording(websocket: WebSocket, target: str, description: str, 
         logger.info("AI wording not delivered (%s)", type(e).__name__)
 
 
+async def _send_hand_count_check(websocket: WebSocket, target: str, frames: list[str], keypoints: list[list[float]],
+                                 score: dict, attempt_number: int) -> None:
+    """Follow-up to a "coaching" message: hand count as judged by the LLM over
+    the measurements + key frames (the one part where it beat our own check
+    on the benchmark). Silent if the learner has left."""
+    result = await hand_count_judge.judge(target, frames, keypoints, score)
+    try:
+        await websocket.send_json({"type": "hand_count_check", "attempt_number": attempt_number, **result,
+                                   "reliability": hand_count_judge.llm_judge.HAND_COUNT_RELIABILITY})
+    except Exception as e:  # noqa: BLE001
+        logger.info("hand-count check not delivered (%s)", type(e).__name__)
+
+
 @router.websocket("/ws/coach-frames")
 async def coach_from_frames(websocket: WebSocket) -> None:
     with SessionLocal() as auth_db:
@@ -85,6 +98,9 @@ async def coach_from_frames(websocket: WebSocket) -> None:
     keypoint_buffer: list[list[float]] = []
     frame_size: tuple[int, int] | None = None
     face_buffer: list[dict | None] = []
+    # The recorded frames themselves (base64 JPEG, aligned with keypoint_buffer),
+    # kept only for the LLM hand-count check's key frames.
+    frame_buffer: list[str] = []
     # Chat context: the last coaching message shown, and recent turns.
     last_feedback: str | None = None
     chat_history: list[dict] = []
@@ -127,6 +143,8 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 kp = keypoint_service.extract_from_base64(b64)
                 frame_size = getattr(keypoint_service, "last_frame_size", None) or frame_size
                 keypoint_buffer.append(kp)
+                if len(frame_buffer) < hand_count_judge.MAX_FRAMES:
+                    frame_buffer.append(b64)
                 # Always extracted alongside pose/hands -- simpler than a
                 # separate "which step is active" protocol message, at the
                 # cost of one extra model pass per frame. Revisit if that
@@ -149,6 +167,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 # covers exactly the recorded clip -- not the prep screen or
                 # countdown frames that otherwise accumulate here.
                 keypoint_buffer = []
+                frame_buffer = []
                 face_buffer = []
 
             elif msg_type == "check_group":
@@ -170,6 +189,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                         results[st] = {"applicable": True, **params.get(st, {"target": None, "yours": None, "match": None})}
                 await websocket.send_json({"type": "group_result", "steps": steps, "results": results})
                 keypoint_buffer = []
+                frame_buffer = []
                 face_buffer = []
 
             elif msg_type == "check_step":
@@ -224,6 +244,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                             **step_result,
                         })
                     keypoint_buffer = []
+                    frame_buffer = []
 
                 else:
                     await websocket.send_json({"type": "error", "message": f"Unknown step '{step}'."})
@@ -267,7 +288,9 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 looks_like = score.get("looks_like")
                 looks_like_skeleton = model_service.get_reference_skeleton(looks_like) if looks_like else None
                 charts = model_service.get_attempt_charts(keypoint_buffer, face_buffer, target_sign)
+                attempt_frames, attempt_keypoints = frame_buffer, keypoint_buffer
                 keypoint_buffer = []
+                frame_buffer = []
                 face_buffer = []
 
                 if score["embedding_similarity"] is None and not score["notes"]:
@@ -277,6 +300,9 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                         "visible and try the sign again.",
                     })
                     continue
+
+                # LLM hand-count check: only for graded attempts of signs with reference rows
+                check_hands = score["embedding_similarity"] is not None and hand_count_judge.available_for(target_sign)
 
                 prediction_label = score["coarse_prediction"] or "unknown"
                 prediction_confidence = score["coarse_confidence"] or 0.0
@@ -319,6 +345,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                     "hand_count_match": score["hand_count_match"],
                     "parameters": score["parameters"],
                     "parameter_scores": score.get("parameter_scores"),
+                    "hand_count_check": {"status": "pending"} if check_hands else None,
                     "attempt_skeleton_raw": attempt_skeletons["raw"],
                     "attempt_skeleton_canonical": attempt_skeletons["canonical"],
                     "attempt_mirrored": attempt_skeletons["mirrored"],
@@ -352,6 +379,9 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 })
                 if coach_writer.ai_enabled():
                     asyncio.create_task(_send_ai_wording(websocket, target_sign, description, score, coaching.attempts))
+                if check_hands:
+                    asyncio.create_task(_send_hand_count_check(websocket, target_sign, attempt_frames, attempt_keypoints,
+                                                               score, coaching.attempts))
 
             elif msg_type == "chat":
                 user_text = data.get("text", "")
@@ -374,6 +404,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
             elif msg_type == "change_target":
                 coaching.target_sign = data.get("target_sign", "")
                 keypoint_buffer = []
+                frame_buffer = []
                 face_buffer = []
                 supported = not coaching.target_sign or _is_supported(coaching.target_sign)
                 message = (

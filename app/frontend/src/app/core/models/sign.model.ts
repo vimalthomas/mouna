@@ -159,6 +159,8 @@ export interface CoachingMessage {
   /** v4: per check, how it scored on the judgement benchmark. */
   check_reliability?: Record<string, { false_alarm: number | null; catches: number | null; reliable: boolean }>;
   parameter_scores?: Record<string, ParameterScore> | null;
+  /** v4: hand count judged by the LLM over measurements + key frames; arrives later as "hand_count_check". */
+  hand_count_check?: HandCountCheck | null;
   charts?: AttemptCharts | null;
   /** False when the sign has no reference recording, so nothing was compared. */
   graded?: boolean;
@@ -279,4 +281,14 @@ export interface ParameterScore {
   cp_worst: string | null;
   ratio?: number;
   n_fluent?: number;
+}
+
+/** Hand count as judged by the LLM over the measurements and key frames
+ * (app/backend/services/hand_count_judge.py). Benchmark: catches 76%, false alarms on correct 5%. */
+export interface HandCountCheck {
+  status: 'pending' | 'done' | 'unavailable';
+  verdict?: 'same' | 'different' | 'unsure';
+  note?: string;
+  model?: string;
+  reliability?: { catches: number; false_alarm: number; false_alarm_other_signs: number; n_correct: number };
 }

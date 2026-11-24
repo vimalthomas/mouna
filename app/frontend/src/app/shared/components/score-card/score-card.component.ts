@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ParameterScore } from '../../../core/models/sign.model';
+import { HandCountCheck, ParameterScore } from '../../../core/models/sign.model';
 
 const ORDER = ['handshape', 'location', 'orientation', 'movement', 'nonmanual'];
 const LEVEL: Record<string, string> = { fluent: 'Fluent', close: 'Close', needs_work: 'Needs work' };
@@ -16,7 +16,7 @@ const CP_WORDS: Record<string, string> = {
   selector: 'app-score-card',
   standalone: true,
   template: `
-    @if (rows.length) {
+    @if (rows.length || hand) {
       <div class="rounded-xl border border-border/60 divide-y divide-border/50 mb-3">
         @for (r of rows; track r.key) {
           <div class="px-4 py-3">
@@ -43,17 +43,56 @@ const CP_WORDS: Record<string, string> = {
             }
           </div>
         }
+        @if (hand; as h) {
+          <div class="px-4 py-3">
+            <div class="grid items-center gap-3" style="grid-template-columns: minmax(110px, 150px) 104px 1fr auto">
+              <span class="text-sm font-semibold text-ink">Hand count</span>
+              <span class="flex items-center gap-1.5 text-xs font-semibold" [class]="h.cls">
+                <span class="w-2.5 h-2.5 rounded-full border-2 border-current" [class.bg-current]="h.match === true"
+                  [class.border-dashed]="h.match === null"></span>
+                {{ h.text }}
+              </span>
+              <span></span>
+              <span class="text-[11px]" [class]="h.trusted ? 'text-emerald-500 font-semibold' : 'text-ink-faint'"
+                [title]="h.trusted ? 'Checked by AI with your video next to two fluent signers; passed the held-out benchmark' : 'Our own estimate: not yet reliable on the held-out benchmark'">
+                {{ h.match === null ? '' : (h.trusted ? 'trusted' : 'estimate') }}</span>
+            </div>
+            @if (h.line) { <p class="mt-1.5 text-[13px] text-ink-muted">{{ h.line }}</p> }
+          </div>
+        }
       </div>
       <p class="text-[11px] text-ink-faint mb-4">
         Each part is compared with fluent signers of this sign (the joint angles of your hand, where it is next to your face and body,
-        and the path it takes over time). "Estimate" means the score hasn't yet passed our accuracy test, so treat it as a hint.
+        and the path it takes over time). Hand count is checked by AI, which looks at frames of your attempt next to two fluent signers
+        along with these measurements; in testing it caught 76% of wrong hand counts and flagged 5% of correct signing. "Estimate" means the score hasn't yet passed our accuracy test, so treat it as a hint.
       </p>
     }
   `,
 })
 export class ScoreCardComponent {
   @Input() scores: Record<string, ParameterScore> | null | undefined = null;
+  @Input() handCountLocal: boolean | null = null;
+  @Input() handCountCheck: HandCountCheck | null = null;
   readonly levels = LEVEL;
+
+  /** Hand count: the AI's answer when it has one, else our own check (an estimate). */
+  get hand(): { text: string; cls: string; match: boolean | null; trusted: boolean; line: string } | null {
+    const c = this.handCountCheck;
+    const local = this.handCountLocal;
+    if (!c && local === null) return null;
+    const ai = c?.status === 'done' && (c.verdict === 'same' || c.verdict === 'different') ? c.verdict : null;
+    const match = ai ? ai === 'same' : local;
+    const pending = c?.status === 'pending';
+    let line = '';
+    if (ai === 'different') line = c?.note || 'The number of hands you used differs from fluent signers.';
+    else if (pending) line = 'Checking with AI against fluent signers…';
+    else if (!ai && c) line = "The AI check couldn't run this time, so this is our own estimate.";
+    return {
+      text: match === null ? 'Not measured' : match ? 'Matches' : 'Different',
+      cls: match === null ? 'text-ink-faint' : match ? 'text-emerald-500' : 'text-rose-500',
+      match, trusted: !!ai, line,
+    };
+  }
 
   get rows(): { key: string; p: ParameterScore; lines: string[] }[] {
     const s = this.scores;

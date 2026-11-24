@@ -33,60 +33,8 @@ import llm_vision_judge as V  # noqa: E402  (loads settings, chdirs to ROOT)
 sys.argv = _argv
 OUT = V.OUT
 PARTS = V.PARTS
-CP_WORDS = {"palm_x": "palm facing sideways", "palm_y": "palm facing up/down", "palm_z": "palm facing toward/away",
-            "finger_thumb": "thumb bend", "finger_index": "index finger bend", "finger_middle": "middle finger bend",
-            "finger_ring": "ring finger bend", "finger_little": "little finger bend", "thumb_out": "thumb position",
-            "loc_x": "hand side-to-side position", "loc_y": "hand height", "dir_x": "side-to-side motion",
-            "dir_y": "up-down motion", "strokes": "number of strokes", "travel": "size of movement", "gap": "hands touching"}
-
-PROMPT = """You judge an attempt at the American Sign Language sign "{sign}".
-Measurements compare the attempt with fluent signers of "{sign}" (not with one video).
-Each parameter has a level (fluent / close / needs_work), a 0-100 score, the
-measurements furthest outside the fluent range, and how trustworthy that score
-is on held-out data. Scores marked "estimate" are hints and can be wrong;
-tracking noise also produces small deviations in correct signing.
-
-{evidence}
-{image_note}
-Decide, per part, whether the attempt's part is DIFFERENT from how fluent signers
-do "{sign}" in a way that changes the sign:
-- handshape: fingers extended/bent, thumb position
-- orientation: which way the palm faces
-- location: where the hand is relative to face and body
-- hands: one or two hands used
-Say "different" only with clear support; "same" otherwise; "unsure" if the evidence is missing.
-Reply with JSON only:
-{{"handshape": "...", "orientation": "...", "location": "...", "hands": "...",
-  "how": "<for any 'different': what the attempt does instead, in a few words; else empty>"}}"""
-
-IMAGE_NOTE = """An image is attached. ROW 1 and ROW 2: two fluent signers doing "{sign}"; their
-differences are normal variation. ROW 3: the attempt. Use it together with the measurements."""
-
-
-def evidence_text(ps: dict, sim: float | None, hands_match, rel: dict) -> str:
-    lines = [f"Whole-sign similarity to fluent signers: {sim:.2f} (good >= 0.60)" if sim == sim and sim is not None else ""]
-    for p in ("handshape", "location", "orientation", "movement"):
-        e = ps.get(p) or {}
-        if not e.get("level"):
-            lines.append(f"- {e.get('label', p)}: not measured")
-            continue
-        trust = "trusted" if e.get("reliable") else "estimate"
-        r = rel.get(p)
-        if r:
-            trust += f"; on held-out signs it flags {r['test_false_alarm']:.0%} of correct signing and catches {r['test_catches']:.0%} of real differences"
-        s = f"- {e['label']}: {e['level']} (score {e['score']}; {trust})"
-        ev = e.get("evidence") or []
-        if ev:
-            s += "; furthest outside: " + "; ".join(
-                f"{x['dim']} {x['yours']}{'°' if x['unit'] == '°' else ''} vs fluent {x['fluent'][0]}-{x['fluent'][1]}{'°' if x['unit'] == '°' else ' shoulder widths'}"
-                for x in ev[:3])
-        elif e.get("cp_worst") and e["level"] != "fluent":
-            s += f"; worst measurement: {CP_WORDS.get(e['cp_worst'], e['cp_worst'])}"
-        lines.append(s)
-    if hands_match is not None:
-        lines.append(f"- Hand count: {'matches' if hands_match else 'differs from'} what fluent signers use (an estimate; flags about 22% of correct signing)")
-    lines.append("- Facial expression: not measured")
-    return "\n".join(x for x in lines if x)
+# prompt, image note and evidence wording live in the app's module, so app and benchmark can't drift
+from mouna.coach.llm_judge import CP_WORDS, IMAGE_NOTE, PROMPT, evidence_text  # noqa: E402,F401
 
 
 def ask(client, types, prompt: str, img: bytes | None) -> dict | None:

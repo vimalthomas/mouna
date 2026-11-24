@@ -116,7 +116,7 @@ def main() -> None:
     from mouna.coach.param_scores import _refs, parameter_scores
     from mouna.data.handedness import canonicalize_handedness
     client = genai.Client(api_key=V.settings.gemini_api_key,
-                          http_options=types.HttpOptions(timeout=30000, retry_options=types.HttpRetryOptions(attempts=1)))
+                          http_options=types.HttpOptions(timeout=90000, retry_options=types.HttpRetryOptions(attempts=1)))
     raw = load_raw_lookup()
     sizes = json.loads((ROOT / "data/references/video_sizes.json").read_text())
     rel = _refs()["calibration"]
@@ -168,9 +168,9 @@ def main() -> None:
                         **ours, **{f"llm_{k}": ans[k] for k in PARTS}, "llm_note": ans["note"], "llm_model": ans["model"],
                         "evidence": ev})
             time.sleep(1.0)
-        if (i + 1) % 20 == 0:
-            print(f"  {i + 1}/{len(base)}", flush=True)
-            pd.DataFrame(out).to_csv(part_file, index=False)
+        pd.DataFrame(out).to_csv(part_file, index=False)      # every attempt: a stop loses nothing
+        if (i + 1) % 10 == 0:
+            print(f"  {i + 1}/{len(base)}  {time.strftime('%H:%M')}", flush=True)
     res = pd.DataFrame(out)
     res.to_csv(OUT / "llm_evidence_rows.csv", index=False)
     for arm in res.arm.unique():

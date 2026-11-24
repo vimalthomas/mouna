@@ -48,3 +48,21 @@ Pronouns are pointing (index handshape + direction): our vectors already measure
 3. LLM stories (checked by code), guided sign-by-sign practice.
 4. Whole-sentence grading, only after it passes the benchmark.
 5. Alphabet: single letters, then spelled names ("MY NAME ___").
+
+## How it connects in the app (decided 2026-11-24)
+Learned words flow into Practice automatically, per account, no copying:
+1. **Learn → Practice, live**: `sign_progress` (per user) already records completion, and the
+   coaching result already carries `sign_completed`; the Practice tab's word list updates from it.
+2. **Story pool = that learner's completed signs** (that have 3D avatar data). Under ~5 learned
+   signs, Practice shows single-sign review and "learn N more to unlock stories". Optional: one
+   "stretch" sign still being practised, clearly marked.
+3. **Stories on the server**: backend calls Gemini, checks in code that every sign is learned,
+   saves stories per user so "another story" avoids recent ones (lab: `lab/stories/server.py`,
+   with a hard per-call time limit in a worker thread).
+4. **Sentence grading**: sign by sign through the existing `/ws/coach-frames` connection; new
+   `sentence_attempts` table (user, story, gloss, per-sign verdicts, all-good flag, time).
+5. **Dashboard**: Words (learned in Learn + how often signed well inside sentences) and
+   Sentences (practised stories, which were fully signed well), from the same account.
+6. **Sign SOP addition**: a new sign is only usable in stories once its 3D data exists
+   (`scripts/build_sign_skin.py <sign>`).
+Lab prototype: `~/mouna/mouna-lab/lab/stories/` (branch `lab/v5-stories`), http://127.0.0.1:8791/.

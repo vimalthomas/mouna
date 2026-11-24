@@ -10,6 +10,7 @@ import { SignSkinComponent } from '../../shared/components/sign-skin/sign-skin.c
 import { VideoBonesComponent } from '../../shared/components/video-bones/video-bones.component';
 import { LookPickerComponent } from '../../shared/components/look-picker/look-picker.component';
 import { AttemptChartsComponent } from '../../shared/components/attempt-charts/attempt-charts.component';
+import { ScoreCardComponent } from '../../shared/components/score-card/score-card.component';
 import { SignFrameComponent } from '../../shared/components/sign-frame/sign-frame.component';
 import { CoachSessionService } from '../../core/services/coach-session.service';
 import { SignsApiService } from '../../core/services/signs-api.service';
@@ -59,7 +60,7 @@ const CHECK_HOLD_MS = 1200;
 @Component({
   selector: 'app-coach',
   standalone: true,
-  imports: [CameraViewComponent, SkeletonCompareComponent, Hand3dComponent, SignSkinComponent, VideoBonesComponent, LookPickerComponent, AttemptChartsComponent, SignFrameComponent, FormsModule],
+  imports: [CameraViewComponent, SkeletonCompareComponent, Hand3dComponent, SignSkinComponent, VideoBonesComponent, LookPickerComponent, AttemptChartsComponent, SignFrameComponent, ScoreCardComponent, FormsModule],
   template: `
     <div class="max-w-7xl mx-auto" [style.paddingRight]="showChat ? '380px' : '0'">
 
@@ -402,7 +403,7 @@ const CHECK_HOLD_MS = 1200;
               </div>
             }
 
-            <!-- tabs: Video / Hands / Face / Motion / Metrics -->
+            <!-- tabs: Video / Hands / Face / Motion / Score -->
             <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
               <div class="flex items-center gap-1 rounded-full bg-surface-sunk border border-border/50 p-1" role="tablist">
                 @for (t of feedbackTabs; track t.id) {
@@ -461,6 +462,10 @@ const CHECK_HOLD_MS = 1200;
                 <p class="text-xs text-ink-muted mb-4">Face and hands together, so you can see where the hands are relative to the face.</p>
               }
               @case ('metrics') {
+                <app-score-card [scores]="lastResult?.parameter_scores" />
+                @if (lastResult?.parameter_scores) {
+                  <h4 class="text-xs font-semibold uppercase tracking-wider text-ink-faint mb-2">More checks</h4>
+                }
                 @if (lastResult?.charts) {
                   <div class="mb-4"><app-attempt-charts [charts]="lastResult?.charts ?? null" /></div>
                 }
@@ -608,7 +613,7 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
     { id: 'hands', label: 'Hands' },
     { id: 'face', label: 'Face' },
     { id: 'motion', label: 'Motion' },
-    { id: 'metrics', label: 'Metrics' },
+    { id: 'metrics', label: 'Score' },
   ];
   /** Video tab: draw each person's tracked skeleton on their own video. */
   showMyBones = true;

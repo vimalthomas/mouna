@@ -88,6 +88,7 @@ def score_attempt(
     model,
     idx_to_label: Optional[dict] = None,
     reference_bucket_index: Optional[dict] = None,
+    frame_size: Optional[tuple[int, int]] = None,
 ) -> dict:
     """Score a live attempt's RAW (pre-canonicalization) keypoints against
     `target_word`'s reference.
@@ -317,6 +318,8 @@ def score_attempt(
         "embedding_similarity": embedding_similarity,
         "check_reliability": reliability,
         "cp_findings": cp_findings(canon, target_word, reliability),
+        # the five parameters scored against fluent signers (vectors + CPs), for the Score tab
+        "parameter_scores": _parameter_scores(canon, target_word, frame_size),
         # why it looked like another sign: only when it wasn't judged good and the recognizer
         # confidently saw a different sign (both gates keep correct signers from hearing it)
         "confusion": confusion_cause(canon, target_word, coarse_prediction, coarse_confidence)
@@ -328,6 +331,18 @@ def score_attempt(
         "overall_verdict": verdict,
         "notes": notes,
     }
+
+
+def _parameter_scores(canon: np.ndarray, target_word: str, frame_size) -> dict | None:
+    """Never lets the score page break grading."""
+    try:
+        from mouna.coach.param_scores import parameter_scores
+        w, h = frame_size or (640, 480)
+        return parameter_scores(canon, target_word, int(w), int(h))
+    except Exception:  # noqa: BLE001
+        import logging
+        logging.getLogger(__name__).exception("parameter scores failed")
+        return None
 
 
 _PROFILES: dict | None = None

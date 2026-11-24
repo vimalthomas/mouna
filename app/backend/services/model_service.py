@@ -189,7 +189,7 @@ class ModelService:
             inference_time_ms=round(elapsed, 2),
         )
 
-    def score_against_target(self, keypoints: list[list[float]], target_word: str) -> dict:
+    def score_against_target(self, keypoints: list[list[float]], target_word: str, frame_size: tuple[int, int] | None = None) -> dict:
         """Teach/correct scoring: compare a live attempt against a known
         target sign's reference instead of guessing from scratch. This is
         the "coach angle" -- see src/mouna/coach/compare.py for the full
@@ -202,7 +202,8 @@ class ModelService:
                 "overall_verdict": "needs_work", "notes": ["Model not loaded."],
             }
         raw = np.array(keypoints, dtype=np.float32)
-        return score_attempt(raw, target_word, self.references, self.model, self.idx_to_label, self.reference_bucket_index)
+        return score_attempt(raw, target_word, self.references, self.model, self.idx_to_label, self.reference_bucket_index,
+                             frame_size=frame_size)
 
     def get_reference_buckets(self, target_word: str) -> dict | None:
         """Reference-only bucket classification (handshape/location/

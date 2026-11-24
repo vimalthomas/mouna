@@ -83,6 +83,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
     session_id = str(uuid.uuid4())
     coaching = CoachingSession(session_id=session_id, user_id=user.id)
     keypoint_buffer: list[list[float]] = []
+    frame_size: tuple[int, int] | None = None
     face_buffer: list[dict | None] = []
     # Chat context: the last coaching message shown, and recent turns.
     last_feedback: str | None = None
@@ -124,6 +125,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                     continue
 
                 kp = keypoint_service.extract_from_base64(b64)
+                frame_size = getattr(keypoint_service, "last_frame_size", None) or frame_size
                 keypoint_buffer.append(kp)
                 # Always extracted alongside pose/hands -- simpler than a
                 # separate "which step is active" protocol message, at the
@@ -158,7 +160,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 if len(keypoint_buffer) < 5:
                     await websocket.send_json({"type": "group_result", "steps": steps, "results": {}, "message": "Need more frames"})
                     continue
-                score = model_service.score_against_target(keypoint_buffer, target_sign)
+                score = model_service.score_against_target(keypoint_buffer, target_sign, frame_size)
                 params = score.get("parameters") or {}
                 results = {}
                 for st in steps:
@@ -212,7 +214,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                         })
                         continue
                     else:
-                        score = model_service.score_against_target(keypoint_buffer, target_sign)
+                        score = model_service.score_against_target(keypoint_buffer, target_sign, frame_size)
                         if step == "hand_count":
                             step_result = {"match": score["hand_count_match"]}
                         else:
@@ -240,7 +242,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                 # Teach/correct scoring: compare against the KNOWN target's
                 # reference (embedding similarity + hand-count), not a 1-of-100
                 # guess. See src/mouna/coach/compare.py for the full reasoning.
-                score = model_service.score_against_target(keypoint_buffer, target_sign)
+                score = model_service.score_against_target(keypoint_buffer, target_sign, frame_size)
 
                 # Skeleton comparison needs the raw attempt buffer -- compute it
                 # BEFORE clearing, not after (this used to discard the buffer
@@ -316,6 +318,7 @@ async def coach_from_frames(websocket: WebSocket) -> None:
                     "embedding_similarity": score["embedding_similarity"],
                     "hand_count_match": score["hand_count_match"],
                     "parameters": score["parameters"],
+                    "parameter_scores": score.get("parameter_scores"),
                     "attempt_skeleton_raw": attempt_skeletons["raw"],
                     "attempt_skeleton_canonical": attempt_skeletons["canonical"],
                     "attempt_mirrored": attempt_skeletons["mirrored"],

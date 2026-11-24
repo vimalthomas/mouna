@@ -158,6 +158,7 @@ export interface CoachingMessage {
   attempt_skin?: SkinData | null;
   /** v4: per check, how it scored on the judgement benchmark. */
   check_reliability?: Record<string, { false_alarm: number | null; catches: number | null; reliable: boolean }>;
+  parameter_scores?: Record<string, ParameterScore> | null;
   charts?: AttemptCharts | null;
   /** False when the sign has no reference recording, so nothing was compared. */
   graded?: boolean;
@@ -265,4 +266,17 @@ export interface SignCatalogEntry {
   /** On ASL-CDI 2.0 and ASL-LEX frequency >= 5.0. */
   essential: boolean;
   in_model_vocab: boolean;
+}
+
+/** One of the five parameters, scored against fluent signers (src/mouna/coach/param_scores.py). */
+export interface ParameterScore {
+  label: string;
+  level: 'fluent' | 'close' | 'needs_work' | null;
+  score: number | null;
+  reliable: boolean;
+  method: 'vector+cp' | 'cp' | 'none';
+  evidence: { dim: string; yours: number; fluent: [number, number]; outside: number; unit: string }[];
+  cp_worst: string | null;
+  ratio?: number;
+  n_fluent?: number;
 }

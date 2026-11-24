@@ -98,6 +98,9 @@ class KeypointService:
             if frame is None:
                 return [0.0] * 225
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # width x height of the last decoded frame: points are fractions of
+            # these, and the score page measures angles in true proportions
+            self.last_frame_size = (int(frame.shape[1]), int(frame.shape[0]))
             return self._extract(rgb)
         except Exception:
             logger.exception("Frame extraction error")

@@ -20,9 +20,14 @@ cosine similarity.
 
 from typing import Optional
 
+import json
+from pathlib import Path
+
 import numpy as np
 import torch
 
+from mouna.coach.reliability import check_reliability
+from mouna.coach import cp_profile
 from mouna.coach.parameters import compare_discrete, extract_dominant_hand_signal, find_divergent_frame
 from mouna.data.handedness import canonicalize_handedness, detect_dominant_hand
 from mouna.data.part_normalize import normalize_per_part
@@ -83,6 +88,7 @@ def score_attempt(
     model,
     idx_to_label: Optional[dict] = None,
     reference_bucket_index: Optional[dict] = None,
+    frame_size: Optional[tuple[int, int]] = None,
 ) -> dict:
     """Score a live attempt's RAW (pre-canonicalization) keypoints against
     `target_word`'s reference.
@@ -248,6 +254,10 @@ def score_attempt(
     # self-test notes). So embedding_similarity against the KNOWN target,
     # together with hand_count_match, is the whole verdict signal.
     notes: list[str] = []
+    reliability = check_reliability()
+    if parameters:
+        for name, result in parameters.items():
+            result["reliable"] = reliability.get(name, {}).get("reliable", True)
 
     if embedding_similarity >= GOOD_SIMILARITY_THRESHOLD:
         verdict = "good"
@@ -276,13 +286,11 @@ def score_attempt(
             f"used {'two hands' if attempt_count == 'two' else ('one hand' if attempt_count == 'one' else 'no detected hand')}, "
             f"this sign typically uses {'two hands' if reference_count == 'two' else ('one hand' if reference_count == 'one' else 'a hand')}."
         )
-        # A real hand-count mismatch is a structural error, not noise -- it
-        # should never let a verdict stay at "good". It does not escalate
-        # "needs_work" further down to "wrong_sign" on its own, though,
-        # since embedding_similarity already accounts for the bulk of the
-        # signal and a hand-count slip can still be a recognizable, close
-        # attempt at the right sign.
-        if verdict == "good":
+        # A hand-count mismatch blocks a "good" verdict only when the check is
+        # measured as reliable (mouna.coach.reliability). Benchmark: it wrongly
+        # flagged 22% of correct signing, which alone graded 1 in 5 correct
+        # attempts "needs work" -- so until it improves it's only a hint.
+        if verdict == "good" and reliability["hand_count"]["reliable"]:
             verdict = "needs_work"
 
     if coarse_prediction != target_word:
@@ -294,7 +302,7 @@ def score_attempt(
 
     if parameters:
         for name, result in parameters.items():
-            if result["match"] is False and result.get("why"):
+            if result["match"] is False and result.get("why") and result.get("reliable", True):
                 notes.append(result["why"])
 
     if looks_like:
@@ -308,6 +316,14 @@ def score_attempt(
         "coarse_prediction": coarse_prediction,
         "coarse_confidence": coarse_confidence,
         "embedding_similarity": embedding_similarity,
+        "check_reliability": reliability,
+        "cp_findings": cp_findings(canon, target_word, reliability),
+        # the five parameters scored against fluent signers (vectors + CPs), for the Score tab
+        "parameter_scores": _parameter_scores(canon, target_word, frame_size),
+        # why it looked like another sign: only when it wasn't judged good and the recognizer
+        # confidently saw a different sign (both gates keep correct signers from hearing it)
+        "confusion": confusion_cause(canon, target_word, coarse_prediction, coarse_confidence)
+        if verdict != "good" else None,
         "hand_count_match": hand_count_match,
         "parameters": parameters,
         "divergent_frames": divergent_frames,
@@ -315,3 +331,55 @@ def score_attempt(
         "overall_verdict": verdict,
         "notes": notes,
     }
+
+
+def _parameter_scores(canon: np.ndarray, target_word: str, frame_size) -> dict | None:
+    """Never lets the score page break grading."""
+    try:
+        from mouna.coach.param_scores import parameter_scores
+        w, h = frame_size or (640, 480)
+        return parameter_scores(canon, target_word, int(w), int(h))
+    except Exception:  # noqa: BLE001
+        import logging
+        logging.getLogger(__name__).exception("parameter scores failed")
+        return None
+
+
+_PROFILES: dict | None = None
+_FAMILY = {"handshape": "fingers", "location": "location_profile", "movement": "movement_profile"}
+
+
+def cp_findings(canon: np.ndarray, target_word: str, reliability: dict) -> list[dict]:
+    """The learner's own CPs vs the range fluent signers use for this sign
+    (mouna.coach.cp_profile): what specifically differs, each marked reliable
+    or not by the judgement benchmark."""
+    global _PROFILES
+    if _PROFILES is None:
+        try:
+            _PROFILES = json.loads((Path(__file__).resolve().parents[3] / "data/references/cp_profiles.json").read_text())
+        except (OSError, ValueError):
+            _PROFILES = {}
+    prof = _PROFILES.get(target_word)
+    feats = cp_profile.features(canon) if prof else None
+    if not feats:
+        return []
+    out = []
+    for f in cp_profile.compare(feats, prof, target_word):
+        fam = _FAMILY.get(f["part"], "movement_profile")
+        out.append({**f, "reliable": bool(reliability.get(fam, {}).get("reliable", False))})
+    return out
+
+
+def confusion_cause(canon: np.ndarray, target_word: str, other: str | None, confidence: float | None) -> dict | None:
+    """The learner's CP that made the attempt look like the recognizer's guess
+    (mouna.coach.cp_profile.explain_confusion), e.g. PAPER signed like SCHOOL:
+    'Your hand moved mostly up and down like SCHOOL; PAPER slides more side to side.'"""
+    if not other or other == target_word or (confidence or 0) < 0.4:
+        return None
+    cp_findings(canon, target_word, {})          # loads the profiles
+    pt, po = (_PROFILES or {}).get(target_word), (_PROFILES or {}).get(other)
+    feats = cp_profile.features(canon) if pt and po else None
+    if not feats:
+        return None
+    ex = cp_profile.explain_confusion(feats, pt, po, target_word, other)
+    return {"looks_like": other, **ex[0]} if ex else None

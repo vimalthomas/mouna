@@ -13,10 +13,12 @@ flipped for display.
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
 
-from mouna.skin.pipeline import _tracks, fill_gaps, fix_bones, smooth, drop_jumps
+from mouna.skin.pipeline import _tracks, fill_gaps, fix_bones, smooth, drop_jumps, steady_shape
 
 WIDTH, HEIGHT, FPS = 640, 480, 10.0   # camera-view.component captures 640x480 every 100 ms
-SETTINGS = {"jump": 0.8, "max_gap": 2, "sigma": 0.8, "fast": 0.3, "face_sigma": 0.7}
+# shape_*: finger-shape clean-up (pipeline.steady_shape); on 8 webcam clips at 10 fps it cut frame steps with a
+# >25 deg joint jump from 34% to 12.5% and one-frame spikes from 8 to 1 (mean change from tracked 6 deg).
+SETTINGS = {"jump": 0.8, "max_gap": 2, "sigma": 0.8, "fast": 0.3, "face_sigma": 0.7, "shape_median": 3, "shape_sigma": 1.0}
 
 
 def _r(a) -> list:
@@ -41,7 +43,8 @@ def attempt_skin(keypoints: list[list[float]], face_frames: list[dict | None] | 
                 hs.append((img, img.copy()))
         hands_by_frame.append(hs)
     s = SETTINGS
-    tracks = [fix_bones(smooth(fill_gaps(drop_jumps(t, s["jump"]), s["max_gap"]), s["sigma"], s["fast"]))
+    tracks = [fix_bones(steady_shape(smooth(fill_gaps(drop_jumps(t, s["jump"]), s["max_gap"]), s["sigma"], s["fast"]),
+                                     s["shape_median"], s["shape_sigma"]))
               for t in _tracks(hands_by_frame)]
 
     # face mesh with depth, lightly smoothed over the frames where it was found

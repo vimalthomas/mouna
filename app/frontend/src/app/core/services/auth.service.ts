@@ -56,6 +56,13 @@ export class AuthService {
       .pipe(tap(user => this.userSubject.next(user)));
   }
 
+  /** v5 Profile: change name / dominant hand. */
+  updateMe(patch: Partial<Pick<UserProfile, 'name' | 'dominant_hand'>>): Observable<UserProfile> {
+    return this.http
+      .patch<UserProfile>(`${this.baseUrl}/users/me`, patch)
+      .pipe(tap(user => this.userSubject.next(user)));
+  }
+
   logout(): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);

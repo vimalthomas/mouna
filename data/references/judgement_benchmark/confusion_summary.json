@@ -1,0 +1,7 @@
+{
+  "wrong_attempts": 905,
+  "named_a_part": 0.735,
+  "named_part_really_differs": 0.934,
+  "false_claim_on_correct": 0.241,
+  "n_correct_checks": 1550
+}

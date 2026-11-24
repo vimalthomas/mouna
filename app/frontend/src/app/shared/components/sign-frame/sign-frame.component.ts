@@ -28,11 +28,11 @@ const HAND_COLORS = ['#F48C77', '#75B4B4'];
       @if (src) {
         <video #videoRef [src]="src" [muted]="true" playsinline preload="auto"
           [autoplay]="phase === 'live'" [loop]="false"
-          class="absolute inset-0 w-full h-full object-fill"
+          class="absolute inset-0 w-full h-full object-fill" [style.transform]="mirror ? 'scaleX(-1)' : null"
           (loadedmetadata)="onMeta()" (timeupdate)="onTime()"></video>
       }
       @if (vw && paths.length) {
-        <svg class="absolute inset-0 w-full h-full pointer-events-none" [attr.viewBox]="'0 0 ' + vw + ' ' + vh" preserveAspectRatio="none" aria-hidden="true">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" [style.transform]="mirror ? 'scaleX(-1)' : null" [attr.viewBox]="'0 0 ' + vw + ' ' + vh" preserveAspectRatio="none" aria-hidden="true">
           @for (p of drawn; track $index) {
             <!-- faint full path (where the hand will go) -->
             @if (p.faint.length > 1) {
@@ -54,7 +54,8 @@ const HAND_COLORS = ['#F48C77', '#75B4B4'];
             @if (p.stillRing) {
               <circle [attr.cx]="p.stillRing[0]" [attr.cy]="p.stillRing[1]" [attr.r]="sw * 7" fill="none" stroke="rgba(0,0,0,0.45)" [attr.stroke-width]="sw * 2" />
               <circle [attr.cx]="p.stillRing[0]" [attr.cy]="p.stillRing[1]" [attr.r]="sw * 7" fill="none" [attr.stroke]="p.color" [attr.stroke-width]="sw * 1.1" [attr.stroke-dasharray]="(sw * 2) + ' ' + (sw * 1.4)" />
-              <text [attr.x]="p.stillRing[0]" [attr.y]="p.stillRing[1] - sw * 9" text-anchor="middle" [attr.font-size]="sw * 4.2" font-family="system-ui, sans-serif" font-weight="600" fill="white" stroke="rgba(0,0,0,0.55)" [attr.stroke-width]="sw * 0.9" paint-order="stroke">stays here</text>
+              <text [attr.x]="p.stillRing[0]" [attr.y]="p.stillRing[1] - sw * 9" text-anchor="middle" [attr.font-size]="sw * 4.2" font-family="system-ui, sans-serif" font-weight="600" fill="white" stroke="rgba(0,0,0,0.55)" [attr.stroke-width]="sw * 0.9" paint-order="stroke"
+                [attr.transform]="mirror ? 'translate(' + (2 * p.stillRing[0]) + ',0) scale(-1,1)' : null">stays here</text>
             }
             @if (p.dot) {
               <circle [attr.cx]="p.dot[0]" [attr.cy]="p.dot[1]" [attr.r]="sw * 2.6" [attr.fill]="p.color" stroke="white" [attr.stroke-width]="sw * 0.8" />
@@ -74,6 +75,8 @@ export class SignFrameComponent implements AfterViewInit, OnDestroy {
   @Input() phase: Phase = 'full';
   @Input() label = '';
   @Input() playbackRate = 1;
+  /** v5: show the signer mirrored (for left-handed learners), overlay included; text stays readable. */
+  @Input() mirror = false;
 
   @ViewChild('videoRef') private videoRef?: ElementRef<HTMLVideoElement>;
   private cdr = inject(ChangeDetectorRef);

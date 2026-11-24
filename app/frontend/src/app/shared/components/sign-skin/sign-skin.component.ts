@@ -7,7 +7,7 @@ import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js'
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { environment } from '../../../../environments/environment';
-import { SkinData } from '../../../core/models/sign.model';
+import { SkinData, SkinFrame } from '../../../core/models/sign.model';
 import { AvatarLook, AvatarLookService } from '../../../core/services/avatar-look.service';
 
 // palm points (wrist, thumb base, knuckles)
@@ -118,6 +118,10 @@ export class SignSkinComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() aspect = '4/3';
   @Input() emptyText = 'Nothing to show in 3D for this one.';
   @Output() available = new EventEmitter<boolean>();
+  /** v5: the frame being shown (whole frames only, emitted when it changes) -- e.g. to highlight
+   * which sign of a sentence is playing. */
+  @Output() position = new EventEmitter<number>();
+  private lastEmitted = -1;
   @ViewChild('canvasRef') private canvasRef!: ElementRef<HTMLCanvasElement>;
 
   state: 'loading' | 'ready' | 'none' | 'error' = 'loading';
@@ -181,6 +185,9 @@ export class SignSkinComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.hands.forEach(h => { h.palm.geometry.dispose(); h.fingers.forEach(f => f.geometry.dispose()); });
     this.faceGeo.dispose();
   }
+
+  /** Play from the start again (own clock only). */
+  restart(): void { this.clockStart = performance.now(); }
 
   resetView(): void {
     const b = this.frameBox, dist = b.size * (this.show === 'all' ? 2.1 : 2.3);
@@ -327,14 +334,24 @@ export class SignSkinComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (n.z < 0) n.negate();   // face normal, toward the viewer
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
     for (const e of this.eyes) {
-      const w = F[e.corners[0]].distanceTo(F[e.corners[1]]);
-      const c = F[e.ring[0]];
-      const ir = e.ring.slice(1).reduce((s, k) => s + F[k].distanceTo(c), 0) / 4 || w * 0.2;
+      const a = F[e.corners[0]], b = F[e.corners[1]];
+      const w = a.distanceTo(b);
+      const mid = a.clone().add(b).multiplyScalar(0.5);
+      // iris centre, kept inside the eye opening (noisy webcam tracking can throw it outside)
+      const c = F[e.ring[0]].clone();
+      const off = c.clone().sub(mid);
+      if (off.length() > w * 0.25) c.copy(mid).addScaledVector(off.normalize(), w * 0.25);
+      // iris radius from the tracked ring, held to a human range (about 0.2 eye widths);
+      // the raw ring jumps frame to frame on webcam video
+      const measured = e.ring.slice(1).reduce((s, k) => s + F[k].distanceTo(F[e.ring[0]]), 0) / 4;
+      const ir = Math.min(w * 0.24, Math.max(w * 0.17, measured || w * 0.2));
       const R = w * 0.58;
       e.ball.position.copy(c).addScaledVector(n, -R * 0.92);
       e.ball.scale.setScalar(R);
-      e.iris.position.copy(c).addScaledVector(n, R * 0.06); e.iris.quaternion.copy(q); e.iris.scale.setScalar(ir * 1.05);
-      e.pupil.position.copy(c).addScaledVector(n, R * 0.08); e.pupil.quaternion.copy(q); e.pupil.scale.setScalar(ir * 0.45);
+      // the eyeball's front is at +0.08 R: iris and pupil sit just in front of it (they used to be
+      // behind / exactly on it, so the iris hid inside the ball and the pupil flickered)
+      e.iris.position.copy(c).addScaledVector(n, R * 0.11); e.iris.quaternion.copy(q); e.iris.scale.setScalar(ir);
+      e.pupil.position.copy(c).addScaledVector(n, R * 0.125); e.pupil.quaternion.copy(q); e.pupil.scale.setScalar(ir * 0.45);
     }
   }
 
@@ -499,14 +516,36 @@ export class SignSkinComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
   }
 
-  /** Frame to show: the followed video's current frame, or our own clock. */
-  private frameIndex(d: SkinData): number {
+  /** Position in the clip, in frames (fractional): the followed video's time, or our own clock. */
+  private framePos(d: SkinData): number {
     const fixed = new URLSearchParams(location.search).get('skinFrame');  // dev aid: hold one frame
     if (fixed !== null) return Math.min(d.n_frames - 1, Math.max(0, +fixed));
     const v = this.videoHost?.querySelector('video');
     const t = v && v.readyState >= 1 ? v.currentTime
       : ((performance.now() - this.clockStart) / 1000 * this.speed) % (d.n_frames / d.fps);
-    return Math.min(d.n_frames - 1, Math.max(0, Math.round(t * d.fps)));
+    return Math.min(d.n_frames - 1, Math.max(0, t * d.fps));
+  }
+
+  /** The frame as drawn at frame i (hands / face from the nearest frame that has them). */
+  private frameAt(d: SkinData, i: number): SkinFrame {
+    const fh = d.frames[this.nearHands[i] ?? i], ff = d.frames[this.nearFace[i] ?? i];
+    return { ...d.frames[i], h: fh.h, w: fh.w, f: ff.f, p: d.frames[i].p ?? fh.p ?? ff.p };
+  }
+
+  /** Blend two frames so playback moves smoothly between recorded frames (learner clips are only
+   * 10 fps). Parts present in only one of them are taken from the nearer frame. */
+  private blend(a: SkinFrame, b: SkinFrame, t: number): SkinFrame {
+    if (t <= 0.001) return a;
+    const mix = (x: number[][] | null | undefined, y: number[][] | null | undefined) =>
+      x && y && x.length === y.length ? x.map((p, k) => p.map((v, j) => v + (y[k][j] - v) * t)) : (t < 0.5 ? x : y) ?? null;
+    const near = t < 0.5 ? a : b;
+    return {
+      ...near,
+      h: [0, 1].map(k => mix(a.h[k], b.h[k])) as SkinFrame['h'],
+      w: [0, 1].map(k => mix(a.w?.[k], b.w?.[k])) as SkinFrame['w'],
+      p: mix(a.p, b.p) as SkinFrame['p'],
+      f: mix(a.f, b.f) as SkinFrame['f'],
+    };
   }
 
   private render(): void {
@@ -514,9 +553,9 @@ export class SignSkinComponent implements AfterViewInit, OnChanges, OnDestroy {
     const d = this.skin;
     const showFace = this.show !== 'hands', showHands = this.show !== 'face';
     if (d && this.faceMesh) {
-      const i = this.frameIndex(d);
-      const fh = d.frames[this.nearHands[i] ?? i], ff = d.frames[this.nearFace[i] ?? i];
-      const f = { ...d.frames[i], h: fh.h, w: fh.w, f: ff.f, p: d.frames[i].p ?? fh.p ?? ff.p };
+      const pos = this.framePos(d), i0 = Math.floor(pos), i1 = Math.min(d.n_frames - 1, i0 + 1);
+      if (i0 !== this.lastEmitted && this.position.observed) { this.lastEmitted = i0; this.zone.run(() => this.position.emit(i0)); }
+      const f = this.blend(this.frameAt(d, i0), this.frameAt(d, i1), pos - i0);
       const pose = f.p;
       const sw = pose ? Math.hypot(pose[11][0] - pose[12][0], pose[11][1] - pose[12][1]) || 1 : 1;
       const midZ = pose ? (pose[11][2] + pose[12][2]) / 2 : 0;

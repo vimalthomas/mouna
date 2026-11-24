@@ -186,3 +186,61 @@ def test_attempt_skin_handles_an_empty_attempt():
     assert attempt_skin([], None) is None
     s = attempt_skin([[0.0] * 225] * 5, None)
     assert all(f["h"] == [None, None] and f["f"] is None for f in s["frames"])
+
+
+# ---- v4: measured reliability gates the judgement ---------------------------
+
+def test_reliability_bar_from_benchmark(tmp_path):
+    import json
+    from mouna.coach.reliability import check_reliability
+    f = tmp_path / "summary.json"
+    f.write_text(json.dumps({"checks": {
+        "hand_count": {"false_alarm_on_correct": {"rate": 0.22}, "catches_when_different": {"rate": 0.71}},
+        "handshape": {"false_alarm_on_correct": {"rate": 0.05}, "catches_when_different": {"rate": 0.8}},
+        "location": {"false_alarm_on_correct": {"rate": 0.05}, "catches_when_different": {"rate": 0.18}},
+        "orientation": {"false_alarm_on_correct": {"rate": 0.08}},
+    }}))
+    r = check_reliability(str(f))
+    assert not r["hand_count"]["reliable"]      # flags too many correct attempts
+    assert r["handshape"]["reliable"]
+    assert not r["location"]["reliable"]        # misses most real differences
+    assert r["orientation"]["reliable"]         # catches can't be measured; false alarm passes
+    assert check_reliability(str(tmp_path / "missing.json"))["location"]["reliable"]  # unmeasured = as before
+
+
+def test_unreliable_check_is_a_hint_not_a_fix():
+    from services import coach_writer
+    score = {"overall_verdict": "good", "embedding_similarity": 0.8, "hand_count_match": True,
+             "check_reliability": {"orientation": {"reliable": False}, "handshape": {"reliable": True}},
+             "parameters": {"orientation": {"match": False, "why": "Turn your palm.", "reliable": False},
+                            "handshape": {"match": True, "why": None, "reliable": True}}}
+    facts = coach_writer._facts("who", "", score)
+    assert facts["fixes"] == [] and facts["hints"][0]["part"] == "orientation"
+    msg = coach_writer.compose_template(facts)
+    assert "Most important" not in msg and "worth a look" in msg
+    assert "~ Palm direction: worth a look" in coach_writer.checklist(facts)
+
+
+def test_reliable_check_still_says_fix_this():
+    from services import coach_writer
+    score = {"overall_verdict": "needs_work", "embedding_similarity": 0.5, "hand_count_match": True,
+             "check_reliability": {"orientation": {"reliable": True}},
+             "parameters": {"orientation": {"match": False, "why": "Turn your palm.", "reliable": True}}}
+    facts = coach_writer._facts("who", "", score)
+    assert "Most important: Turn your palm." in coach_writer.compose_template(facts)
+    assert "! Palm direction: Turn your palm." in coach_writer.checklist(facts)
+
+
+def test_measured_finding_is_named_specifically():
+    # v4: the learner's own finger, measured against fluent signers, not a generic "handshape differs"
+    from services import coach_writer
+    score = {"overall_verdict": "wrong_sign", "embedding_similarity": 0.3, "hand_count_match": True,
+             "check_reliability": {"handshape": {"reliable": False}},
+             "parameters": {"handshape": {"match": False, "why": "Open your hand more.", "reliable": False}},
+             "cp_findings": [{"part": "handshape", "feature": "finger_middle", "reliable": False,
+                              "say": "Your middle finger is more bent than fluent signers' in PAPER; straighten it."}]}
+    facts = coach_writer._facts("paper", "", score)
+    msg = coach_writer.compose_template(facts)
+    assert msg.startswith("That looked more like a different sign") and "middle finger" in msg
+    lines = coach_writer.checklist(facts)
+    assert "middle finger" in lines and "Open your hand more" not in lines   # replaces the coarse line

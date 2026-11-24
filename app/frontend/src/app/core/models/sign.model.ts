@@ -27,6 +27,8 @@ export interface ParameterResult {
   /** Plain wording of target/yours buckets; null where not trustworthy (location). */
   target_plain?: string | null;
   yours_plain?: string | null;
+  /** v4: false when this check failed the judgement benchmark (shown as a hint, not a mistake). */
+  reliable?: boolean;
 }
 
 export interface FaceContours {
@@ -154,6 +156,11 @@ export interface CoachingMessage {
   feedback_source?: 'claude' | 'gemini' | 'template';
   /** v3: the learner's own hands and face as 3D skin (mirrored like the camera preview). */
   attempt_skin?: SkinData | null;
+  /** v4: per check, how it scored on the judgement benchmark. */
+  check_reliability?: Record<string, { false_alarm: number | null; catches: number | null; reliable: boolean }>;
+  parameter_scores?: Record<string, ParameterScore> | null;
+  /** v4: hand count judged by the LLM over measurements + key frames; arrives later as "hand_count_check". */
+  hand_count_check?: HandCountCheck | null;
   charts?: AttemptCharts | null;
   /** False when the sign has no reference recording, so nothing was compared. */
   graded?: boolean;
@@ -261,4 +268,27 @@ export interface SignCatalogEntry {
   /** On ASL-CDI 2.0 and ASL-LEX frequency >= 5.0. */
   essential: boolean;
   in_model_vocab: boolean;
+}
+
+/** One of the five parameters, scored against fluent signers (src/mouna/coach/param_scores.py). */
+export interface ParameterScore {
+  label: string;
+  level: 'fluent' | 'close' | 'needs_work' | null;
+  score: number | null;
+  reliable: boolean;
+  method: 'vector+cp' | 'cp' | 'none';
+  evidence: { dim: string; yours: number; fluent: [number, number]; outside: number; unit: string }[];
+  cp_worst: string | null;
+  ratio?: number;
+  n_fluent?: number;
+}
+
+/** Hand count as judged by the LLM over the measurements and key frames
+ * (app/backend/services/hand_count_judge.py). Benchmark: catches 76%, false alarms on correct 5%. */
+export interface HandCountCheck {
+  status: 'pending' | 'done' | 'unavailable';
+  verdict?: 'same' | 'different' | 'unsure';
+  note?: string;
+  model?: string;
+  reliability?: { catches: number; false_alarm: number; false_alarm_other_signs: number; n_correct: number };
 }

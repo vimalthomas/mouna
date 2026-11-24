@@ -1,0 +1,16 @@
+{
+  "param": "movement",
+  "correct": 163,
+  "differs": 2673,
+  "minimal_pairs": 28,
+  "auc_all": {
+    "ratio": 0.8,
+    "old": 0.621,
+    "combined_ratio": 0.781
+  },
+  "auc_minimal_pairs": {
+    "ratio": 0.768,
+    "old": 0.589,
+    "combined_ratio": 0.743
+  }
+}

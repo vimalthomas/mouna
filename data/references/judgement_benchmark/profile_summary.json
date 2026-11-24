@@ -1,0 +1,60 @@
+{
+  "attempts": 7180,
+  "correct": 310,
+  "fingers": {
+    "false_alarm_on_correct": {
+      "rate": 0.31,
+      "n": 310
+    },
+    "catches_when_different": {
+      "rate": 0.794,
+      "n": 6382
+    },
+    "false_alarm_when_same_on_other_signs": {
+      "rate": 0.572,
+      "n": 488
+    }
+  },
+  "location": {
+    "false_alarm_on_correct": {
+      "rate": 0.165,
+      "n": 310
+    },
+    "catches_when_different": {
+      "rate": 0.495,
+      "n": 5591
+    },
+    "false_alarm_when_same_on_other_signs": {
+      "rate": 0.34,
+      "n": 1279
+    }
+  },
+  "movement": {
+    "false_alarm_on_correct": {
+      "rate": 0.184,
+      "n": 310
+    },
+    "catches_when_different": {
+      "rate": 0.207,
+      "n": 5809
+    },
+    "false_alarm_when_same_on_other_signs": {
+      "rate": 0.221,
+      "n": 1061
+    }
+  },
+  "contact": {
+    "false_alarm_on_correct": {
+      "rate": 0.026,
+      "n": 310
+    },
+    "catches_when_different": {
+      "rate": 0.08,
+      "n": 3360
+    },
+    "false_alarm_when_same_on_other_signs": {
+      "rate": 0.096,
+      "n": 3510
+    }
+  }
+}

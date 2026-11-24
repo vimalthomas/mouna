@@ -1,0 +1,340 @@
+{
+  "attempts": 7562,
+  "correct_attempts": 330,
+  "wrong_sign_attempts": 7232,
+  "sign": {
+    "auc": 0.994,
+    "correct_graded_good": {
+      "rate": 0.948,
+      "n": 330
+    },
+    "wrong_sign_graded_good": {
+      "rate": 0.001,
+      "n": 7232
+    }
+  },
+  "checks": {
+    "handshape": {
+      "graded": 0.782,
+      "false_alarm_on_correct": {
+        "rate": 0.239,
+        "n": 280
+      },
+      "catches_when_different": {
+        "rate": 0.686,
+        "n": 5234
+      },
+      "false_alarm_when_same_on_other_signs": {
+        "rate": 0.39,
+        "n": 400
+      },
+      "minimal_pairs_catches": {
+        "rate": 0.67,
+        "n": 391
+      }
+    },
+    "location": {
+      "graded": 0.95,
+      "false_alarm_on_correct": {
+        "rate": 0.116,
+        "n": 310
+      },
+      "catches_when_different": {
+        "rate": 0.184,
+        "n": 4833
+      },
+      "false_alarm_when_same_on_other_signs": {
+        "rate": 0.196,
+        "n": 2041
+      },
+      "minimal_pairs_catches": {
+        "rate": 0.133,
+        "n": 30
+      }
+    },
+    "hand_count": {
+      "graded": 1.0,
+      "false_alarm_on_correct": {
+        "rate": 0.218,
+        "n": 330
+      },
+      "catches_when_different": {
+        "rate": 0.71,
+        "n": 3628
+      },
+      "false_alarm_when_same_on_other_signs": {
+        "rate": 0.282,
+        "n": 3604
+      },
+      "minimal_pairs_catches": {
+        "rate": 0.8,
+        "n": 10
+      }
+    },
+    "orientation": {
+      "graded": 0.756,
+      "false_alarm_on_correct": {
+        "rate": 0.32,
+        "n": 250
+      }
+    }
+  },
+  "uncovered_parts": {
+    "movement": {
+      "rate": 0.688,
+      "n": 7232
+    },
+    "location_detail": {
+      "rate": 0.82,
+      "n": 7232
+    }
+  },
+  "per_sign": [
+    {
+      "sign": "accident",
+      "correct_good": null,
+      "wrong_good": 0.0,
+      "n_correct": 0
+    },
+    {
+      "sign": "africa",
+      "correct_good": null,
+      "wrong_good": 0.0,
+      "n_correct": 0
+    },
+    {
+      "sign": "all",
+      "correct_good": null,
+      "wrong_good": 0.0,
+      "n_correct": 0
+    },
+    {
+      "sign": "apple",
+      "correct_good": null,
+      "wrong_good": 0.0,
+      "n_correct": 0
+    },
+    {
+      "sign": "basketball",
+      "correct_good": null,
+      "wrong_good": 0.006,
+      "n_correct": 0
+    },
+    {
+      "sign": "bed",
+      "correct_good": null,
+      "wrong_good": 0.0,
+      "n_correct": 0
+    },
+    {
+      "sign": "bird",
+      "correct_good": null,
+      "wrong_good": 0.0,
+      "n_correct": 0
+    },
+    {
+      "sign": "birthday",
+      "correct_good": null,
+      "wrong_good": 0.006,
+      "n_correct": 0
+    },
+    {
+      "sign": "black",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "book",
+      "correct_good": 0.9,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "can",
+      "correct_good": 0.6,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "chair",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "clothes",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "color",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "cook",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "dark",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "deaf",
+      "correct_good": 0.8,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "drink",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "eat",
+      "correct_good": 1.0,
+      "wrong_good": 0.006,
+      "n_correct": 10
+    },
+    {
+      "sign": "finish",
+      "correct_good": 0.9,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "go",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "hearing",
+      "correct_good": 0.9,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "help",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "hot",
+      "correct_good": 0.9,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "later",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "man",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "many",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "mother",
+      "correct_good": 0.9,
+      "wrong_good": 0.006,
+      "n_correct": 10
+    },
+    {
+      "sign": "need",
+      "correct_good": 0.8,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "no",
+      "correct_good": 0.9,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "now",
+      "correct_good": 1.0,
+      "wrong_good": 0.011,
+      "n_correct": 10
+    },
+    {
+      "sign": "orange",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "paper",
+      "correct_good": 1.0,
+      "wrong_good": 0.006,
+      "n_correct": 10
+    },
+    {
+      "sign": "school",
+      "correct_good": 1.0,
+      "wrong_good": 0.006,
+      "n_correct": 10
+    },
+    {
+      "sign": "tell",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "time",
+      "correct_good": 0.9,
+      "wrong_good": 0.006,
+      "n_correct": 10
+    },
+    {
+      "sign": "walk",
+      "correct_good": 0.8,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "who",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "work",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "year",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    },
+    {
+      "sign": "yes",
+      "correct_good": 1.0,
+      "wrong_good": 0.0,
+      "n_correct": 10
+    }
+  ]
+}

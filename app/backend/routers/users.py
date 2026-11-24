@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
@@ -25,6 +25,10 @@ def update_me(
         user.name = payload.name
     if payload.avatar_url is not None:
         user.avatar_url = payload.avatar_url
+    if payload.dominant_hand is not None:
+        if payload.dominant_hand not in ("right", "left"):
+            raise HTTPException(status_code=422, detail="dominant_hand must be 'right' or 'left'")
+        user.dominant_hand = payload.dominant_hand
     db.commit()
     db.refresh(user)
     return UserPublic.model_validate(user)

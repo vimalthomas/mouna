@@ -74,7 +74,7 @@ import { environment } from '../../../environments/environment';
             <div class="flex items-center justify-between px-6 py-4">
               <span class="text-xs text-ink-faint">{{ selectedSign.category }}@if (catalog[selectedSign.word]?.frequency) { · used often: {{ catalog[selectedSign.word]!.frequency }} / 7 }</span>
               @if (practiceSet.has(selectedSign.word)) {
-                <a [routerLink]="['/coach']" [queryParams]="{ sign: selectedSign.word }" class="h-9 px-4 inline-flex items-center rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors">Practice this sign</a>
+                <a [routerLink]="['/learn']" [queryParams]="{ sign: selectedSign.word }" class="h-9 px-4 inline-flex items-center rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors">Learn this sign</a>
               } @else {
                 <span class="text-xs text-ink-faint">Not in the coached set yet</span>
               }

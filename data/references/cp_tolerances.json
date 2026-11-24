@@ -1,0 +1,222 @@
+{
+ "chosen": {
+  "finger": 1.5,
+  "thumb": 1.5,
+  "location": 1.0,
+  "travel": 3.0
+ },
+ "max_false_alarm": 0.1,
+ "tune_signs": [
+  "africa",
+  "all",
+  "apple",
+  "bed",
+  "book",
+  "can",
+  "chair",
+  "clothes",
+  "cook",
+  "dark",
+  "drink",
+  "finish",
+  "go",
+  "hearing",
+  "man",
+  "many",
+  "need",
+  "school",
+  "tell"
+ ],
+ "test_signs": [
+  "accident",
+  "basketball",
+  "bird",
+  "birthday",
+  "black",
+  "deaf",
+  "eat",
+  "help",
+  "hot",
+  "later",
+  "mother",
+  "no",
+  "now",
+  "paper",
+  "time",
+  "walk",
+  "who",
+  "work",
+  "year",
+  "yes"
+ ],
+ "families": {
+  "fingers": {
+   "margin": 1.5,
+   "tune_grid": [
+    {
+     "margin": 0.25,
+     "false_alarm": 0.32,
+     "catches": 0.734
+    },
+    {
+     "margin": 0.5,
+     "false_alarm": 0.22,
+     "catches": 0.647
+    },
+    {
+     "margin": 0.75,
+     "false_alarm": 0.153,
+     "catches": 0.573
+    },
+    {
+     "margin": 1.0,
+     "false_alarm": 0.113,
+     "catches": 0.508
+    },
+    {
+     "margin": 1.5,
+     "false_alarm": 0.08,
+     "catches": 0.414
+    },
+    {
+     "margin": 2.0,
+     "false_alarm": 0.047,
+     "catches": 0.344
+    },
+    {
+     "margin": 3.0,
+     "false_alarm": 0.033,
+     "catches": 0.226
+    },
+    {
+     "margin": 4.0,
+     "false_alarm": 0.013,
+     "catches": 0.133
+    },
+    {
+     "margin": 6.0,
+     "false_alarm": 0.013,
+     "catches": 0.042
+    }
+   ],
+   "test": {
+    "false_alarm_on_correct": 0.081,
+    "catches_when_different": 0.498,
+    "n_correct": 160,
+    "n_different": 3327
+   }
+  },
+  "location": {
+   "margin": 1.0,
+   "tune_grid": [
+    {
+     "margin": 0.25,
+     "false_alarm": 0.2,
+     "catches": 0.507
+    },
+    {
+     "margin": 0.5,
+     "false_alarm": 0.167,
+     "catches": 0.393
+    },
+    {
+     "margin": 0.75,
+     "false_alarm": 0.113,
+     "catches": 0.302
+    },
+    {
+     "margin": 1.0,
+     "false_alarm": 0.093,
+     "catches": 0.238
+    },
+    {
+     "margin": 1.5,
+     "false_alarm": 0.027,
+     "catches": 0.149
+    },
+    {
+     "margin": 2.0,
+     "false_alarm": 0.02,
+     "catches": 0.097
+    },
+    {
+     "margin": 3.0,
+     "false_alarm": 0.02,
+     "catches": 0.043
+    },
+    {
+     "margin": 4.0,
+     "false_alarm": 0.02,
+     "catches": 0.022
+    },
+    {
+     "margin": 6.0,
+     "false_alarm": 0.0,
+     "catches": 0.007
+    }
+   ],
+   "test": {
+    "false_alarm_on_correct": 0.05,
+    "catches_when_different": 0.235,
+    "n_correct": 160,
+    "n_different": 2863
+   }
+  },
+  "movement": {
+   "margin": 3.0,
+   "tune_grid": [
+    {
+     "margin": 0.25,
+     "false_alarm": 0.327,
+     "catches": 0.375
+    },
+    {
+     "margin": 0.5,
+     "false_alarm": 0.253,
+     "catches": 0.315
+    },
+    {
+     "margin": 0.75,
+     "false_alarm": 0.213,
+     "catches": 0.269
+    },
+    {
+     "margin": 1.0,
+     "false_alarm": 0.173,
+     "catches": 0.234
+    },
+    {
+     "margin": 1.5,
+     "false_alarm": 0.14,
+     "catches": 0.191
+    },
+    {
+     "margin": 2.0,
+     "false_alarm": 0.12,
+     "catches": 0.171
+    },
+    {
+     "margin": 3.0,
+     "false_alarm": 0.087,
+     "catches": 0.146
+    },
+    {
+     "margin": 4.0,
+     "false_alarm": 0.073,
+     "catches": 0.135
+    },
+    {
+     "margin": 6.0,
+     "false_alarm": 0.06,
+     "catches": 0.111
+    }
+   ],
+   "test": {
+    "false_alarm_on_correct": 0.056,
+    "catches_when_different": 0.156,
+    "n_correct": 160,
+    "n_different": 2883
+   }
+  }
+ }
+}

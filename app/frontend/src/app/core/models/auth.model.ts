@@ -3,6 +3,8 @@ export interface UserProfile {
   email: string;
   name: string;
   avatar_url: string | null;
+  /** v5: the hand the learner signs with */
+  dominant_hand?: 'right' | 'left';
   created_at: string;
 }
 

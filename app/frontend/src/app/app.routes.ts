@@ -5,6 +5,8 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 
 /** Guest mode (demo deployment): there is no sign-in or sign-up, go straight in. */
+/** v5: signed-out visitors land on Home (/welcome), not the sign-in form. */
+const homeOrWelcome: CanActivateFn = () => inject(AuthService).isAuthenticated ? true : inject(Router).createUrlTree(['/welcome']);
 const noLoginInGuestMode: CanActivateFn = () => inject(AuthService).guestMode ? inject(Router).createUrlTree(['/']) : true;
 
 export const routes: Routes = [
@@ -21,10 +23,33 @@ export const routes: Routes = [
       import('./pages/auth/signup.component').then(m => m.SignupComponent),
   },
   {
+    path: 'welcome',
+    loadComponent: () =>
+      import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent),
+  },
+  {
     path: '',
-    canActivate: [authGuard],
+    canActivate: [homeOrWelcome],
     loadComponent: () =>
       import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
+  },
+  {
+    path: 'learn',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/coach/coach.component').then(m => m.CoachComponent),
+  },
+  {
+    path: 'practice',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/practice/practice.component').then(m => m.PracticeComponent),
+  },
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/profile/profile.component').then(m => m.ProfileComponent),
   },
   {
     path: 'dictionary',
@@ -32,12 +57,8 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/dictionary/dictionary.component').then(m => m.DictionaryComponent),
   },
-  {
-    path: 'coach',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/coach/coach.component').then(m => m.CoachComponent),
-  },
+  // v4 links (/coach?sign=...) still work: Learn is the same page
+  { path: 'coach', redirectTo: 'learn' },
   {
     path: 'debug',
     canActivate: [authGuard],

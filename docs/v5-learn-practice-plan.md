@@ -66,3 +66,25 @@ Learned words flow into Practice automatically, per account, no copying:
 6. **Sign SOP addition**: a new sign is only usable in stories once its 3D data exists
    (`scripts/build_sign_skin.py <sign>`).
 Lab prototype: `~/mouna/mouna-lab/lab/stories/` (branch `lab/v5-stories`), http://127.0.0.1:8791/.
+
+## Navigation (decided 2026-11-24)
+- Signed out: **Home** (`/welcome`: purpose, how it works, honest feedback, what's inside) → Sign in / Start.
+- Signed in: **Dashboard** (home: continue, come back to, Words / Sentences), **Learn**, **Practice**, **Dictionary**,
+  and **Profile** from your name (name, dominant hand, avatar look, theme, language).
+- No leaderboard for now: it would reward fast attempts over careful signing; personal streaks and
+  "sentences signed well" instead.
+
+## Built so far (v5 branch `v5/learn-practice`, ~/mouna/mouna-v5, backend :8004, frontend :4204)
+- Home, Profile (dominant hand mirrors the example signers in Learn and Practice), Learn (= v4 coach, `/coach` redirects).
+- Practice: stories from the learner's learned signs (unlock at 5), "add a sign I'm still practising",
+  ASL structure, the signs in order, the avatar signing the sentence with the current sign highlighted,
+  camera practice sign by sign (`/practice/score`, same scoring as Learn, doesn't change Learn progress),
+  saved to `sentence_attempts`; Review tab lists learned / practising signs.
+- Dashboard: Words / Sentences tabs, "Sentences signed well" tile, a Practice card.
+- DB migration 0002: `users.dominant_hand`, `practice_stories`, `sentence_attempts`.
+
+## Known limits
+- Sentence grading is only as good as single-sign grading: look-alike signs at the same place can pass
+  (a WHO clip graded "good" as BIRD, both one hand at the mouth). Idea to test: within a sentence, flag a
+  sign when the attempt is closer to ANOTHER sign of the same sentence than to the target.
+- Vocabulary has no pronouns yet, so stories are simple; next step is the ~40 story signs.

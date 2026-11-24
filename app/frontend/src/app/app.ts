@@ -5,7 +5,7 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 
-const STANDALONE_ROUTES = ['/login', '/signup'];
+const STANDALONE_ROUTES = ['/login', '/signup', '/welcome'];  // no sidebar
 
 @Component({
   selector: 'app-root',

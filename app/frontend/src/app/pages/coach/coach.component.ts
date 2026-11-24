@@ -1,3 +1,4 @@
+import { AuthService } from '../../core/services/auth.service';
 import { Component, inject, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewChecked, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -146,7 +147,7 @@ const CHECK_HOLD_MS = 1200;
             <div>
               <div #previewVideos>
                 @if (referenceVideoUrl) {
-                  <app-sign-frame [src]="referenceVideoUrl" [paths]="handPaths" phase="live" [playbackRate]="playbackRate" label="The dot follows the hand" />
+                  <app-sign-frame [mirror]="lefty" [src]="referenceVideoUrl" [paths]="handPaths" phase="live" [playbackRate]="playbackRate" label="The dot follows the hand" />
                 } @else {
                   <div class="rounded-xl bg-black aspect-video flex items-center justify-center text-white/60 text-sm">No example video for "{{ targetSignWord }}"</div>
                 }
@@ -172,12 +173,12 @@ const CHECK_HOLD_MS = 1200;
               <div class="flex flex-col gap-3">
                 @if (skinAvailable !== false) {
                   <app-sign-skin [word]="targetSignWord" show="hands" label="Hands, close up" aspect="16/10"
-                    [videoHost]="previewVideosEl?.nativeElement ?? null" (available)="skinAvailable = $event" />
+                    [videoHost]="previewVideos" (available)="skinAvailable = $event" />
                 } @else if (referenceSkeleton?.length) {
                   <app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="playbackRate" [loopSeconds]="signSeconds" />
                 }
                 <app-sign-skin [word]="targetSignWord" show="face" label="Face, close up" aspect="16/10"
-                  emptyText="No face in this example." [videoHost]="previewVideosEl?.nativeElement ?? null" />
+                  emptyText="No face in this example." [videoHost]="previewVideos" />
               </div>
               <p class="mt-2 text-[11px] text-ink-muted">Both follow the video and its speed. Drag to turn, scroll to zoom.</p>
               <div class="mt-3"><app-look-picker /></div>
@@ -190,7 +191,7 @@ const CHECK_HOLD_MS = 1200;
             <div class="grid grid-cols-3 gap-3">
               @for (ph of phaseCards; track ph.label; let i = $index) {
                 <div>
-                  <app-sign-frame [src]="referenceVideoUrl" [paths]="handPaths" [phase]="ph.phase" [label]="(i + 1) + '. ' + ph.label" />
+                  <app-sign-frame [mirror]="lefty" [src]="referenceVideoUrl" [paths]="handPaths" [phase]="ph.phase" [label]="(i + 1) + '. ' + ph.label" />
                   <p class="text-sm text-ink-muted mt-2">{{ ph.caption }}</p>
                 </div>
               }
@@ -215,7 +216,7 @@ const CHECK_HOLD_MS = 1200;
             <div class="grid grid-cols-3 gap-2">
               @for (v of variations; track v.video_url) {
                 <div class="relative rounded-lg overflow-hidden bg-black border border-border/50" style="aspect-ratio: 16/10;">
-                  <video [src]="apiBase + v.video_url" autoplay loop [muted]="true" playsinline class="w-full h-full object-cover"></video>
+                  <video [src]="apiBase + v.video_url" autoplay loop [muted]="true" playsinline class="w-full h-full object-cover" [style.transform]="lefty ? 'scaleX(-1)' : null"></video>
                   @if (v.label) {
                     <span class="absolute left-1.5 top-1.5 px-1.5 py-0.5 rounded bg-surface/90 text-ink text-[10px] font-medium">{{ v.label }}</span>
                   }
@@ -279,15 +280,15 @@ const CHECK_HOLD_MS = 1200;
                   <div class="mb-2"><app-hand-3d [targetOnly]="true" [referenceFrames]="referenceSkeleton" [speedMultiplier]="playbackRate" [loopSeconds]="signSeconds" /></div>
                 }
                 @if (referenceVideoUrl && st.clip) {
-                  <div class="mb-3"><app-sign-frame [src]="referenceVideoUrl" [paths]="handPaths" phase="live" label="The motion" /></div>
+                  <div class="mb-3"><app-sign-frame [mirror]="lefty" [src]="referenceVideoUrl" [paths]="handPaths" phase="live" label="The motion" /></div>
                 }
                 @if (referenceVideoUrl) {
                   @for (sh of st.shots; track sh.label) {
                     @if (!sh.zoom && handPaths.length) {
-                      <div class="mb-3"><app-sign-frame [src]="referenceVideoUrl" [paths]="handPaths" phase="full" [label]="sh.label" /></div>
+                      <div class="mb-3"><app-sign-frame [mirror]="lefty" [src]="referenceVideoUrl" [paths]="handPaths" phase="full" [label]="sh.label" /></div>
                     } @else {
                     <div class="relative rounded-lg overflow-hidden bg-black border border-border/50 mb-2" style="aspect-ratio: 16/10;">
-                      <video [src]="referenceVideoUrl" [muted]="true" playsinline preload="auto"
+                      <video [src]="referenceVideoUrl" [muted]="true" playsinline preload="auto" [style.transform]="lefty ? 'scaleX(-1)' : null"
                         [class]="sh.zoom && handZoomStyle ? 'absolute max-w-none object-cover' : 'w-full h-full object-cover'"
                         [style]="sh.zoom ? handZoomStyle : null"
                         (loadedmetadata)="seekStill($event, sh.frac)"></video>
@@ -435,7 +436,7 @@ const CHECK_HOLD_MS = 1200;
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
                   <app-video-bones [src]="recordedAttemptUrl" [skin]="lastResult?.attempt_skin ?? null" [mirror]="true"
                     [showBones]="showMyBones" [speed]="skeletonSpeed" label="You" emptyText="Your recording isn't available" />
-                  <app-video-bones [src]="referenceVideoUrl" [word]="targetSignWord" [showBones]="showTargetBones" [speed]="skeletonSpeed" label="Target" />
+                  <app-video-bones [src]="referenceVideoUrl" [mirror]="lefty" [word]="targetSignWord" [showBones]="showTargetBones" [speed]="skeletonSpeed" label="Target" />
                 </div>
                 <p class="text-xs text-ink-muted mb-4">Your video is mirrored, as you saw yourself while recording.</p>
               }
@@ -552,6 +553,10 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('chatScroll') chatScrollEl?: ElementRef<HTMLDivElement>;
 
   private coachService = inject(CoachSessionService);
+  private auth = inject(AuthService);
+  /** v5: left-handed learner (Profile) -> the example signers are shown mirrored. */
+  lefty = false;
+  private handSub = this.auth.user$.subscribe(u => (this.lefty = u?.dominant_hand === 'left'));
   private signsApi = inject(SignsApiService);
   private route = inject(ActivatedRoute);
   private subs: Subscription[] = [];
@@ -1408,6 +1413,7 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.handSub.unsubscribe();
     if (this.countdownTimer) clearInterval(this.countdownTimer);
     if (this.recordingTimer) clearInterval(this.recordingTimer);
     if (this.recordedAttemptUrl) URL.revokeObjectURL(this.recordedAttemptUrl);

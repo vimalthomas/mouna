@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -26,6 +27,8 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # v5: which hand the learner signs with ("right" | "left"); the examples are mirrored for left
+    dominant_hand: Mapped[str] = mapped_column(String(5), default="right", server_default="right", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -73,3 +76,30 @@ class SignProgress(Base):
 
     user: Mapped["User"] = relationship(back_populates="sign_progress")
     sign: Mapped["Sign"] = relationship(back_populates="progress")
+
+
+class PracticeStory(Base):
+    """v5: a short story written for a learner from their learned signs (Practice tab)."""
+    __tablename__ = "practice_stories"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)   # JSON: sentences (english + gloss), structure notes
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, index=True)
+
+
+class SentenceAttempt(Base):
+    """v5: one try at signing a story's sentence(s), graded sign by sign."""
+    __tablename__ = "sentence_attempts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    story_id: Mapped[int | None] = mapped_column(ForeignKey("practice_stories.id"), nullable=True)
+    english: Mapped[str] = mapped_column(Text, nullable=False)
+    gloss: Mapped[str] = mapped_column(String(500), nullable=False)   # signs in order, space-separated
+    results: Mapped[str] = mapped_column(Text, nullable=False)        # JSON: [{sign, verdict}]
+    signs_good: Mapped[int] = mapped_column(Integer, nullable=False)
+    signs_total: Mapped[int] = mapped_column(Integer, nullable=False)
+    all_good: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, index=True)

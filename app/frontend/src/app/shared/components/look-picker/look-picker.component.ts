@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { AvatarLookService, BROW_COLOURS, EYE_COLOURS, FACES, SKIN_TONES, STYLES } from '../../../core/services/avatar-look.service';
 
 /** Compact picker for the 3D face and hands: skin tone, eyes, brows, style.
@@ -7,12 +7,14 @@ import { AvatarLookService, BROW_COLOURS, EYE_COLOURS, FACES, SKIN_TONES, STYLES
   selector: 'app-look-picker',
   standalone: true,
   template: `
+    @if (!alwaysOpen) {
     <button type="button" (click)="toggle()" [attr.aria-expanded]="open"
       class="inline-flex items-center gap-1.5 text-[11px] font-medium text-ink-muted hover:text-ink px-2.5 py-1 rounded-full border border-border/50 bg-surface-sunk">
       <span class="w-3 h-3 rounded-full border border-border" [style.background]="look().skin"></span>
       Avatar look {{ open ? '▴' : '▾' }}
     </button>
-    @if (open) {
+    }
+    @if (open || alwaysOpen) {
     <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-ink-muted mt-2">
       <div class="flex items-center gap-1.5" role="radiogroup" aria-label="Skin tone">
         <span class="mr-0.5">Skin</span>
@@ -65,6 +67,8 @@ export class LookPickerComponent {
   readonly styles = STYLES;
   readonly faces = FACES;
   open = LookPickerComponent.read();
+  /** v5 Profile: show the choices without the fold-out button. */
+  @Input() alwaysOpen = false;
 
   private static read(): boolean { try { return localStorage.getItem('mouna_look_open') === '1'; } catch { return false; } }
 

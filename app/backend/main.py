@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from config import settings
 from db.session import SessionLocal
 from db.signs_repo import sync_signs
-from routers import auth, coach_frames, debug, health, signs, users
+from routers import auth, coach_frames, debug, health, signs, users, practice
 from services.keypoint_service import keypoint_service
 from services.model_service import model_service
 from services.signs_service import signs_service
@@ -52,6 +52,7 @@ app.include_router(signs.router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(coach_frames.router)
+app.include_router(practice.router)
 if settings.enable_debug_routes:
     app.include_router(debug.router)
 

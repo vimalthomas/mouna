@@ -118,6 +118,10 @@ export class SignSkinComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() aspect = '4/3';
   @Input() emptyText = 'Nothing to show in 3D for this one.';
   @Output() available = new EventEmitter<boolean>();
+  /** v5: the frame being shown (whole frames only, emitted when it changes) -- e.g. to highlight
+   * which sign of a sentence is playing. */
+  @Output() position = new EventEmitter<number>();
+  private lastEmitted = -1;
   @ViewChild('canvasRef') private canvasRef!: ElementRef<HTMLCanvasElement>;
 
   state: 'loading' | 'ready' | 'none' | 'error' = 'loading';
@@ -181,6 +185,9 @@ export class SignSkinComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.hands.forEach(h => { h.palm.geometry.dispose(); h.fingers.forEach(f => f.geometry.dispose()); });
     this.faceGeo.dispose();
   }
+
+  /** Play from the start again (own clock only). */
+  restart(): void { this.clockStart = performance.now(); }
 
   resetView(): void {
     const b = this.frameBox, dist = b.size * (this.show === 'all' ? 2.1 : 2.3);
@@ -547,6 +554,7 @@ export class SignSkinComponent implements AfterViewInit, OnChanges, OnDestroy {
     const showFace = this.show !== 'hands', showHands = this.show !== 'face';
     if (d && this.faceMesh) {
       const pos = this.framePos(d), i0 = Math.floor(pos), i1 = Math.min(d.n_frames - 1, i0 + 1);
+      if (i0 !== this.lastEmitted && this.position.observed) { this.lastEmitted = i0; this.zone.run(() => this.position.emit(i0)); }
       const f = this.blend(this.frameAt(d, i0), this.frameAt(d, i1), pos - i0);
       const pose = f.p;
       const sw = pose ? Math.hypot(pose[11][0] - pose[12][0], pose[11][1] - pose[12][1]) || 1 : 1;

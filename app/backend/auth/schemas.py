@@ -23,6 +23,7 @@ class UserPublic(BaseModel):
     email: str
     name: str
     avatar_url: str | None = None
+    dominant_hand: str = "right"
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -31,6 +32,7 @@ class UserPublic(BaseModel):
 class UserUpdateRequest(BaseModel):
     name: str | None = None
     avatar_url: str | None = None
+    dominant_hand: str | None = None   # "right" | "left"
 
 
 class TokenResponse(BaseModel):

@@ -16,7 +16,7 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Wordmark -->
       <a routerLink="/" class="relative block px-5 pt-7 pb-6" aria-label="mouna home">
         <img [src]="theme.isDark() ? 'brand/mouna-logo-dark.png' : 'brand/mouna-logo.png'" alt="mouna" class="w-full h-auto" />
-        <span class="absolute top-3 right-4 text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded bg-accent text-white">v4</span>
+        <span class="absolute top-3 right-4 text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded bg-accent text-white">v5</span>
       </a>
 
       <!-- Nav -->
@@ -28,12 +28,19 @@ import { AuthService } from '../../../core/services/auth.service';
           </svg>
           <span>{{ 'nav.dashboard' | translate }}</span>
         </a>
-        <a routerLink="/coach" routerLinkActive="nav-active"
+        <a routerLink="/learn" routerLinkActive="nav-active"
           class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-ink-muted hover:text-ink hover:bg-surface-sunk transition-colors">
           <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12m0-1.5v-6a1.5 1.5 0 0 1 3 0V12m0-5.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.6a6 6 0 0 1-4.7-2.3L2.6 15.4a1.6 1.6 0 0 1 2.4-2.1L8 16" />
           </svg>
-          <span>{{ 'nav.coach' | translate }}</span>
+          <span>{{ 'nav.learn' | translate }}</span>
+        </a>
+        <a routerLink="/practice" routerLinkActive="nav-active"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-ink-muted hover:text-ink hover:bg-surface-sunk transition-colors">
+          <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-9.75 6.75 3-3h11.25A2.25 2.25 0 0 0 20.25 13.5v-7.5A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12.75Z" />
+          </svg>
+          <span>{{ 'nav.practice' | translate }}</span>
         </a>
         <a routerLink="/dictionary" routerLinkActive="nav-active"
           class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-ink-muted hover:text-ink hover:bg-surface-sunk transition-colors">
@@ -47,12 +54,14 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Account + preferences -->
       <div class="px-4 pb-5 pt-4 border-t border-border/70 space-y-3">
         @if (auth.user$ | async; as user) {
-          <div class="flex items-center gap-3 px-1">
+          <div class="flex items-center gap-1 px-1">
+            <a routerLink="/profile" routerLinkActive="bg-surface-sunk" title="Profile" class="flex items-center gap-3 min-w-0 flex-1 rounded-lg p-1 -m-1 hover:bg-surface-sunk transition-colors">
             <span class="shrink-0 w-8 h-8 rounded-full bg-surface-sunk text-ink-muted text-xs font-semibold flex items-center justify-center uppercase">{{ initials(user.name || user.email) }}</span>
             <div class="min-w-0 flex-1">
               <p class="text-sm text-ink truncate">{{ user.name || 'You' }}</p>
-              <p class="text-[11px] text-ink-faint truncate">{{ auth.guestMode ? 'Demo, no sign-in needed' : user.email }}</p>
+              <p class="text-[11px] text-ink-faint truncate">{{ auth.guestMode ? 'Demo, no sign-in needed' : 'Profile & settings' }}</p>
             </div>
+            </a>
             @if (!auth.guestMode) {
             <button (click)="onLogout()" title="Log out" aria-label="Log out"
               class="shrink-0 text-ink-faint hover:text-ink transition-colors p-1">
@@ -102,6 +111,6 @@ export class NavbarComponent {
 
   onLogout(): void {
     this.auth.logout();
-    this.router.navigateByUrl('/login');
+    this.router.navigateByUrl('/welcome');
   }
 }

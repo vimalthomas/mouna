@@ -27,9 +27,10 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "scripts"), str(ROOT / "src")]
-import llm_vision_judge as V  # noqa: E402  (loads settings, chdirs to ROOT)
-
 ARMS = sys.argv[1].split(",") if len(sys.argv) > 1 else ["text", "vision"]
+_argv, sys.argv = sys.argv, sys.argv[:1]          # llm_vision_judge reads argv at import
+import llm_vision_judge as V  # noqa: E402  (loads settings, chdirs to ROOT)
+sys.argv = _argv
 OUT = V.OUT
 PARTS = V.PARTS
 CP_WORDS = {"palm_x": "palm facing sideways", "palm_y": "palm facing up/down", "palm_z": "palm facing toward/away",

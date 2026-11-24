@@ -34,7 +34,7 @@ import mediapipe as mp
 import numpy as np
 from mediapipe.tasks.python import vision
 from mediapipe.tasks.python.core.base_options import BaseOptions
-from scipy.ndimage import gaussian_filter1d
+from scipy.ndimage import gaussian_filter1d, median_filter
 
 ROOT = Path(__file__).resolve().parents[3]
 MODELS = ROOT / "data" / "skin_models"        # MediaPipe .task files (not in git; see scripts/build_sign_skin.py)
@@ -42,7 +42,11 @@ EXAMPLES = json.loads((ROOT / "data/references/example_videos.json").read_text()
 VIDEOS = ROOT / "app/wlasl/videos"
 
 # Clean-up settings (chosen with --sweep; see tune()).
-SETTINGS = {"jump": 0.8, "max_gap": 3, "sigma": 1.5, "fast": 0.3, "pose_sigma": 1.5, "face_sigma": 0.8, "image_bones": False}
+# shape_median / shape_sigma: finger-shape clean-up (steady_shape), chosen 2026-11-24 on the 41 practice
+# signs: frame steps with a >25 deg joint jump 19.1% -> 5.3%, one-frame spikes 181 -> 24, mean change
+# from the tracked shape 6 deg.
+SETTINGS = {"jump": 0.8, "max_gap": 3, "sigma": 1.5, "fast": 0.3, "pose_sigma": 1.5, "face_sigma": 0.8, "image_bones": False,
+            "shape_median": 3, "shape_sigma": 2.0}
 
 # 21-point hand: parent of each joint (wrist = root)
 HAND_PARENT = [-1, 0, 1, 2, 3, 0, 5, 6, 7, 0, 9, 10, 11, 0, 13, 14, 15, 0, 17, 18, 19]
@@ -269,6 +273,32 @@ def smooth(track, sigma, fast=0.0):
     return out
 
 
+def steady_shape(track, med=3, sigma=2.0):
+    """The finger SHAPE (3D world points relative to the wrist) is cleaned on
+    its own, separately from where the hand is: a short running median drops
+    one-frame flips of a finger (tracking errors), then steady zero-lag
+    smoothing. smooth() is speed-aware for position, so during fast moves it
+    left the shape almost unsmoothed and the fingers flickered."""
+    out, i = list(track), 0
+    while i < len(track):
+        if track[i] is None:
+            i += 1
+            continue
+        j = i
+        while j < len(track) and track[j] is not None:
+            j += 1
+        if j - i >= 3:
+            W = np.stack([track[k][1] - track[k][1][0] for k in range(i, j)])
+            if med > 1:
+                W = median_filter(W, size=(med, 1, 1), mode="nearest")
+            if sigma > 0:
+                W = gaussian_filter1d(W, sigma, axis=0, mode="nearest")
+            for k in range(i, j):
+                out[k] = (out[k][0], W[k - i] + track[k][1][0])
+        i = j
+    return out
+
+
 def fix_bones(track, parts=(1,)):
     """Every bone keeps its direction per frame but gets the clip's typical
     length, so fingers never stretch or shrink. Applied to the true 3D shape
@@ -397,7 +427,8 @@ def build(raw: dict, s: dict = SETTINGS) -> dict:
 
     today = _tracks(raw["today_hands"])
     raw_tracks = _tracks(raw["found"])
-    tracks = [fix_bones(smooth(fill_gaps(drop_jumps(t, s["jump"]), s["max_gap"]), s["sigma"], s.get("fast", 0.0)),
+    tracks = [fix_bones(steady_shape(smooth(fill_gaps(drop_jumps(t, s["jump"]), s["max_gap"]), s["sigma"], s.get("fast", 0.0)),
+                                     s.get("shape_median", 0), s.get("shape_sigma", 0.0)),
                         (0, 1) if s.get("image_bones") else (1,)) for t in raw_tracks]
     poses = join_wrists(clean_poses(raw["poses"], s["pose_sigma"], s["max_gap"]), tracks)
 

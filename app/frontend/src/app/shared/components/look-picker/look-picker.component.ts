@@ -1,12 +1,19 @@
 import { Component, inject } from '@angular/core';
 import { AvatarLookService, BROW_COLOURS, EYE_COLOURS, FACES, SKIN_TONES, STYLES } from '../../../core/services/avatar-look.service';
 
-/** Compact picker for the 3D face and hands: skin tone, eyes, brows, style. */
+/** Compact picker for the 3D face and hands: skin tone, eyes, brows, style.
+ * Folded behind an "Avatar look" button (closed by default) so it doesn't crowd the page. */
 @Component({
   selector: 'app-look-picker',
   standalone: true,
   template: `
-    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-ink-muted">
+    <button type="button" (click)="toggle()" [attr.aria-expanded]="open"
+      class="inline-flex items-center gap-1.5 text-[11px] font-medium text-ink-muted hover:text-ink px-2.5 py-1 rounded-full border border-border/50 bg-surface-sunk">
+      <span class="w-3 h-3 rounded-full border border-border" [style.background]="look().skin"></span>
+      Avatar look {{ open ? '▴' : '▾' }}
+    </button>
+    @if (open) {
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-ink-muted mt-2">
       <div class="flex items-center gap-1.5" role="radiogroup" aria-label="Skin tone">
         <span class="mr-0.5">Skin</span>
         @for (t of skins; track t.value) {
@@ -46,6 +53,7 @@ import { AvatarLookService, BROW_COLOURS, EYE_COLOURS, FACES, SKIN_TONES, STYLES
         }
       </div>
     </div>
+    }
   `,
 })
 export class LookPickerComponent {
@@ -56,4 +64,12 @@ export class LookPickerComponent {
   readonly brows = BROW_COLOURS;
   readonly styles = STYLES;
   readonly faces = FACES;
+  open = LookPickerComponent.read();
+
+  private static read(): boolean { try { return localStorage.getItem('mouna_look_open') === '1'; } catch { return false; } }
+
+  toggle(): void {
+    this.open = !this.open;
+    try { localStorage.setItem('mouna_look_open', this.open ? '1' : '0'); } catch { /* private mode */ }
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewChecked, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -62,7 +62,7 @@ const CHECK_HOLD_MS = 1200;
   standalone: true,
   imports: [CameraViewComponent, SkeletonCompareComponent, Hand3dComponent, SignSkinComponent, VideoBonesComponent, LookPickerComponent, AttemptChartsComponent, SignFrameComponent, ScoreCardComponent, FormsModule],
   template: `
-    <div class="max-w-7xl mx-auto" [style.paddingRight]="showChat ? '380px' : '0'">
+    <div class="max-w-7xl mx-auto" [style.paddingRight]="showChat && chatMode === 'side' ? '380px' : '0'">
 
       <!-- Steps -->
       @if (screen !== 'intro') {
@@ -377,7 +377,7 @@ const CHECK_HOLD_MS = 1200;
             <h1 class="font-display text-3xl text-ink mb-4">How it went</h1>
 
             <div class="flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5 mb-4" [class]="lastResult?.verdict === 'good' ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-amber-500/40 bg-amber-500/5'">
-              <span class="text-sm text-ink">{{ lastResult?.graded === false ? 'Not graded: no reference recording for' : 'vs.' }} "<span class="capitalize">{{ targetSignWord }}</span>" — the coach's notes are in the chat →</span>
+              <span class="text-sm text-ink">{{ lastResult?.graded === false ? 'Not graded: no reference recording for' : 'vs.' }} "<span class="capitalize">{{ targetSignWord }}</span>" — the coach's notes are in the chat{{ chatMode === 'side' ? ' →' : '' }}</span>
               <span class="text-xs font-medium px-3 py-1 rounded-full shrink-0"
                 [class]="lastResult?.verdict === 'good' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'"
               >{{ verdictLabel }}</span>
@@ -463,9 +463,10 @@ const CHECK_HOLD_MS = 1200;
               }
               @case ('metrics') {
                 <app-score-card [scores]="lastResult?.parameter_scores" [handCountLocal]="lastResult?.hand_count_match ?? null" [handCountCheck]="lastResult?.hand_count_check ?? null" />
-                @if (lastResult?.parameter_scores) {
-                  <h4 class="text-xs font-semibold uppercase tracking-wider text-ink-faint mb-2">More checks</h4>
-                }
+                <label class="flex items-center gap-2 text-sm text-ink-muted cursor-pointer select-none mb-3">
+                  <input type="checkbox" [ngModel]="showScoreDetails" (ngModelChange)="setScoreDetails($event)"> Show detailed charts and checks
+                </label>
+                @if (showScoreDetails) {
                 @if (lastResult?.charts) {
                   <div class="mb-4"><app-attempt-charts [charts]="lastResult?.charts ?? null" /></div>
                 }
@@ -484,6 +485,7 @@ const CHECK_HOLD_MS = 1200;
                     </div>
                   }
                 </div>
+                }
               }
             }
 
@@ -496,15 +498,27 @@ const CHECK_HOLD_MS = 1200;
       }
     </div>
 
-    <!-- Chat panel: only on Record & feedback, so prep gets the full width -->
+    <!-- Chat: docked on the right (wide screens), a bottom sheet (narrow), minimised to a button,
+         or expanded to a large window. Only on Record & feedback, so prep gets the full width. -->
     @if (showChat) {
-      <div class="fixed top-0 right-0 h-full z-40 flex">
-        <div class="bg-surface border-l border-border/50 flex flex-col" style="width: 360px; height: 100vh;">
-          <div class="px-5 py-4 border-b border-border/50 flex items-center justify-between flex-shrink-0">
-            <h3 class="text-sm font-semibold text-ink">AI Coach Chat</h3>
-            @if (screen !== 'preview') {
-              <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div><span class="text-xs text-emerald-500">Live</span></div>
-            }
+      @if (chatMode === 'min') {
+        <button (click)="openChat()" class="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-accent text-white px-5 h-12 shadow-lg text-sm font-semibold">
+          Coach chat
+          @if (chatUnread) { <span class="min-w-5 h-5 px-1.5 rounded-full bg-white text-accent text-[11px] flex items-center justify-center">{{ chatUnread }}</span> }
+        </button>
+      } @else {
+        @if (chatMode === 'full') { <div class="fixed inset-0 z-40 bg-black/50" (click)="setChatMode(chatDock)"></div> }
+        <div [class]="chatBoxClass" [style]="chatBoxStyle" role="dialog" aria-label="AI coach chat">
+          <div class="px-5 py-3 border-b border-border/50 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-semibold text-ink">AI Coach Chat</h3>
+              <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button (click)="setChatMode(chatMode === 'full' ? chatDock : 'full')" class="w-8 h-8 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunk"
+                [title]="chatMode === 'full' ? 'Back to the side' : 'Expand to a large window'" [attr.aria-label]="chatMode === 'full' ? 'Shrink chat' : 'Expand chat'">{{ chatMode === 'full' ? '⤡' : '⤢' }}</button>
+              <button (click)="setChatMode('min')" class="w-8 h-8 rounded-lg text-ink-muted hover:text-ink hover:bg-surface-sunk" title="Minimise" aria-label="Minimise chat">—</button>
+            </div>
           </div>
           <div #chatScroll class="flex-1 overflow-y-auto p-4 space-y-3">
             @for (msg of chatMessages; track $index) {
@@ -527,7 +541,7 @@ const CHECK_HOLD_MS = 1200;
             </div>
           </div>
         </div>
-      </div>
+      }
     }
   `,
 })
@@ -961,6 +975,7 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   private pushChat(msg: ChatMessage): void {
     this.chatMessages.push(msg);
+    if (this.chatMode === 'min' && msg.role === 'coach') this.chatUnread++;
     this.shouldScroll = true;
   }
 
@@ -1140,6 +1155,58 @@ export class CoachComponent implements OnInit, OnDestroy, AfterViewChecked {
   stepIndex(id: Screen): number { return this.screenSteps.findIndex(s => s.id === id); }
 
   get showChat(): boolean { return this.screen === 'record'; }
+
+  // ---- chat layout --------------------------------------------------------------------
+  /** 'side' = docked right (wide screens), 'sheet' = bottom sheet (narrow), 'min' = a button, 'full' = large window. */
+  chatMode: 'side' | 'sheet' | 'min' | 'full' = CoachComponent.initialChatMode();
+  chatUnread = 0;
+  showScoreDetails = CoachComponent.readPref('mouna_score_details') === '1';
+
+  private static readPref(k: string): string | null { try { return localStorage.getItem(k); } catch { return null; } }
+  private static writePref(k: string, v: string): void { try { localStorage.setItem(k, v); } catch { /* private mode */ } }
+  private static wide(): boolean { return typeof window === 'undefined' || window.innerWidth >= 1280; }
+  private static initialChatMode(): 'side' | 'sheet' | 'min' {
+    // narrow screens start minimised, so the chat doesn't cover the results; the button shows new messages
+    if (CoachComponent.readPref('mouna_chat_min') === '1' || !CoachComponent.wide()) return 'min';
+    return 'side';
+  }
+  /** Where the chat docks when it isn't minimised or full: the side on wide screens, the bottom otherwise. */
+  get chatDock(): 'side' | 'sheet' { return CoachComponent.wide() ? 'side' : 'sheet'; }
+
+  get chatBoxClass(): string {
+    const base = 'fixed z-50 bg-surface flex flex-col shadow-2xl';
+    switch (this.chatMode) {
+      case 'full': return `${base} rounded-2xl border border-border/60`;
+      case 'sheet': return `${base} inset-x-0 bottom-0 h-[60vh] rounded-t-2xl border-t border-border/60`;
+      default: return `${base} top-0 right-0 h-screen w-[360px] border-l border-border/50 shadow-none`;
+    }
+  }
+
+  /** The large window: centred, up to 768 px wide, 88% of the screen tall. */
+  get chatBoxStyle(): Record<string, string> {
+    return this.chatMode === 'full'
+      ? { left: '50%', transform: 'translateX(-50%)', top: '6vh', height: '88vh', width: 'min(768px, calc(100vw - 2rem))' }
+      : {};
+  }
+
+  setChatMode(m: 'side' | 'sheet' | 'min' | 'full'): void {
+    this.chatMode = m;
+    CoachComponent.writePref('mouna_chat_min', m === 'min' ? '1' : '0');
+    if (m !== 'min') { this.chatUnread = 0; this.shouldScroll = true; }
+  }
+
+  openChat(): void { this.setChatMode(this.chatDock); }
+
+  setScoreDetails(on: boolean): void {
+    this.showScoreDetails = on;
+    CoachComponent.writePref('mouna_score_details', on ? '1' : '0');
+  }
+
+  @HostListener('window:keydown.escape') onEscape(): void { if (this.chatMode === 'full') this.setChatMode(this.chatDock); }
+
+  @HostListener('window:resize') onResize(): void {
+    if (this.chatMode === 'side' || this.chatMode === 'sheet') this.chatMode = this.chatDock;
+  }
 
   private postPrepResultsToChat(): void {
     if (this.comments.length === 0) return;

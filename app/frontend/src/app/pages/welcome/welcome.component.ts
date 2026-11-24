@@ -17,7 +17,7 @@ import { ThemeService } from '../../core/services/theme.service';
         <div class="flex items-center gap-2">
           <button (click)="theme.toggle()" class="h-9 px-3 rounded-lg border border-border/70 text-xs text-ink-muted hover:text-ink">{{ theme.isDark() ? 'Dark' : 'Light' }}</button>
           @if (signedIn) {
-            <a routerLink="/" class="h-9 px-4 rounded-lg bg-accent text-white text-sm font-medium flex items-center">Go to your dashboard</a>
+            <a routerLink="/" (click)="enter()" class="h-9 px-4 rounded-lg bg-accent text-white text-sm font-medium flex items-center">{{ demo ? 'Try it now' : 'Go to your dashboard' }}</a>
           } @else {
             <a routerLink="/login" class="h-9 px-4 rounded-lg border border-border/70 text-sm text-ink flex items-center">Sign in</a>
           }
@@ -33,7 +33,7 @@ import { ThemeService } from '../../core/services/theme.service';
           <p class="text-lg text-ink-muted mt-5 leading-relaxed">Mouna helps hearing people take their first steps in ASL so they can meet Deaf people a little closer to halfway.
             You watch fluent signers, sign in front of your camera, and get specific, honest feedback on each part of the sign.</p>
           <div class="flex flex-wrap gap-3 mt-8">
-            <a [routerLink]="signedIn ? '/' : '/signup'" class="h-12 px-6 rounded-xl bg-accent text-white font-medium flex items-center">{{ signedIn ? 'Continue learning' : 'Start learning, free' }}</a>
+            <a [routerLink]="signedIn ? '/' : '/signup'" (click)="enter()" class="h-12 px-6 rounded-xl bg-accent text-white font-medium flex items-center">{{ cta }}</a>
             <a href="#how" class="h-12 px-6 rounded-xl border border-border/70 text-ink flex items-center">How it works</a>
           </div>
           <p class="text-xs text-ink-faint mt-4">A practice companion, not a replacement for Deaf teachers and the Deaf community.</p>
@@ -93,7 +93,7 @@ import { ThemeService } from '../../core/services/theme.service';
 
         <section class="py-14 border-t border-border/60 text-center">
           <h2 class="font-display text-3xl text-ink">Ready for your first sign?</h2>
-          <a [routerLink]="signedIn ? '/' : '/signup'" class="inline-flex h-12 px-6 mt-6 rounded-xl bg-accent text-white font-medium items-center">{{ signedIn ? 'Continue learning' : 'Start learning, free' }}</a>
+          <a [routerLink]="signedIn ? '/' : '/signup'" (click)="enter()" class="inline-flex h-12 px-6 mt-6 rounded-xl bg-accent text-white font-medium items-center">{{ cta }}</a>
         </section>
       </main>
 
@@ -109,6 +109,11 @@ export class WelcomeComponent {
   theme = inject(ThemeService);
   private auth = inject(AuthService);
   readonly signedIn = this.auth.isAuthenticated;
+  readonly demo = this.auth.guestMode;
+  readonly cta = this.demo ? 'Try it now, no sign-up' : this.signedIn ? 'Continue learning' : 'Start learning, free';
+
+  /** Going in from Home: in the demo, don't show Home again on the next visit. */
+  enter(): void { try { localStorage.setItem('mouna_seen_welcome', '1'); } catch { /* private mode */ } }
   readonly steps = [
     { title: 'Learn', text: 'Watch a fluent signer and a 3D avatar from any angle. Short prep checks get your hand shape and position right, then you record the sign and see what to fix.' },
     { title: 'Practice', text: 'The signs you have learned come back as short stories, shown in English and in ASL order. Watch the avatar sign them, then sign them yourself, sign by sign.' },

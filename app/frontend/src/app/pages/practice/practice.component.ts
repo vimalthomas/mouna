@@ -26,7 +26,7 @@ const LEVEL: Record<string, string> = { fluent: 'Fluent', close: 'Close', needs_
       <div class="flex items-end justify-between gap-4 flex-wrap mb-6">
         <div>
           <h1 class="font-display text-3xl text-ink">Practice</h1>
-          <p class="text-sm text-ink-muted mt-1">Short stories made only from the signs you've learned. Watch them, then sign them yourself.</p>
+          <p class="text-sm text-ink-muted mt-1">{{ pool?.demo ? 'Short stories made from the practice signs (in your own account, only from the signs you have learned).' : "Short stories made only from the signs you've learned." }} Watch them, then sign them yourself.</p>
         </div>
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-1 rounded-full bg-surface-sunk border border-border/50 p-1" role="tablist">

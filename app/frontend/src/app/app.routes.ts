@@ -6,7 +6,14 @@ import { AuthService } from './core/services/auth.service';
 
 /** Guest mode (demo deployment): there is no sign-in or sign-up, go straight in. */
 /** v5: signed-out visitors land on Home (/welcome), not the sign-in form. */
-const homeOrWelcome: CanActivateFn = () => inject(AuthService).isAuthenticated ? true : inject(Router).createUrlTree(['/welcome']);
+/** In the public demo (guest mode) everyone counts as signed in, so first-time visitors see Home once. */
+const homeOrWelcome: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  let seen = false;
+  try { seen = localStorage.getItem('mouna_seen_welcome') === '1'; } catch { /* private mode */ }
+  if (!auth.isAuthenticated || (auth.guestMode && !seen)) return inject(Router).createUrlTree(['/welcome']);
+  return true;
+};
 const noLoginInGuestMode: CanActivateFn = () => inject(AuthService).guestMode ? inject(Router).createUrlTree(['/']) : true;
 
 export const routes: Routes = [

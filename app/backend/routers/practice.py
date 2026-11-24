@@ -16,7 +16,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from auth.dependencies import get_current_user
+from auth.dependencies import GUEST_EMAIL, get_current_user
+from config import settings
 from db.models import PracticeStory, SentenceAttempt, Sign, SignProgress, User
 from db.session import get_db
 from services import coach_writer, example_videos, story_service
@@ -41,6 +42,11 @@ def _progress(db: Session, user_id: int) -> dict[str, SignProgress]:
     return {g.lower(): p for g, p in rows}
 
 
+def _is_guest(user: User) -> bool:
+    """The public demo's shared guest: its progress is everyone's, so stories use every practice sign."""
+    return bool(settings.allow_guest) and user.email == GUEST_EMAIL
+
+
 def _sign_card(w: str, p: SignProgress | None) -> dict:
     info = signs_service.signs_by_word.get(w)
     ex = example_videos.get(w) or {}
@@ -52,6 +58,9 @@ def _sign_card(w: str, p: SignProgress | None) -> dict:
 @router.get("/pool")
 def pool(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
     prog, usable = _progress(db, user.id), _story_signs()
+    if _is_guest(user):
+        return {"learned": [_sign_card(w, prog.get(w)) for w in sorted(usable)], "practising": [],
+                "min_signs": MIN_SIGNS, "unlocked": True, "ai": story_service.enabled(), "demo": True}
     learned = sorted(w for w in usable if prog.get(w) and prog[w].completed)
     practising = sorted(w for w in usable if prog.get(w) and not prog[w].completed and prog[w].total_attempts)
     return {"learned": [_sign_card(w, prog.get(w)) for w in learned],
@@ -68,7 +77,7 @@ async def new_story(req: StoryRequest, user: User = Depends(get_current_user), d
     if not story_service.enabled():
         raise HTTPException(503, "Stories need an AI key (GEMINI_API_KEY) on the server.")
     prog, usable = _progress(db, user.id), _story_signs()
-    learned = [w for w in usable if prog.get(w) and prog[w].completed]
+    learned = list(usable) if _is_guest(user) else [w for w in usable if prog.get(w) and prog[w].completed]
     if len(learned) < MIN_SIGNS:
         raise HTTPException(400, f"Learn {MIN_SIGNS - len(learned)} more sign(s) to unlock stories.")
     practising = [w for w in usable if prog.get(w) and not prog[w].completed and prog[w].total_attempts]

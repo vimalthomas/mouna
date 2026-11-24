@@ -6,7 +6,7 @@ import { SkinData } from '../models/sign.model';
 
 /** v5 Practice tab: stories from learned signs, the sentence avatar, sign-by-sign grading, history. */
 export interface PracticeSign { word: string; description: string; video_url: string | null; learned: boolean; tries: number; }
-export interface PracticePool { learned: PracticeSign[]; practising: PracticeSign[]; min_signs: number; unlocked: boolean; ai: boolean; }
+export interface PracticePool { learned: PracticeSign[]; practising: PracticeSign[]; min_signs: number; unlocked: boolean; ai: boolean; demo?: boolean; }
 export interface StorySentence { english: string; gloss: string[]; }
 export interface Story {
   id: number; title: string; sentences: StorySentence[]; structure: string[];

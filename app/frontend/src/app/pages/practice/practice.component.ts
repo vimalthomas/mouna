@@ -36,7 +36,7 @@ const LEVEL: Record<string, string> = { fluent: 'Fluent', close: 'Close', needs_
                 [class]="mode === m.id ? 'bg-accent text-white' : 'text-ink-muted hover:text-ink'">{{ m.label }}</button>
             }
           </div>
-          @if (mode === 'stories' && pool?.unlocked) {
+          @if (mode === 'stories' && pool?.unlocked && pool?.ai) {
             <button (click)="newStory()" [disabled]="loadingStory || practising"
               class="px-4 h-9 rounded-xl bg-accent text-white text-sm font-medium disabled:opacity-50">Another story</button>
           }
@@ -45,8 +45,13 @@ const LEVEL: Record<string, string> = { fluent: 'Fluent', close: 'Close', needs_
 
       @if (!pool) {
         <p class="text-sm text-ink-muted">Loading your signs…</p>
-      } @else if (mode === 'review' || !pool.unlocked) {
-        @if (!pool.unlocked) {
+      } @else if (mode === 'review' || !pool.unlocked || !pool.ai) {
+        @if (!pool.ai) {
+          <div class="rounded-xl border border-border/60 bg-surface px-5 py-4 mb-6">
+            <p class="text-ink font-medium">Stories aren't switched on here yet</p>
+            <p class="text-sm text-ink-muted mt-1">Stories are written by AI, which isn't set up on this server. You can still review your signs below.</p>
+          </div>
+        } @else if (!pool.unlocked) {
           <div class="rounded-xl border border-border/60 bg-surface px-5 py-4 mb-6">
             <p class="text-ink font-medium">Learn {{ pool.min_signs - pool.learned.length }} more sign{{ pool.min_signs - pool.learned.length === 1 ? '' : 's' }} to unlock stories</p>
             <div class="h-2 rounded-full bg-surface-sunk overflow-hidden mt-3 max-w-md">
@@ -245,7 +250,11 @@ export class PracticeComponent implements OnInit, OnDestroy {
     try { this.stretch = localStorage.getItem('mouna_story_stretch') === '1'; } catch { /* private mode */ }
     this.subs.push(this.auth.user$.subscribe(u => (this.lefty = u?.dominant_hand === 'left')));
     this.api.pool().subscribe({
-      next: p => { this.pool = p; if (p.unlocked) this.newStory(); },
+      next: p => {
+        this.pool = p;
+        if (!p.ai) this.mode = 'review';          // no AI key on this server: stories can't be written
+        else if (p.unlocked) this.newStory();
+      },
       error: () => (this.error = "Couldn't load your signs."),
     });
   }

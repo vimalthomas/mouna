@@ -1,0 +1,96 @@
+{
+  "judged": 280,
+  "handshape": {
+    "unsure_rate": 0.004,
+    "llm_false_alarm_on_correct": {
+      "rate": 0.233,
+      "n": 60
+    },
+    "ours_false_alarm_on_correct": {
+      "rate": 0.304,
+      "n": 56
+    },
+    "llm_catches": {
+      "rate": 0.947,
+      "n": 207
+    },
+    "ours_catches": {
+      "rate": 0.699,
+      "n": 166
+    },
+    "llm_false_alarm_other_signs": {
+      "rate": 0.583,
+      "n": 12
+    },
+    "ours_false_alarm_other_signs": {
+      "rate": 0.375,
+      "n": 8
+    }
+  },
+  "location": {
+    "unsure_rate": 0.0,
+    "llm_false_alarm_on_correct": {
+      "rate": 0.083,
+      "n": 60
+    },
+    "ours_false_alarm_on_correct": {
+      "rate": 0.07,
+      "n": 57
+    },
+    "llm_catches": {
+      "rate": 0.877,
+      "n": 179
+    },
+    "ours_catches": {
+      "rate": 0.088,
+      "n": 171
+    },
+    "llm_false_alarm_other_signs": {
+      "rate": 0.39,
+      "n": 41
+    },
+    "ours_false_alarm_other_signs": {
+      "rate": 0.216,
+      "n": 37
+    }
+  },
+  "hands": {
+    "unsure_rate": 0.004,
+    "llm_false_alarm_on_correct": {
+      "rate": 0.05,
+      "n": 60
+    },
+    "ours_false_alarm_on_correct": {
+      "rate": 0.233,
+      "n": 60
+    },
+    "llm_catches": {
+      "rate": 0.78,
+      "n": 127
+    },
+    "ours_catches": {
+      "rate": 0.724,
+      "n": 127
+    },
+    "llm_false_alarm_other_signs": {
+      "rate": 0.196,
+      "n": 92
+    },
+    "ours_false_alarm_other_signs": {
+      "rate": 0.312,
+      "n": 93
+    }
+  },
+  "orientation": {
+    "unsure_rate": 0.004,
+    "llm_false_alarm_on_correct": {
+      "rate": 0.233,
+      "n": 60
+    },
+    "ours_false_alarm_on_correct": {
+      "rate": 0.404,
+      "n": 47
+    }
+  },
+  "note": "partial: 280 of 287 attempts (run hung on an API call and was stopped)"
+}

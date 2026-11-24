@@ -142,7 +142,7 @@ def ask(client, types, img: bytes, sign: str) -> dict | None:
 def main() -> None:
     from google import genai
     from google.genai import types
-    client = genai.Client(api_key=settings.gemini_api_key, http_options=types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=1)))
+    client = genai.Client(api_key=settings.gemini_api_key, http_options=types.HttpOptions(timeout=30000, retry_options=types.HttpRetryOptions(attempts=1)))
     sys.path.insert(0, str(ROOT / "scripts")); sys.path.insert(0, str(ROOT / "src"))
     from build_sign_references_v2 import load_raw_lookup
     raw = load_raw_lookup()
